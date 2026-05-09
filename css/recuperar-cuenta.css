@@ -1,0 +1,68 @@
+/* Estilos de la página de recuperar cuenta */
+
+/* Fondo azul sólido */
+.pagina-recuperar {
+  min-height: 100vh;
+  background: #1152d4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* Tarjeta blanca central */
+.tarjeta-recuperar {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  text-align: center;
+}
+
+/* Título de la tarjeta */
+.titulo-recuperar {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 16px;
+}
+
+/* Texto informativo */
+.texto-recuperar {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+/* Dato de contacto (correo, teléfono) */
+.dato-contacto {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1152d4;
+  margin-bottom: 8px;
+}
+
+/* Botón de volver */
+.btn-volver {
+  display: inline-block;
+  margin-top: 24px;
+  padding: 10px 24px;
+  background-color: #1152d4;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.btn-volver:hover {
+  background-color: #0f46b8;
+  color: #ffffff;
+}

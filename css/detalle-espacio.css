@@ -1,0 +1,179 @@
+/* Contenedor del enlace de volver */
+.volver-contenedor {
+  margin-bottom: 20px;
+}
+
+/* Enlace de volver */
+.enlace-volver {
+  color: #64748b;
+  font-size: 13px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.enlace-volver:hover {
+  color: #1152d4;
+}
+
+/* Tarjeta cuando el espacio no existe */
+.zona-error-tarjeta {
+  text-align: center;
+  padding: 60px;
+}
+
+/* Icono de error */
+.error-icono {
+  font-size: 48px;
+  color: #f59e0b;
+  display: block;
+  margin-bottom: 16px;
+}
+
+/* Título de no encontrado */
+.error-titulo {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* Texto de no encontrado */
+.error-texto {
+  color: #64748b;
+}
+
+/* Fila de badges bajo el título */
+.badges-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+/* Zona superior del detalle */
+.cabecera-detalle {
+  margin-bottom: 20px;
+}
+
+/* Nombre del espacio como título */
+.titulo-espacio {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+/* Separador entre cabecera y metadatos */
+.separador-esp {
+  border-color: #e2e8f0;
+  margin-bottom: 20px;
+}
+
+/* Etiqueta de metadato */
+.metadato-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+/* Valor del metadato */
+.metadato-valor {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+/* Etiqueta de la descripción */
+.descripcion-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+/* Caja de descripción */
+.descripcion-caja {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.7;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 0;
+}
+
+/* Título del panel lateral */
+.panel-titulo {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Título del panel de cambio */
+.panel-titulo-sm {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Texto de ayuda del panel */
+.panel-ayuda {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 12px;
+}
+
+/* Select de nuevo estado */
+.select-estado-panel {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+/* Botón guardar estado: ancho completo */
+.btn-guardar-estado {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Tarjeta de referencia con fondo gris */
+.tarjeta-referencia {
+  background: #f8fafc;
+}
+
+/* Etiqueta de referencia */
+.referencia-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+/* Código de referencia ESP-0001 */
+.referencia-codigo {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1152d4;
+  font-family: monospace;
+}
+
+/* Badge de estado grande en el panel lateral */
+.badge-estado-grande {
+  font-size: 13px;
+  padding: 6px 14px;
+}

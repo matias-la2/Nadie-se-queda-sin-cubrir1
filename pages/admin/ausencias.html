@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Ausencias — IES Río Arba</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/estilos.css">
+  <link rel="stylesheet" href="../../css/ausencias.css">
+</head>
+
+<body>
+
+  <div id="sidebar-container"></div>
+
+  <main class="contenido-principal">
+
+    <!-- Cabecera -->
+    <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+      <div class="pagina-header mb-0">
+        <h1>Gestión Global de Ausencias</h1>
+        <p>Visualiza y administra todas las ausencias del profesorado.</p>
+      </div>
+      <a href="../compartido/nueva-ausencia.html" class="btn-primario">
+        <i class="bi bi-plus-lg"></i>
+        Nueva Ausencia
+      </a>
+    </div>
+
+    <!-- Tarjetas resumen -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-pendiente">
+            <i class="bi bi-hourglass-split"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Pendientes</div>
+            <div class="numero" id="num-pendientes">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-cubierta-aus">
+            <i class="bi bi-check-circle"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Cubiertas</div>
+            <div class="numero" id="num-cubiertas">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-sin-cubrir">
+            <i class="bi bi-x-circle"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Sin cubrir</div>
+            <div class="numero" id="num-sin-cubrir">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-total">
+            <i class="bi bi-calendar-x"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Total</div>
+            <div class="numero" id="num-total">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tarjeta con filtros + tabla -->
+    <div class="tarjeta">
+
+      <!-- Barra de búsqueda y filtros -->
+      <div class="barra-acciones">
+        <input
+          type="text"
+          class="input-busqueda"
+          id="input-busqueda"
+          placeholder="Buscar por profesor o comentario..."
+          oninput="renderizarAusencias()"
+        >
+        <select class="select-filtro" id="filtro-departamento" onchange="renderizarAusencias()">
+          <option value="">Todos los departamentos</option>
+        </select>
+        <select class="select-filtro" id="filtro-estado" onchange="renderizarAusencias()">
+          <option value="">Todos los estados</option>
+          <option value="PENDIENTE">Pendiente</option>
+          <option value="CUBIERTA">Cubierta</option>
+          <option value="SIN_CUBRIR">Sin cubrir</option>
+        </select>
+      </div>
+
+      <!-- Tabla -->
+      <div class="tabla-responsive">
+        <table class="tabla-datos">
+          <thead>
+            <tr>
+              <th>Profesor</th>
+              <th>Fecha</th>
+              <th>Tramo</th>
+              <th>Motivo</th>
+              <th>Tarea</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-body"></tbody>
+        </table>
+      </div>
+
+      <!-- Contador de resultados -->
+      <div class="contador-ausencias" id="contador-texto">
+        Mostrando 0 ausencias
+      </div>
+
+    </div>
+
+  </main>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../../js/datos-prueba.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/sidebar.js"></script>
+
+  <script>
+    // Inicialización
+    verificarSesion();
+    crearSidebar("ausencias", "../../");
+
+    // Actualiza las tarjetas de resumen
+    function actualizarResumen() {
+      var pend = 0, cub = 0, sinCub = 0;
+      for (var i = 0; i < AUSENCIAS.length; i++) {
+        if (AUSENCIAS[i].estado === "PENDIENTE")  pend++;
+        else if (AUSENCIAS[i].estado === "CUBIERTA")   cub++;
+        else if (AUSENCIAS[i].estado === "SIN_CUBRIR") sinCub++;
+      }
+      document.getElementById("num-pendientes").textContent  = pend;
+      document.getElementById("num-cubiertas").textContent   = cub;
+      document.getElementById("num-sin-cubrir").textContent  = sinCub;
+      document.getElementById("num-total").textContent       = AUSENCIAS.length;
+    }
+    actualizarResumen();
+
+    // Rellena el select de departamentos
+    var departamentos = [];
+    for (var i = 0; i < AUSENCIAS.length; i++) {
+      if (departamentos.indexOf(AUSENCIAS[i].departamento) === -1) {
+        departamentos.push(AUSENCIAS[i].departamento);
+      }
+    }
+    var selectDepto = document.getElementById("filtro-departamento");
+    for (var i = 0; i < departamentos.length; i++) {
+      var opt = document.createElement("option");
+      opt.value = departamentos[i];
+      opt.textContent = departamentos[i];
+      selectDepto.appendChild(opt);
+    }
+
+    // Filtra y dibuja la tabla de ausencias
+    function renderizarAusencias() {
+      var tbody    = document.getElementById("tabla-body");
+      var busqueda = document.getElementById("input-busqueda").value.trim().toLowerCase();
+      var depto    = document.getElementById("filtro-departamento").value;
+      var estado   = document.getElementById("filtro-estado").value;
+
+      var resultado = [];
+      for (var i = 0; i < AUSENCIAS.length; i++) {
+        var a = AUSENCIAS[i];
+        var okTexto  = !busqueda || a.profesor.toLowerCase().indexOf(busqueda) !== -1 || (a.comentario && a.comentario.toLowerCase().indexOf(busqueda) !== -1);
+        var okDepto  = !depto  || a.departamento === depto;
+        var okEstado = !estado || a.estado === estado;
+        if (okTexto && okDepto && okEstado) resultado.push(a);
+      }
+
+      document.getElementById("contador-texto").textContent =
+        "Mostrando " + resultado.length + " de " + AUSENCIAS.length + " ausencias";
+
+      if (resultado.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron ausencias con esos filtros</td></tr>';
+        return;
+      }
+
+      var html = "";
+      for (var i = 0; i < resultado.length; i++) {
+        var a = resultado[i];
+        var partes = a.fecha.split("-");
+        var fecha  = partes[2] + "/" + partes[1] + "/" + partes[0];
+
+        // Badge de estado
+        var claseBadge, textoEstado;
+        if (a.estado === "PENDIENTE") {
+          claseBadge = "badge-pendiente"; textoEstado = "Pendiente";
+        } else if (a.estado === "CUBIERTA") {
+          claseBadge = "badge-cubierta"; textoEstado = "Cubierta";
+        } else {
+          claseBadge = "badge-en-proceso"; textoEstado = "Sin cubrir";
+        }
+
+        // Avatar del profesor
+        var avatarSrc = "";
+        for (var j = 0; j < USUARIOS.length; j++) {
+          if ((USUARIOS[j].nombre + " " + USUARIOS[j].apellidos) === a.profesor) {
+            avatarSrc = USUARIOS[j].avatar;
+            break;
+          }
+        }
+        if (!avatarSrc) {
+          avatarSrc = "https://ui-avatars.com/api/?name=" + encodeURIComponent(a.profesor) + "&background=f1f5f9&color=475569&bold=true";
+        }
+
+        // Celda tarea
+        var hayTareaCelda;
+        if (a.hay_tarea) {
+          hayTareaCelda = '<span class="tarea-si"><i class="bi bi-check-circle-fill me-1"></i>Sí</span>';
+        } else {
+          hayTareaCelda = '<span class="tarea-no"><i class="bi bi-dash-circle me-1"></i>No</span>';
+        }
+
+        // Comentario
+        var comentario;
+        if (a.comentario) {
+          comentario = '<span class="comentario-texto">' + a.comentario + '</span>';
+        } else {
+          comentario = '<span class="comentario-vacio">—</span>';
+        }
+
+        // Botón aprobar (desactivado si ya está cubierta)
+        var botonAprobar;
+        if (a.estado === "CUBIERTA") {
+          botonAprobar = '<button class="btn-accion btn-desactivado" title="Ya cubierta" disabled><i class="bi bi-check-lg"></i></button>';
+        } else {
+          botonAprobar = '<button class="btn-accion" title="Marcar como cubierta" onclick="aprobarAusencia(' + a.id + ')"><i class="bi bi-check-lg"></i></button>';
+        }
+
+        html += '<tr>' +
+                  '<td><div class="celda-profesor">' +
+                    '<img src="' + avatarSrc + '" class="avatar-profesor" alt="">' +
+                    '<div><div class="profesor-nombre">' + a.profesor + '</div><div class="profesor-departamento">' + a.departamento + '</div></div>' +
+                  '</div></td>' +
+                  '<td class="celda-sm">' + fecha + '</td>' +
+                  '<td class="celda-sm">' + a.tramo_horario + '</td>' +
+                  '<td>' + comentario + '</td>' +
+                  '<td>' + hayTareaCelda + '</td>' +
+                  '<td><span class="badge-estado ' + claseBadge + '">' + textoEstado + '</span></td>' +
+                  '<td><div class="d-flex gap-1">' +
+                    botonAprobar +
+                    '<button class="btn-accion peligro" title="Eliminar" onclick="eliminarAusencia(' + a.id + ')"><i class="bi bi-trash"></i></button>' +
+                  '</div></td>' +
+                '</tr>';
+      }
+      tbody.innerHTML = html;
+    }
+
+    // Marca la ausencia como cubierta
+    function aprobarAusencia(id) {
+      for (var i = 0; i < AUSENCIAS.length; i++) {
+        if (AUSENCIAS[i].id === id) {
+          AUSENCIAS[i].estado = "CUBIERTA";
+          break;
+        }
+      }
+      actualizarResumen();
+      renderizarAusencias();
+    }
+
+    // Elimina la ausencia del array
+    function eliminarAusencia(id) {
+      if (!confirm("¿Eliminar esta ausencia definitivamente?")) return;
+      for (var i = 0; i < AUSENCIAS.length; i++) {
+        if (AUSENCIAS[i].id === id) { AUSENCIAS.splice(i, 1); break; }
+      }
+      actualizarResumen();
+      renderizarAusencias();
+    }
+
+    renderizarAusencias();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,145 @@
+/* Icono resumen: pendientes */
+.icono-pendientes {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+/* Icono resumen: realizadas */
+.icono-realizadas {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+/* Icono resumen: canceladas */
+.icono-canceladas {
+  background: #fffbeb;
+  color: #f59e0b;
+}
+
+/* Icono resumen: total guardias */
+.icono-total {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+/* Contador de guardias mostradas */
+.contador-guardias {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Celda sin resultados */
+.sin-resultados {
+  text-align: center;
+  color: #64748b;
+  padding: 32px;
+}
+
+/* Icono del mensaje sin resultados */
+.sin-resultados-icono {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* Celda de fecha */
+.celda-fecha {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Celda de texto pequeño */
+.celda-sm {
+  font-size: 13px;
+}
+
+/* Nombre principal del profesor */
+.profesor-principal {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Etiqueta "Sustituto" o "Ausente" */
+.profesor-etiqueta {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* Modal con bordes redondeados */
+.modal-contenido {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Cabecera del modal */
+.modal-cabecera {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 20px 24px;
+}
+
+/* Título del modal */
+.modal-titulo {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* Icono azul en el título del modal */
+.modal-icono-titulo {
+  color: #1152d4;
+}
+
+/* Cuerpo del modal */
+.modal-cuerpo {
+  padding: 24px;
+}
+
+/* Pie del modal */
+.modal-pie {
+  border-top: 1px solid #e2e8f0;
+  padding: 16px 24px;
+  gap: 8px;
+}
+
+/* Etiqueta de campo del formulario */
+.modal-label {
+  font-size: 13px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 5px;
+}
+
+/* Asterisco de campo obligatorio */
+.campo-obligatorio {
+  color: #ef4444;
+}
+
+/* Input/select de ancho completo */
+.campo-completo {
+  width: 100%;
+}
+
+/* Error dentro del modal */
+.modal-error {
+  display: none;
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+/* Texto de campo opcional */
+.label-opcional {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+/* Textarea de observaciones */
+.textarea-obs {
+  min-height: 80px;
+  resize: vertical;
+}

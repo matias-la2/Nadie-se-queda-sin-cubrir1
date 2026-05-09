@@ -1,0 +1,162 @@
+/* Icono resumen: activos */
+.icono-activos {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+/* Icono resumen: inactivos */
+.icono-inactivos {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+/* Icono resumen: total */
+.icono-total-prof {
+  background: #eff6ff;
+  color: #1152d4;
+}
+
+/* Icono resumen: departamentos */
+.icono-departamentos {
+  background: #fef9c3;
+  color: #b45309;
+}
+
+/* Contador de profesores mostrados */
+.contador-profesores {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Celda sin resultados */
+.sin-resultados {
+  text-align: center;
+  color: #64748b;
+  padding: 32px;
+}
+
+/* Icono grande del mensaje sin resultados */
+.sin-resultados-icono {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* Fila con avatar + nombre + id */
+.celda-profesor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Avatar circular del profesor */
+.avatar-profesor {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Nombre del profesor */
+.profesor-nombre {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+/* ID debajo del nombre */
+.profesor-id {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* Celda de texto pequeño */
+.celda-sm {
+  font-size: 13px;
+}
+
+/* Badge de departamento */
+.badge-departamento {
+  background: #eff6ff;
+  color: #1152d4;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Separación entre badges de rol */
+.badge-rol {
+  margin-right: 4px;
+}
+
+/* Icono circular mini de estado activo/inactivo */
+.icono-status-mini {
+  font-size: 8px;
+}
+
+/* Modal con bordes redondeados */
+.modal-contenido {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Cabecera del modal */
+.modal-cabecera {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 20px 24px;
+}
+
+/* Título del modal */
+.modal-titulo {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* Icono azul del título */
+.modal-icono-titulo {
+  color: #1152d4;
+}
+
+/* Cuerpo del modal */
+.modal-cuerpo {
+  padding: 24px;
+}
+
+/* Pie del modal */
+.modal-pie {
+  border-top: 1px solid #e2e8f0;
+  padding: 16px 24px;
+  gap: 8px;
+}
+
+/* Etiqueta de campo del formulario */
+.modal-label {
+  font-size: 13px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 5px;
+}
+
+/* Asterisco de campo obligatorio */
+.campo-obligatorio {
+  color: #ef4444;
+}
+
+/* Input/select de ancho completo */
+.campo-completo {
+  width: 100%;
+}
+
+/* Error dentro del modal */
+.modal-error {
+  display: none;
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}

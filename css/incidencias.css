@@ -1,0 +1,66 @@
+/* Icono resumen: pendientes */
+.icono-pendientes-inc {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+/* Icono resumen: en proceso */
+.icono-proceso-inc {
+  background: #fffbeb;
+  color: #f59e0b;
+}
+
+/* Icono resumen: resueltas */
+.icono-resueltas-inc {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+/* Icono resumen: total */
+.icono-total-inc {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+/* Contador de incidencias mostradas */
+.contador-incidencias {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Celda sin resultados */
+.sin-resultados {
+  text-align: center;
+  color: #64748b;
+  padding: 32px;
+}
+
+/* Icono grande del mensaje sin resultados */
+.sin-resultados-icono {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* Título de incidencia en la tabla */
+.inc-titulo-tabla {
+  font-weight: 500;
+}
+
+/* Celda de texto pequeño */
+.celda-sm {
+  font-size: 13px;
+}
+
+/* Celda de fecha en gris */
+.celda-fecha-gris {
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Select inline para cambiar estado desde la tabla */
+.select-estado-inline {
+  padding: 4px 8px;
+  font-size: 12px;
+}

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalle de Espacio — IES Río Arba</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/estilos.css">
+  <link rel="stylesheet" href="../../css/detalle-espacio.css">
+</head>
+
+<body>
+
+  <div id="sidebar-container"></div>
+
+  <main class="contenido-principal">
+
+    <!-- Enlace de volver -->
+    <div class="volver-contenedor">
+      <a href="aulas.html" class="enlace-volver">
+        <i class="bi bi-arrow-left"></i>
+        Volver a Aulas y Espacios
+      </a>
+    </div>
+
+    <!-- Zona de error si el espacio no existe -->
+    <div id="zona-error" style="display:none;">
+      <div class="tarjeta zona-error-tarjeta">
+        <i class="bi bi-exclamation-triangle error-icono"></i>
+        <h2 class="error-titulo">Espacio no encontrado</h2>
+        <p class="error-texto">El identificador de la URL no corresponde a ningún espacio.</p>
+      </div>
+    </div>
+
+    <!-- Zona de contenido, visible cuando el espacio existe -->
+    <div id="zona-contenido" style="display:none;">
+
+      <div class="row g-4">
+
+        <!-- Columna principal: datos del espacio -->
+        <div class="col-12 col-lg-8">
+          <div class="tarjeta">
+
+            <!-- Nombre con badge de estado -->
+            <div class="cabecera-detalle">
+              <div class="badges-cabecera">
+                <span id="badge-estado" class="badge-estado"></span>
+              </div>
+              <h1 id="esp-nombre" class="titulo-espacio"></h1>
+            </div>
+
+            <hr class="separador-esp">
+
+            <!-- Metadatos en 2 columnas -->
+            <div class="row g-3 mb-4">
+              <div class="col-6">
+                <div class="metadato-label">Edificio</div>
+                <div id="esp-edificio" class="metadato-valor"></div>
+              </div>
+              <div class="col-6">
+                <div class="metadato-label">Capacidad</div>
+                <div id="esp-capacidad" class="metadato-valor"></div>
+              </div>
+              <div class="col-6">
+                <div class="metadato-label">Estado</div>
+                <div id="esp-estado-meta" class="metadato-valor"></div>
+              </div>
+              <div class="col-6">
+                <div class="metadato-label">Referencia</div>
+                <div id="esp-ref-meta" class="metadato-valor"></div>
+              </div>
+            </div>
+
+            <!-- Descripción -->
+            <div>
+              <div class="descripcion-label">Descripción</div>
+              <p class="descripcion-caja">Espacio del centro educativo IES Río Arba</p>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Columna lateral: gestión de estado -->
+        <div class="col-12 col-lg-4">
+
+          <!-- Estado actual -->
+          <div class="tarjeta mb-3">
+            <div class="panel-titulo">Estado actual</div>
+            <div id="estado-actual-texto"></div>
+          </div>
+
+          <!-- Panel para cambiar estado -->
+          <div class="tarjeta mb-3">
+            <div class="panel-titulo-sm">Cambiar estado</div>
+            <p class="panel-ayuda">Selecciona el nuevo estado y guarda el cambio.</p>
+            <select class="select-filtro select-estado-panel" id="select-nuevo-estado">
+              <option value="DISPONIBLE">Disponible</option>
+              <option value="NO_DISPONIBLE">No disponible</option>
+              <option value="MANTENIMIENTO">Mantenimiento</option>
+            </select>
+            <button class="btn-primario btn-guardar-estado" onclick="guardarEstado()">
+              <i class="bi bi-check-lg"></i>
+              Guardar cambio
+            </button>
+          </div>
+
+          <!-- Referencia -->
+          <div class="tarjeta tarjeta-referencia">
+            <div class="referencia-label">Referencia</div>
+            <div id="esp-referencia" class="referencia-codigo"></div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../../js/datos-prueba.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/sidebar.js"></script>
+
+  <script>
+    // Inicialización
+    verificarSesion();
+    crearSidebar("aulas", "../../");
+
+    // Busca el nombre del edificio por su id
+    function obtenerNombreEdificio(id) {
+      for (var i = 0; i < EDIFICIOS.length; i++) {
+        if (EDIFICIOS[i].id === id) return EDIFICIOS[i].nombre;
+      }
+      return "—";
+    }
+
+    // Clase del badge según el estado
+    function claseBadgePor(estado) {
+      if (estado === "DISPONIBLE")    return "badge-cubierta";
+      if (estado === "NO_DISPONIBLE") return "badge-pendiente";
+      return "badge-en-proceso";
+    }
+
+    // Texto legible del estado
+    function textoEstadoPor(estado) {
+      if (estado === "DISPONIBLE")    return "Disponible";
+      if (estado === "NO_DISPONIBLE") return "No disponible";
+      return "Mantenimiento";
+    }
+
+    // Lee el id de la URL y busca el espacio
+    var params  = new URLSearchParams(window.location.search);
+    var idTexto = params.get("id");
+    var id      = idTexto ? parseInt(idTexto) : null;
+    var espacio = null;
+    for (var i = 0; i < ESPACIOS.length; i++) {
+      if (ESPACIOS[i].id === id) { espacio = ESPACIOS[i]; break; }
+    }
+
+    if (!espacio) {
+      document.getElementById("zona-error").style.display    = "block";
+      document.getElementById("zona-contenido").style.display = "none";
+    } else {
+      document.getElementById("zona-error").style.display    = "none";
+      document.getElementById("zona-contenido").style.display = "block";
+
+      var ref = "ESP-" + String(espacio.id).padStart(4, "0");
+
+      // Rellena los datos
+      document.getElementById("esp-nombre").textContent    = espacio.nombre;
+      document.getElementById("esp-referencia").textContent = ref;
+      document.getElementById("esp-ref-meta").textContent   = ref;
+      document.getElementById("esp-edificio").textContent   = obtenerNombreEdificio(espacio.id_edificio);
+      document.getElementById("esp-capacidad").textContent  = espacio.capacidad + " personas";
+      document.getElementById("esp-estado-meta").textContent = textoEstadoPor(espacio.estado);
+
+      // Badge de estado en la cabecera
+      var badge = document.getElementById("badge-estado");
+      badge.className   = "badge-estado " + claseBadgePor(espacio.estado);
+      badge.textContent = textoEstadoPor(espacio.estado);
+
+      // Badge grande en el panel lateral
+      document.getElementById("estado-actual-texto").innerHTML =
+        '<span class="badge-estado badge-estado-grande ' + claseBadgePor(espacio.estado) + '">' +
+          textoEstadoPor(espacio.estado) +
+        '</span>';
+
+      // Preselecciona el estado en el select
+      document.getElementById("select-nuevo-estado").value = espacio.estado;
+    }
+
+    // Actualiza el estado del espacio sin recargar la página
+    function guardarEstado() {
+      if (!espacio) return;
+      var nuevoEstado = document.getElementById("select-nuevo-estado").value;
+      espacio.estado = nuevoEstado;
+
+      // Actualiza el badge de la cabecera
+      var badge = document.getElementById("badge-estado");
+      badge.className   = "badge-estado " + claseBadgePor(nuevoEstado);
+      badge.textContent = textoEstadoPor(nuevoEstado);
+
+      // Actualiza el panel lateral
+      document.getElementById("estado-actual-texto").innerHTML =
+        '<span class="badge-estado badge-estado-grande ' + claseBadgePor(nuevoEstado) + '">' +
+          textoEstadoPor(nuevoEstado) +
+        '</span>';
+
+      // Actualiza el metadato de estado
+      document.getElementById("esp-estado-meta").textContent = textoEstadoPor(nuevoEstado);
+
+      alert("Estado actualizado a: " + textoEstadoPor(nuevoEstado));
+    }
+  </script>
+
+</body>
+</html>

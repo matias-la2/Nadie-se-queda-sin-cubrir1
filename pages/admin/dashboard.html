@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Admin — IES Río Arba</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/estilos.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+</head>
+
+<body>
+
+  <div id="sidebar-container"></div>
+
+  <main class="contenido-principal">
+
+    <!-- Cabecera -->
+    <div class="pagina-header">
+      <h1 id="saludo">Panel de Administración</h1>
+      <p>Resumen general del centro educativo.</p>
+    </div>
+
+    <!-- 4 tarjetas de resumen -->
+    <div class="row g-3 mb-4">
+
+      <!-- Incidencias activas -->
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-incidencias">
+            <i class="bi bi-exclamation-triangle"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Incidencias Activas</div>
+            <div class="numero" id="num-incidencias">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ausencias hoy -->
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-ausencias">
+            <i class="bi bi-calendar-x"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Ausencias Hoy</div>
+            <div class="numero" id="num-ausencias">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aulas reservadas -->
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-reservas">
+            <i class="bi bi-calendar-check"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Aulas Reservadas</div>
+            <div class="numero" id="num-reservas">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profesores activos -->
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-profesores">
+            <i class="bi bi-people"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Profesores Activos</div>
+            <div class="numero" id="num-profesores">0</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Fila inferior: incidencias recientes + coberturas -->
+    <div class="row g-3">
+
+      <!-- Incidencias recientes -->
+      <div class="col-12 col-md-7">
+        <div class="tarjeta tarjeta-altura-completa">
+
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="tarjeta-titulo mb-0">Incidencias Recientes</h2>
+            <a href="incidencias.html" class="btn-secundario btn-ver-todo">
+              Ver todas <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+
+          <div class="tabla-responsive">
+            <table class="tabla-datos">
+              <thead>
+                <tr>
+                  <th>Incidencia</th>
+                  <th>Creador</th>
+                  <th>Estado</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-incidencias-body"></tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Coberturas de hoy -->
+      <div class="col-12 col-md-5">
+        <div class="tarjeta tarjeta-altura-completa">
+
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="tarjeta-titulo mb-0">Coberturas de Hoy</h2>
+            <a href="guardias.html" class="btn-secundario btn-ver-todo">
+              Ver todas <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+
+          <div id="lista-coberturas"></div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../../js/datos-prueba.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/sidebar.js"></script>
+
+  <script>
+    // Inicialización
+    verificarSesion();
+    crearSidebar("dashboard", "../../");
+    var usuario = obtenerUsuarioActual();
+    document.getElementById("saludo").textContent =
+      "Bienvenido/a, " + usuario.nombre + " — Panel de Administración";
+
+    var hoy = new Date();
+    var fechaHoy = hoy.getFullYear() + "-" +
+                   String(hoy.getMonth() + 1).padStart(2, "0") + "-" +
+                   String(hoy.getDate()).padStart(2, "0");
+
+    // Tarjeta 1: incidencias activas
+    var numInc = 0;
+    for (var i = 0; i < INCIDENCIAS.length; i++) {
+      if (INCIDENCIAS[i].estado === "ABIERTA" || INCIDENCIAS[i].estado === "EN_PROCESO") numInc++;
+    }
+    document.getElementById("num-incidencias").textContent = numInc;
+
+    // Tarjeta 2: ausencias de hoy (o pendientes si los datos de prueba no tienen fecha de hoy)
+    var ausHoy = 0, ausPend = 0;
+    for (var i = 0; i < AUSENCIAS.length; i++) {
+      if (AUSENCIAS[i].fecha === fechaHoy) ausHoy++;
+      if (AUSENCIAS[i].estado === "PENDIENTE") ausPend++;
+    }
+    document.getElementById("num-ausencias").textContent = ausHoy > 0 ? ausHoy : ausPend;
+
+    // Tarjeta 3: total de reservas
+    document.getElementById("num-reservas").textContent = RESERVAS.length;
+
+    // Tarjeta 4: profesores activos
+    var numProf = 0;
+    for (var i = 0; i < USUARIOS.length; i++) {
+      if (USUARIOS[i].activo) numProf++;
+    }
+    document.getElementById("num-profesores").textContent = numProf;
+
+    // Tabla: últimas 4 incidencias ordenadas por id descendente
+    var recientes = INCIDENCIAS.slice().sort(function(a, b) { return b.id - a.id; }).slice(0, 4);
+    var tbody = document.getElementById("tabla-incidencias-body");
+
+    if (recientes.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="sin-incidencias">Sin incidencias</td></tr>';
+    } else {
+      var html = "";
+      for (var i = 0; i < recientes.length; i++) {
+        var inc = recientes[i];
+        var partes = inc.fecha.split("-");
+        var fechaMostrar = partes[2] + "/" + partes[1];
+
+        var claseBadge, textoEstado;
+        if (inc.estado === "ABIERTA") {
+          claseBadge = "badge-pendiente"; textoEstado = "Pendiente";
+        } else if (inc.estado === "EN_PROCESO") {
+          claseBadge = "badge-en-proceso"; textoEstado = "En proceso";
+        } else if (inc.estado === "RESUELTA") {
+          claseBadge = "badge-resuelta"; textoEstado = "Resuelta";
+        } else {
+          claseBadge = "badge-cerrada"; textoEstado = "Cerrada";
+        }
+
+        html += '<tr>' +
+                  '<td><div class="inc-titulo">' + inc.titulo + '</div><div class="texto-secundario-celda">' + inc.espacio + '</div></td>' +
+                  '<td class="celda-sm">' + inc.creador.split(" ")[0] + '</td>' +
+                  '<td><span class="badge-estado ' + claseBadge + '">' + textoEstado + '</span></td>' +
+                  '<td class="celda-fecha-gris">' + fechaMostrar + '</td>' +
+                '</tr>';
+      }
+      tbody.innerHTML = html;
+    }
+
+    // Coberturas de hoy (o pendientes si no hay datos de hoy)
+    var contenedorCoberturas = document.getElementById("lista-coberturas");
+    var guardiasHoy = [];
+    for (var i = 0; i < GUARDIAS_ASIGNADAS.length; i++) {
+      if (GUARDIAS_ASIGNADAS[i].fecha === fechaHoy) guardiasHoy.push(GUARDIAS_ASIGNADAS[i]);
+    }
+    var coberturasAMostrar = guardiasHoy;
+    if (guardiasHoy.length === 0) {
+      for (var i = 0; i < GUARDIAS_ASIGNADAS.length; i++) {
+        if (GUARDIAS_ASIGNADAS[i].estado === "PENDIENTE") coberturasAMostrar.push(GUARDIAS_ASIGNADAS[i]);
+      }
+    }
+
+    if (coberturasAMostrar.length === 0) {
+      contenedorCoberturas.innerHTML =
+        '<div class="coberturas-vacias">' +
+          '<i class="bi bi-shield-check coberturas-vacias-icono"></i>' +
+          'Sin coberturas pendientes hoy' +
+        '</div>';
+    } else {
+      var htmlCob = "";
+      for (var i = 0; i < coberturasAMostrar.length; i++) {
+        var g = coberturasAMostrar[i];
+        var claseIcono, iconoClass;
+        if (g.estado === "REALIZADA") {
+          claseIcono = "cobertura-icono-realizada"; iconoClass = "bi-check-circle";
+        } else {
+          claseIcono = "cobertura-icono-pendiente"; iconoClass = "bi-shield-check";
+        }
+        htmlCob += '<div class="tarjeta-cobertura">' +
+                     '<div class="cobertura-icono ' + claseIcono + '"><i class="bi ' + iconoClass + '"></i></div>' +
+                     '<div class="cobertura-info">' +
+                       '<div><span class="cobertura-clase">' + g.clase + '</span><span class="cobertura-tramo">' + g.tramo + '</span></div>' +
+                       '<div class="cobertura-sustituto"><i class="bi bi-person-check me-1"></i>' + g.profesor_sustituto + '</div>' +
+                       '<div class="cobertura-ausente"><i class="bi bi-person-x me-1"></i>Ausente: ' + g.profesor_ausente.split(" ")[0] + ' ' + g.profesor_ausente.split(" ")[1] + '</div>' +
+                     '</div>' +
+                   '</div>';
+      }
+      contenedorCoberturas.innerHTML = htmlCob;
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,203 @@
+/* Campo de formulario con etiqueta */
+.campo-grupo {
+  margin-bottom: 20px;
+}
+
+.campo-grupo label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+
+/* Asterisco de campo obligatorio */
+.campo-grupo label .obligatorio {
+  color: #ef4444;
+  margin-left: 2px;
+}
+
+/* Inputs y selects del formulario */
+.campo-grupo input,
+.campo-grupo select,
+.campo-grupo textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  color: #1e293b;
+  background: #ffffff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.campo-grupo input:focus,
+.campo-grupo select:focus,
+.campo-grupo textarea:focus {
+  outline: none;
+  border-color: #1152d4;
+  box-shadow: 0 0 0 3px rgba(17, 82, 212, 0.1);
+}
+
+/* Textarea redimensionable verticalmente */
+.campo-grupo textarea {
+  resize: vertical;
+  min-height: 110px;
+}
+
+/* Campo con margen superior extra */
+.campo-grupo-mt {
+  margin-top: 20px;
+}
+
+/* Botones de selección de categoría */
+.categoria-opciones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.categoria-btn {
+  padding: 7px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.categoria-btn:hover {
+  border-color: #1152d4;
+  color: #1152d4;
+}
+
+/* Categoría seleccionada */
+.categoria-btn.seleccionado {
+  background-color: #eff6ff;
+  border-color: #1152d4;
+  color: #1152d4;
+  font-weight: 600;
+}
+
+/* Botón de enviar el formulario */
+.btn-enviar {
+  width: 100%;
+  padding: 13px;
+  background-color: #1152d4;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  transition: background-color 0.15s;
+}
+
+.btn-enviar:hover {
+  background-color: #0f46b8;
+}
+
+/* Alerta de error del formulario */
+.alerta-error {
+  display: none;
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+/* Input de archivo para imágenes */
+.campo-imagenes {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  color: #1e293b;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+/* Texto con formatos admitidos */
+.imagenes-info {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
+/* Contenedor de miniaturas */
+.preview-contenedor {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+/* Miniatura individual */
+.preview-item {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Botón X para quitar la miniatura */
+.btn-quitar-imagen {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+/* Contenedor del botón cancelar */
+.cancelar-contenedor {
+  margin-top: 12px;
+  text-align: center;
+}
+
+/* Botón cancelar sin estilos de botón */
+.btn-cancelar {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  text-decoration: underline;
+}

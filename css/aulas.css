@@ -1,0 +1,216 @@
+/* Icono del resumen: disponibles */
+.icono-disponible {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+/* Icono del resumen: no disponibles */
+.icono-no-disponible {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+/* Icono del resumen: mantenimiento */
+.icono-mantenimiento {
+  background: #fffbeb;
+  color: #f59e0b;
+}
+
+/* Icono del resumen: aforo total */
+.icono-aforo {
+  background: #eff6ff;
+  color: #1152d4;
+}
+
+/* Botones para alternar entre vista tarjetas y tabla */
+.botones-vista {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+
+/* Contador de espacios mostrados */
+.contador-espacios {
+  margin-top: 16px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Tarjeta de espacio en la cuadrícula */
+.tarjeta-espacio {
+  margin-bottom: 0;
+  height: 100%;
+}
+
+/* Cabecera de la tarjeta: icono + nombre + edificio */
+.tarjeta-espacio-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+/* Cuadrado coloreado con el icono del aula */
+.tarjeta-espacio-icono {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 18px;
+}
+
+/* Nombre del espacio */
+.tarjeta-espacio-nombre {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Edificio al que pertenece */
+.tarjeta-espacio-edificio {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* Fila con capacidad y badge de estado */
+.tarjeta-espacio-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Botones ver/editar en la parte inferior de la tarjeta */
+.tarjeta-espacio-acciones {
+  display: flex;
+  gap: 6px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 12px;
+}
+
+/* btn-accion que ocupa todo el ancho disponible */
+.btn-accion-full {
+  flex: 1;
+  justify-content: center;
+}
+
+/* Mensaje cuando no hay resultados en la cuadrícula */
+.sin-resultados {
+  text-align: center;
+  padding: 40px;
+  color: #64748b;
+}
+
+/* Mensaje cuando no hay resultados en la tabla */
+.sin-resultados-tabla {
+  text-align: center;
+  color: #64748b;
+  padding: 32px;
+}
+
+/* Icono grande del mensaje sin resultados */
+.sin-resultados-icono {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 30px;
+}
+
+/* Fila con icono de puerta y nombre en la vista tabla */
+.celda-nombre-espacio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Icono de puerta en la columna de nombre */
+.celda-icono-puerta {
+  font-size: 16px;
+  color: #64748b;
+}
+
+/* Texto del nombre en la columna */
+.celda-nombre-texto {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+/* Celda de texto normal */
+.celda-texto {
+  font-size: 13px;
+}
+
+/* Icono de personas en la columna de capacidad */
+.icono-personas {
+  color: #64748b;
+}
+
+/* Modal con bordes redondeados */
+.modal-contenido {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Cabecera del modal */
+.modal-cabecera {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 20px 24px;
+}
+
+/* Título del modal */
+.modal-titulo {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* Icono azul en el título del modal */
+.modal-icono-titulo {
+  color: #1152d4;
+}
+
+/* Cuerpo del modal */
+.modal-cuerpo {
+  padding: 24px;
+}
+
+/* Pie del modal */
+.modal-pie {
+  border-top: 1px solid #e2e8f0;
+  padding: 16px 24px;
+  gap: 8px;
+}
+
+/* Etiqueta de campo dentro del modal */
+.modal-label {
+  font-size: 13px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 5px;
+}
+
+/* Asterisco de campo obligatorio */
+.campo-obligatorio {
+  color: #ef4444;
+}
+
+/* Input o select que ocupa el ancho completo */
+.campo-completo {
+  width: 100%;
+}
+
+/* Mensaje de error dentro del modal */
+.modal-error {
+  display: none;
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}

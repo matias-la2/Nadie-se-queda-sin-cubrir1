@@ -1,0 +1,106 @@
+/* Icono resumen: pendientes */
+.icono-pendiente {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+/* Icono resumen: cubiertas */
+.icono-cubierta-aus {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+/* Icono resumen: sin cubrir */
+.icono-sin-cubrir {
+  background: #fffbeb;
+  color: #f59e0b;
+}
+
+/* Icono resumen: total ausencias */
+.icono-total {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+/* Contador de ausencias mostradas */
+.contador-ausencias {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Celda sin resultados */
+.sin-resultados {
+  text-align: center;
+  color: #64748b;
+  padding: 32px;
+}
+
+/* Icono grande del mensaje sin resultados */
+.sin-resultados-icono {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* Celda del profesor: avatar + nombre + departamento */
+.celda-profesor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Avatar circular del profesor */
+.avatar-profesor {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Nombre del profesor */
+.profesor-nombre {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+/* Departamento debajo del nombre */
+.profesor-departamento {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* Celda de texto pequeño (fecha, tramo) */
+.celda-sm {
+  font-size: 13px;
+}
+
+/* Badge "Sí" de tarea */
+.tarea-si {
+  color: #16a34a;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Badge "No" de tarea */
+.tarea-no {
+  color: #cbd5e1;
+  font-size: 12px;
+}
+
+/* Texto del comentario */
+.comentario-texto {
+  font-size: 12px;
+  color: #374151;
+}
+
+/* Guión cuando no hay comentario */
+.comentario-vacio {
+  color: #cbd5e1;
+}
+
+/* Botón aprobar cuando la ausencia ya está cubierta */
+.btn-desactivado {
+  opacity: 0.4;
+  cursor: default;
+}

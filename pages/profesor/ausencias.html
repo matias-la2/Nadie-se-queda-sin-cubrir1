@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Ausencias — IES Río Arba</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/estilos.css">
+  <link rel="stylesheet" href="../../css/prof-ausencias.css">
+</head>
+
+<body>
+
+  <div id="sidebar-container"></div>
+
+  <main class="contenido-principal">
+
+    <!-- Cabecera -->
+    <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+      <div class="pagina-header mb-0">
+        <h1>Mis Ausencias</h1>
+        <p>Consulta y gestiona tus ausencias registradas.</p>
+      </div>
+      <a href="../compartido/nueva-ausencia.html" class="btn-primario">
+        <i class="bi bi-plus-lg"></i>
+        Registrar Ausencia
+      </a>
+    </div>
+
+    <!-- Tarjetas de resumen -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-aus-total">
+            <i class="bi bi-calendar-x"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Total</div>
+            <div class="numero" id="total-ausencias">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-aus-pendiente">
+            <i class="bi bi-hourglass-split"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Pendientes</div>
+            <div class="numero" id="total-pendientes">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-aus-cubierta">
+            <i class="bi bi-check-circle"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Cubiertas</div>
+            <div class="numero" id="total-cubiertas">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-aus-sin-cubrir">
+            <i class="bi bi-x-circle"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Sin cubrir</div>
+            <div class="numero" id="total-sin-cubrir">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tarjeta con pestañas + tabla -->
+    <div class="tarjeta">
+
+      <!-- Pestañas de filtrado -->
+      <div class="tabs-filtro">
+        <button class="tab-btn activo" onclick="cambiarTab(this, 'todas')">Todas</button>
+        <button class="tab-btn" onclick="cambiarTab(this, 'PENDIENTE')">Pendientes</button>
+        <button class="tab-btn" onclick="cambiarTab(this, 'CUBIERTA')">Cubiertas</button>
+        <button class="tab-btn" onclick="cambiarTab(this, 'SIN_CUBRIR')">Sin cubrir</button>
+      </div>
+
+      <!-- Tabla -->
+      <div class="tabla-responsive">
+        <table class="tabla-datos">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Tramo Horario</th>
+              <th>Estado</th>
+              <th>Hay Tarea</th>
+              <th>Comentario</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-body"></tbody>
+        </table>
+      </div>
+
+      <!-- Contador -->
+      <div class="contador-aus" id="contador-texto">
+        Mostrando 0 ausencias
+      </div>
+
+    </div>
+
+  </main>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../../js/datos-prueba.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/sidebar.js"></script>
+
+  <script>
+    // Inicialización
+    verificarSesion();
+    crearSidebar("ausencias", "../../");
+    var usuario = obtenerUsuarioActual();
+    var nombreCompleto = usuario.nombre + " " + usuario.apellidos;
+    var filtroActual = "todas";
+
+    // Ausencias del usuario
+    var misAusencias = [];
+    for (var i = 0; i < AUSENCIAS.length; i++) {
+      if (AUSENCIAS[i].profesor === nombreCompleto) misAusencias.push(AUSENCIAS[i]);
+    }
+
+    // Tarjetas de resumen
+    var pend = 0, cub = 0, sinCub = 0;
+    for (var i = 0; i < misAusencias.length; i++) {
+      if (misAusencias[i].estado === "PENDIENTE")  pend++;
+      else if (misAusencias[i].estado === "CUBIERTA")   cub++;
+      else if (misAusencias[i].estado === "SIN_CUBRIR") sinCub++;
+    }
+    document.getElementById("total-ausencias").textContent  = misAusencias.length;
+    document.getElementById("total-pendientes").textContent = pend;
+    document.getElementById("total-cubiertas").textContent  = cub;
+    document.getElementById("total-sin-cubrir").textContent = sinCub;
+
+    // Cambia la pestaña activa y re-renderiza
+    function cambiarTab(boton, filtro) {
+      var btns = document.querySelectorAll(".tab-btn");
+      for (var i = 0; i < btns.length; i++) btns[i].classList.remove("activo");
+      boton.classList.add("activo");
+      filtroActual = filtro;
+      renderizarAusencias(filtro);
+    }
+
+    // Filtra y dibuja las ausencias del usuario
+    function renderizarAusencias(filtro) {
+      var tbody = document.getElementById("tabla-body");
+
+      var resultado = [];
+      for (var i = 0; i < misAusencias.length; i++) {
+        if (filtro === "todas" || misAusencias[i].estado === filtro) resultado.push(misAusencias[i]);
+      }
+
+      document.getElementById("contador-texto").textContent =
+        "Mostrando " + resultado.length + " de " + misAusencias.length + " ausencias";
+
+      if (resultado.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="sin-resultados"><i class="bi bi-calendar-x sin-resultados-icono"></i>No hay ausencias en esta categoría</td></tr>';
+        return;
+      }
+
+      var html = "";
+      for (var i = 0; i < resultado.length; i++) {
+        var ausencia = resultado[i];
+        var partes = ausencia.fecha.split("-");
+        var fechaMostrar = partes[2] + "/" + partes[1] + "/" + partes[0];
+
+        // Badge de estado
+        var claseBadge, textoMostrar;
+        if (ausencia.estado === "PENDIENTE")      { claseBadge = "badge-pendiente"; textoMostrar = "Pendiente"; }
+        else if (ausencia.estado === "CUBIERTA")  { claseBadge = "badge-cubierta";  textoMostrar = "Cubierta"; }
+        else                                       { claseBadge = "badge-en-proceso"; textoMostrar = "Sin cubrir"; }
+
+        // Celda tarea
+        var hayTareaCelda;
+        if (ausencia.hay_tarea) {
+          hayTareaCelda = '<span class="tarea-si"><i class="bi bi-check-circle-fill me-1"></i>Sí</span>';
+        } else {
+          hayTareaCelda = '<span class="tarea-no"><i class="bi bi-dash-circle me-1"></i>No</span>';
+        }
+
+        // Comentario
+        var comentario;
+        if (ausencia.comentario) {
+          comentario = ausencia.comentario;
+        } else {
+          comentario = '<span class="comentario-vacio">—</span>';
+        }
+
+        html += '<tr>' +
+                  '<td class="fecha-peso">' + fechaMostrar + '</td>' +
+                  '<td>' + ausencia.tramo_horario + '</td>' +
+                  '<td><span class="badge-estado ' + claseBadge + '">' + textoMostrar + '</span></td>' +
+                  '<td>' + hayTareaCelda + '</td>' +
+                  '<td class="celda-comentario">' + comentario + '</td>' +
+                '</tr>';
+      }
+      tbody.innerHTML = html;
+    }
+
+    renderizarAusencias("todas");
+  </script>
+
+</body>
+</html>

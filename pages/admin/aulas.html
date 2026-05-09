@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Aulas — IES Río Arba</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/estilos.css">
+  <link rel="stylesheet" href="../../css/aulas.css">
+</head>
+
+<body>
+
+  <!-- Sidebar inyectado por sidebar.js -->
+  <div id="sidebar-container"></div>
+
+  <main class="contenido-principal">
+
+    <!-- Cabecera con título y botón de acción -->
+    <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+      <div class="pagina-header mb-0">
+        <h1>Gestión de Aulas y Espacios</h1>
+        <p>Consulta y administra todos los espacios disponibles en el centro.</p>
+      </div>
+      <button class="btn-primario" data-bs-toggle="modal" data-bs-target="#modal-nuevo-espacio">
+        <i class="bi bi-plus-lg"></i>
+        Añadir Espacio
+      </button>
+    </div>
+
+    <!-- Tarjetas resumen: contadores rápidos por estado -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-disponible">
+            <i class="bi bi-check-circle"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Disponibles</div>
+            <div class="numero" id="num-disponibles">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-no-disponible">
+            <i class="bi bi-x-circle"></i>
+          </div>
+          <div>
+            <div class="etiqueta">No disponibles</div>
+            <div class="numero" id="num-no-disponibles">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-mantenimiento">
+            <i class="bi bi-tools"></i>
+          </div>
+          <div>
+            <div class="etiqueta">En mantenimiento</div>
+            <div class="numero" id="num-mantenimiento">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-aforo">
+            <i class="bi bi-people"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Aforo total</div>
+            <div class="numero" id="num-aforo">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtros + cuadrícula de tarjetas -->
+    <div class="tarjeta">
+
+      <!-- Barra de filtros: edificio y estado -->
+      <div class="barra-acciones">
+        <select class="select-filtro" id="filtro-edificio" onchange="renderizarEspacios()">
+          <option value="">Todos los edificios</option>
+        </select>
+        <select class="select-filtro" id="filtro-estado" onchange="renderizarEspacios()">
+          <option value="">Todos los estados</option>
+          <option value="DISPONIBLE">Disponible</option>
+          <option value="NO_DISPONIBLE">No disponible</option>
+          <option value="MANTENIMIENTO">Mantenimiento</option>
+        </select>
+        <button class="btn-secundario" onclick="limpiarFiltros()">
+          <i class="bi bi-arrow-counterclockwise"></i>
+          Limpiar
+        </button>
+        <!-- Botones para cambiar vista -->
+        <div class="botones-vista">
+          <button class="btn-secundario" id="btn-vista-tarjetas" onclick="cambiarVista('tarjetas')" title="Vista tarjetas">
+            <i class="bi bi-grid-3x3-gap"></i>
+          </button>
+          <button class="btn-secundario" id="btn-vista-tabla" onclick="cambiarVista('tabla')" title="Vista tabla">
+            <i class="bi bi-list-ul"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Vista tarjetas (por defecto) -->
+      <div id="vista-tarjetas">
+        <div class="row g-3" id="grid-espacios"></div>
+      </div>
+
+      <!-- Vista tabla (alternativa) -->
+      <div id="vista-tabla" style="display:none;">
+        <div class="tabla-responsive">
+          <table class="tabla-datos">
+            <thead>
+              <tr>
+                <th>Espacio</th>
+                <th>Edificio</th>
+                <th>Capacidad</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Contador de resultados -->
+      <div class="contador-espacios" id="contador-texto">
+        Mostrando 0 espacios
+      </div>
+
+    </div>
+
+  </main>
+
+
+  <!-- Modal para añadir o editar espacio -->
+  <div class="modal fade" id="modal-nuevo-espacio" tabindex="-1" aria-labelledby="modal-esp-titulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content modal-contenido">
+
+        <div class="modal-header modal-cabecera">
+          <h5 class="modal-title modal-titulo" id="modal-esp-titulo">
+            <i class="bi bi-door-open me-2 modal-icono-titulo"></i>
+            <span id="texto-titulo-espacio">Añadir Nuevo Espacio</span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+
+        <div class="modal-body modal-cuerpo">
+
+          <div id="modal-esp-error" class="modal-error"></div>
+
+          <form id="form-espacio" onsubmit="guardarEspacio(event)">
+
+            <div class="mb-3">
+              <label class="modal-label">
+                Nombre del espacio <span class="campo-obligatorio">*</span>
+              </label>
+              <input type="text" id="modal-esp-nombre" class="select-filtro campo-completo"
+                     placeholder="Ej: Aula 305, Sala de Reuniones..." required>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-sm-6">
+                <label class="modal-label">
+                  Edificio <span class="campo-obligatorio">*</span>
+                </label>
+                <select id="modal-esp-edificio" class="select-filtro campo-completo" required>
+                  <option value="">Seleccionar...</option>
+                </select>
+              </div>
+              <div class="col-12 col-sm-6">
+                <label class="modal-label">
+                  Capacidad (personas) <span class="campo-obligatorio">*</span>
+                </label>
+                <input type="number" id="modal-esp-capacidad" class="select-filtro campo-completo"
+                       min="1" max="500" placeholder="Ej: 30" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="modal-label">
+                Estado <span class="campo-obligatorio">*</span>
+              </label>
+              <select id="modal-esp-estado" class="select-filtro campo-completo" required>
+                <option value="DISPONIBLE">Disponible</option>
+                <option value="NO_DISPONIBLE">No disponible</option>
+                <option value="MANTENIMIENTO">Mantenimiento</option>
+              </select>
+            </div>
+
+          </form>
+        </div>
+
+        <div class="modal-footer modal-pie">
+          <button type="button" class="btn-secundario" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" form="form-espacio" class="btn-primario" id="btn-guardar-espacio">
+            <i class="bi bi-check-lg"></i>
+            Añadir Espacio
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../../js/datos-prueba.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/sidebar.js"></script>
+
+  <script>
+    // Inicialización
+    verificarSesion();
+    crearSidebar("aulas", "../../");
+    var vistaActual = "tarjetas";
+    var espacioEditandoId = null; // null = creación, número = edición
+
+    // Rellena el select de edificios del filtro
+    var selectEdificio = document.getElementById("filtro-edificio");
+    for (var i = 0; i < EDIFICIOS.length; i++) {
+      var opt = document.createElement("option");
+      opt.value = EDIFICIOS[i].id;
+      opt.textContent = EDIFICIOS[i].nombre;
+      selectEdificio.appendChild(opt);
+    }
+
+    // Actualiza las tarjetas de resumen
+    function actualizarResumen() {
+      var dis = 0, noDis = 0, mant = 0, aforo = 0;
+      for (var i = 0; i < ESPACIOS.length; i++) {
+        if (ESPACIOS[i].estado === "DISPONIBLE")         dis++;
+        else if (ESPACIOS[i].estado === "NO_DISPONIBLE") noDis++;
+        else if (ESPACIOS[i].estado === "MANTENIMIENTO") mant++;
+        aforo += ESPACIOS[i].capacidad;
+      }
+      document.getElementById("num-disponibles").textContent    = dis;
+      document.getElementById("num-no-disponibles").textContent = noDis;
+      document.getElementById("num-mantenimiento").textContent  = mant;
+      document.getElementById("num-aforo").textContent          = aforo;
+    }
+    actualizarResumen();
+
+    // Devuelve el nombre del edificio dado su id
+    function obtenerNombreEdificio(id) {
+      for (var i = 0; i < EDIFICIOS.length; i++) {
+        if (EDIFICIOS[i].id === id) return EDIFICIOS[i].nombre;
+      }
+      return "—";
+    }
+
+    // Busca un espacio por id
+    function buscarEspacio(id) {
+      for (var i = 0; i < ESPACIOS.length; i++) {
+        if (ESPACIOS[i].id === id) return ESPACIOS[i];
+      }
+      return null;
+    }
+
+    // Abre el modal rellenado con los datos del espacio para editar
+    function editarEspacio(id) {
+      var e = buscarEspacio(id);
+      if (!e) return;
+
+      espacioEditandoId = id;
+
+      // Rellena los campos del formulario
+      document.getElementById("modal-esp-nombre").value    = e.nombre;
+      document.getElementById("modal-esp-capacidad").value = e.capacidad;
+      document.getElementById("modal-esp-estado").value    = e.estado;
+
+      // Selecciona el edificio correcto
+      var selectEdif = document.getElementById("modal-esp-edificio");
+      for (var i = 0; i < selectEdif.options.length; i++) {
+        if (parseInt(selectEdif.options[i].value) === e.id_edificio) {
+          selectEdif.selectedIndex = i;
+          break;
+        }
+      }
+
+      // Cambia el título y el botón del modal
+      document.getElementById("texto-titulo-espacio").textContent = "Editar Espacio";
+      document.getElementById("btn-guardar-espacio").innerHTML =
+        '<i class="bi bi-check-lg"></i> Guardar Cambios';
+      document.getElementById("modal-esp-error").style.display = "none";
+
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-nuevo-espacio")).show();
+    }
+
+    // Filtra espacios y dibuja en la vista activa
+    function renderizarEspacios() {
+      var filtroEdificio = document.getElementById("filtro-edificio").value;
+      var filtroEstado   = document.getElementById("filtro-estado").value;
+      var resultado = [];
+      for (var i = 0; i < ESPACIOS.length; i++) {
+        var e = ESPACIOS[i];
+        var okEdificio = !filtroEdificio || e.id_edificio === parseInt(filtroEdificio);
+        var okEstado   = !filtroEstado   || e.estado === filtroEstado;
+        if (okEdificio && okEstado) resultado.push(e);
+      }
+      document.getElementById("contador-texto").textContent =
+        "Mostrando " + resultado.length + " de " + ESPACIOS.length + " espacios";
+      if (vistaActual === "tarjetas") renderizarTarjetas(resultado);
+      else                            renderizarTabla(resultado);
+    }
+
+    // Genera la cuadrícula de tarjetas
+    function renderizarTarjetas(lista) {
+      var grid = document.getElementById("grid-espacios");
+      if (lista.length === 0) {
+        grid.innerHTML = '<div class="col-12 sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No hay espacios que coincidan con los filtros</div>';
+        return;
+      }
+      var html = "";
+      for (var i = 0; i < lista.length; i++) {
+        var e = lista[i];
+        var nombreEdificio = obtenerNombreEdificio(e.id_edificio);
+
+        var claseBadge, icono, texto;
+        if (e.estado === "DISPONIBLE") {
+          claseBadge = "badge-cubierta"; icono = "bi-check-circle-fill"; texto = "Disponible";
+        } else if (e.estado === "NO_DISPONIBLE") {
+          claseBadge = "badge-pendiente"; icono = "bi-x-circle-fill"; texto = "No disponible";
+        } else {
+          claseBadge = "badge-en-proceso"; icono = "bi-tools"; texto = "Mantenimiento";
+        }
+
+        var claseIcono;
+        if (e.estado === "DISPONIBLE")         claseIcono = "icono-disponible";
+        else if (e.estado === "MANTENIMIENTO") claseIcono = "icono-mantenimiento";
+        else                                    claseIcono = "icono-no-disponible";
+
+        html += '<div class="col-12 col-md-4 col-lg-3">' +
+                  '<div class="tarjeta tarjeta-espacio">' +
+                    '<div class="tarjeta-espacio-cabecera">' +
+                      '<div class="tarjeta-espacio-icono ' + claseIcono + '">' +
+                        '<i class="bi bi-door-open"></i>' +
+                      '</div>' +
+                      '<div>' +
+                        '<div class="tarjeta-espacio-nombre">' + e.nombre + '</div>' +
+                        '<div class="tarjeta-espacio-edificio">' + nombreEdificio + '</div>' +
+                      '</div>' +
+                    '</div>' +
+                    '<div class="tarjeta-espacio-info">' +
+                      '<span><i class="bi bi-people me-1"></i>' + e.capacidad + ' personas</span>' +
+                      '<span class="badge-estado ' + claseBadge + '"><i class="bi ' + icono + ' me-1"></i>' + texto + '</span>' +
+                    '</div>' +
+                    '<div class="tarjeta-espacio-acciones">' +
+                      '<button class="btn-accion btn-accion-full" onclick="window.location.href=\'detalle-espacio.html?id=' + e.id + '\'"><i class="bi bi-eye me-1"></i> Ver</button>' +
+                      '<button class="btn-accion btn-accion-full" onclick="editarEspacio(' + e.id + ')"><i class="bi bi-pencil me-1"></i> Editar</button>' +
+                    '</div>' +
+                  '</div>' +
+                '</div>';
+      }
+      grid.innerHTML = html;
+    }
+
+    // Genera la vista en tabla
+    function renderizarTabla(lista) {
+      var tbody = document.getElementById("tabla-body");
+      if (lista.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="sin-resultados-tabla"><i class="bi bi-inbox sin-resultados-icono"></i>No hay espacios que coincidan con los filtros</td></tr>';
+        return;
+      }
+      var html = "";
+      for (var i = 0; i < lista.length; i++) {
+        var e = lista[i];
+        var nombreEdificio = obtenerNombreEdificio(e.id_edificio);
+
+        var claseBadge, icono, texto;
+        if (e.estado === "DISPONIBLE") {
+          claseBadge = "badge-cubierta"; icono = "bi-check-circle-fill"; texto = "Disponible";
+        } else if (e.estado === "NO_DISPONIBLE") {
+          claseBadge = "badge-pendiente"; icono = "bi-x-circle-fill"; texto = "No disponible";
+        } else {
+          claseBadge = "badge-en-proceso"; icono = "bi-tools"; texto = "Mantenimiento";
+        }
+
+        html += '<tr>' +
+                  '<td><div class="celda-nombre-espacio"><i class="bi bi-door-open celda-icono-puerta"></i><span class="celda-nombre-texto">' + e.nombre + '</span></div></td>' +
+                  '<td class="celda-texto">' + nombreEdificio + '</td>' +
+                  '<td class="celda-texto"><i class="bi bi-people me-1 icono-personas"></i>' + e.capacidad + ' personas</td>' +
+                  '<td><span class="badge-estado ' + claseBadge + '"><i class="bi ' + icono + ' me-1"></i>' + texto + '</span></td>' +
+                  '<td><div class="d-flex gap-1">' +
+                    '<button class="btn-accion" title="Ver" onclick="window.location.href=\'detalle-espacio.html?id=' + e.id + '\'"><i class="bi bi-eye"></i></button>' +
+                    '<button class="btn-accion" title="Editar" onclick="editarEspacio(' + e.id + ')"><i class="bi bi-pencil"></i></button>' +
+                  '</div></td>' +
+                '</tr>';
+      }
+      tbody.innerHTML = html;
+    }
+
+    // Alterna entre vista tarjetas y tabla
+    function cambiarVista(tipo) {
+      vistaActual = tipo;
+      document.getElementById("vista-tarjetas").style.display = tipo === "tarjetas" ? "block" : "none";
+      document.getElementById("vista-tabla").style.display    = tipo === "tabla"    ? "block" : "none";
+      renderizarEspacios();
+    }
+
+    // Resetea filtros y recarga
+    function limpiarFiltros() {
+      document.getElementById("filtro-edificio").value = "";
+      document.getElementById("filtro-estado").value   = "";
+      renderizarEspacios();
+    }
+
+    renderizarEspacios();
+
+    // Rellena el select de edificios del modal
+    var selectEdificioModal = document.getElementById("modal-esp-edificio");
+    for (var i = 0; i < EDIFICIOS.length; i++) {
+      var opt = document.createElement("option");
+      opt.value = EDIFICIOS[i].id;
+      opt.textContent = EDIFICIOS[i].nombre;
+      selectEdificioModal.appendChild(opt);
+    }
+
+    // Al abrir el modal en modo creación, limpia el formulario
+    document.getElementById("modal-nuevo-espacio").addEventListener("show.bs.modal", function() {
+      if (espacioEditandoId === null) {
+        document.getElementById("form-espacio").reset();
+        document.getElementById("modal-esp-error").style.display = "none";
+        document.getElementById("modal-esp-edificio").selectedIndex = 0;
+      }
+    });
+
+    // Al cerrar el modal, restaura el modo creación
+    document.getElementById("modal-nuevo-espacio").addEventListener("hidden.bs.modal", function() {
+      espacioEditandoId = null;
+      document.getElementById("texto-titulo-espacio").textContent = "Añadir Nuevo Espacio";
+      document.getElementById("btn-guardar-espacio").innerHTML =
+        '<i class="bi bi-check-lg"></i> Añadir Espacio';
+    });
+
+    // Guarda el espacio (crea nuevo o actualiza el existente)
+    function guardarEspacio(event) {
+      event.preventDefault();
+      var errorDiv = document.getElementById("modal-esp-error");
+      errorDiv.style.display = "none";
+
+      var nombre     = document.getElementById("modal-esp-nombre").value.trim();
+      var edificioId = parseInt(document.getElementById("modal-esp-edificio").value);
+      var capacidad  = parseInt(document.getElementById("modal-esp-capacidad").value);
+      var estado     = document.getElementById("modal-esp-estado").value;
+
+      if (espacioEditandoId !== null) {
+        // Modo edición: actualiza el espacio existente
+        for (var i = 0; i < ESPACIOS.length; i++) {
+          if (ESPACIOS[i].id === espacioEditandoId) {
+            ESPACIOS[i].nombre      = nombre;
+            ESPACIOS[i].id_edificio = edificioId;
+            ESPACIOS[i].capacidad   = capacidad;
+            ESPACIOS[i].estado      = estado;
+            break;
+          }
+        }
+        bootstrap.Modal.getInstance(document.getElementById("modal-nuevo-espacio")).hide();
+        actualizarResumen();
+        renderizarEspacios();
+        alert("Espacio \"" + nombre + "\" actualizado correctamente.");
+      } else {
+        // Modo creación: valida que el nombre no se repita en el mismo edificio
+        for (var i = 0; i < ESPACIOS.length; i++) {
+          if (ESPACIOS[i].nombre.toLowerCase() === nombre.toLowerCase() && ESPACIOS[i].id_edificio === edificioId) {
+            errorDiv.textContent = "Ya existe un espacio con ese nombre en ese edificio.";
+            errorDiv.style.display = "block";
+            return;
+          }
+        }
+
+        var nuevoId = 0;
+        for (var i = 0; i < ESPACIOS.length; i++) {
+          if (ESPACIOS[i].id > nuevoId) nuevoId = ESPACIOS[i].id;
+        }
+        nuevoId++;
+        ESPACIOS.push({ id: nuevoId, nombre: nombre, estado: estado, capacidad: capacidad, id_edificio: edificioId });
+
+        bootstrap.Modal.getInstance(document.getElementById("modal-nuevo-espacio")).hide();
+        actualizarResumen();
+        renderizarEspacios();
+        alert("Espacio \"" + nombre + "\" añadido correctamente.");
+      }
+    }
+  </script>
+
+</body>
+</html>

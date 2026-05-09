@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Guardias — IES Río Arba</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/estilos.css">
+  <link rel="stylesheet" href="../../css/guardias.css">
+</head>
+
+<body>
+
+  <!-- Sidebar inyectado por sidebar.js -->
+  <div id="sidebar-container"></div>
+
+  <main class="contenido-principal">
+
+    <!-- Cabecera con título y botón de acción -->
+    <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+      <div class="pagina-header mb-0">
+        <h1>Gestión Global de Guardias</h1>
+        <p>Visualiza y administra todas las guardias asignadas del centro.</p>
+      </div>
+      <button class="btn-primario" data-bs-toggle="modal" data-bs-target="#modal-nueva-guardia">
+        <i class="bi bi-plus-lg"></i>
+        Crear Guardia Manual
+      </button>
+    </div>
+
+    <!-- Tarjetas resumen: contadores rápidos de estado -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-pendientes">
+            <i class="bi bi-hourglass-split"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Pendientes</div>
+            <div class="numero" id="num-pendientes">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-realizadas">
+            <i class="bi bi-check-circle"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Realizadas</div>
+            <div class="numero" id="num-realizadas">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-canceladas">
+            <i class="bi bi-x-circle"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Canceladas</div>
+            <div class="numero" id="num-canceladas">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-total">
+            <i class="bi bi-shield-check"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Total</div>
+            <div class="numero" id="num-total">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tarjeta principal con filtros y tabla -->
+    <div class="tarjeta">
+
+      <!-- Barra de filtros -->
+      <div class="barra-acciones">
+        <input
+          type="date"
+          class="select-filtro"
+          id="filtro-fecha"
+          title="Filtrar por fecha"
+          onchange="renderizarGuardias()"
+        >
+        <select class="select-filtro" id="filtro-tipo" onchange="renderizarGuardias()">
+          <option value="">Todos los tipos</option>
+          <option value="AUTOMATICA">Automática</option>
+          <option value="MANUAL">Manual</option>
+        </select>
+        <select class="select-filtro" id="filtro-estado" onchange="renderizarGuardias()">
+          <option value="">Todos los estados</option>
+          <option value="PENDIENTE">Pendiente</option>
+          <option value="REALIZADA">Realizada</option>
+          <option value="CANCELADA">Cancelada</option>
+        </select>
+        <button class="btn-secundario" onclick="limpiarFiltros()">
+          <i class="bi bi-arrow-counterclockwise"></i>
+          Limpiar
+        </button>
+      </div>
+
+      <!-- Tabla de guardias -->
+      <div class="tabla-responsive">
+        <table class="tabla-datos">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Tramo</th>
+              <th>Profesor Sustituto</th>
+              <th>Profesor Ausente</th>
+              <th>Clase</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-body"></tbody>
+        </table>
+      </div>
+
+      <!-- Contador de resultados -->
+      <div class="contador-guardias" id="contador-texto">
+        Mostrando 0 guardias
+      </div>
+
+    </div>
+
+  </main>
+
+
+  <!-- Modal para crear o editar guardia -->
+  <div class="modal fade" id="modal-nueva-guardia" tabindex="-1" aria-labelledby="modal-titulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content modal-contenido">
+
+        <div class="modal-header modal-cabecera">
+          <h5 class="modal-title modal-titulo" id="modal-titulo">
+            <i class="bi bi-shield-plus me-2 modal-icono-titulo"></i>
+            <span id="texto-titulo-guardia">Nueva Guardia Manual</span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+
+        <div class="modal-body modal-cuerpo">
+
+          <!-- Error dentro del modal -->
+          <div id="modal-error" class="modal-error"></div>
+
+          <form id="form-guardia" onsubmit="guardarGuardia(event)">
+
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-sm-6">
+                <label class="modal-label">
+                  Fecha <span class="campo-obligatorio">*</span>
+                </label>
+                <input type="date" id="modal-fecha" class="select-filtro campo-completo" required>
+              </div>
+              <div class="col-12 col-sm-6">
+                <label class="modal-label">
+                  Tramo horario <span class="campo-obligatorio">*</span>
+                </label>
+                <select id="modal-tramo" class="select-filtro campo-completo" required>
+                  <option value="">Seleccionar...</option>
+                  <option value="08:00-09:00">08:00 - 09:00</option>
+                  <option value="09:00-10:00">09:00 - 10:00</option>
+                  <option value="10:00-11:00">10:00 - 11:00</option>
+                  <option value="11:00-12:00">11:00 - 12:00</option>
+                  <option value="12:00-13:00">12:00 - 13:00</option>
+                  <option value="13:00-14:00">13:00 - 14:00</option>
+                  <option value="14:00-15:00">14:00 - 15:00</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="modal-label">
+                Profesor sustituto <span class="campo-obligatorio">*</span>
+              </label>
+              <select id="modal-sustituto" class="select-filtro campo-completo" required>
+                <option value="">Seleccionar sustituto...</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="modal-label">
+                Profesor ausente <span class="campo-obligatorio">*</span>
+              </label>
+              <select id="modal-ausente" class="select-filtro campo-completo" required>
+                <option value="">Seleccionar ausente...</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="modal-label">
+                Clase <span class="campo-obligatorio">*</span>
+              </label>
+              <input
+                type="text"
+                id="modal-clase"
+                class="select-filtro campo-completo"
+                placeholder="Ej: 1 ESO A, 2 Bachillerato C..."
+                required
+              >
+            </div>
+
+            <div class="mb-3">
+              <label class="modal-label">
+                Observaciones <span class="label-opcional">(opcional)</span>
+              </label>
+              <textarea
+                id="modal-observaciones"
+                class="select-filtro campo-completo textarea-obs"
+                placeholder="Cualquier nota relevante para el sustituto..."
+              ></textarea>
+            </div>
+
+          </form>
+        </div>
+
+        <div class="modal-footer modal-pie">
+          <button type="button" class="btn-secundario" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" form="form-guardia" class="btn-primario" id="btn-guardar-guardia">
+            <i class="bi bi-check-lg"></i>
+            Crear Guardia
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../../js/datos-prueba.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/sidebar.js"></script>
+
+  <script>
+    // Inicialización
+    verificarSesion();
+    crearSidebar("guardias", "../../");
+    var guardiaEditandoId = null; // null = creación, número = edición
+
+    // Actualiza las tarjetas de resumen
+    function actualizarResumen() {
+      var pend = 0, real = 0, canc = 0;
+      for (var i = 0; i < GUARDIAS_ASIGNADAS.length; i++) {
+        if (GUARDIAS_ASIGNADAS[i].estado === "PENDIENTE")  pend++;
+        else if (GUARDIAS_ASIGNADAS[i].estado === "REALIZADA")  real++;
+        else if (GUARDIAS_ASIGNADAS[i].estado === "CANCELADA") canc++;
+      }
+      document.getElementById("num-pendientes").textContent = pend;
+      document.getElementById("num-realizadas").textContent = real;
+      document.getElementById("num-canceladas").textContent = canc;
+      document.getElementById("num-total").textContent      = GUARDIAS_ASIGNADAS.length;
+    }
+    actualizarResumen();
+
+    // Busca una guardia por id
+    function buscarGuardia(id) {
+      for (var i = 0; i < GUARDIAS_ASIGNADAS.length; i++) {
+        if (GUARDIAS_ASIGNADAS[i].id === id) return GUARDIAS_ASIGNADAS[i];
+      }
+      return null;
+    }
+
+    // Abre el modal relleno con los datos de la guardia para editar
+    function editarGuardia(id) {
+      var g = buscarGuardia(id);
+      if (!g) return;
+
+      guardiaEditandoId = id;
+
+      // Rellena los campos
+      document.getElementById("modal-fecha").value = g.fecha;
+      document.getElementById("modal-tramo").value = g.tramo;
+      document.getElementById("modal-clase").value = g.clase;
+
+      // Selecciona el sustituto correcto
+      var selSust = document.getElementById("modal-sustituto");
+      for (var i = 0; i < selSust.options.length; i++) {
+        if (selSust.options[i].value === g.profesor_sustituto) {
+          selSust.selectedIndex = i; break;
+        }
+      }
+
+      // Selecciona el ausente correcto
+      var selAus = document.getElementById("modal-ausente");
+      for (var i = 0; i < selAus.options.length; i++) {
+        if (selAus.options[i].value === g.profesor_ausente) {
+          selAus.selectedIndex = i; break;
+        }
+      }
+
+      // Cambia título y botón
+      document.getElementById("texto-titulo-guardia").textContent = "Editar Guardia";
+      document.getElementById("btn-guardar-guardia").innerHTML =
+        '<i class="bi bi-check-lg"></i> Guardar Cambios';
+      document.getElementById("modal-error").style.display = "none";
+
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-nueva-guardia")).show();
+    }
+
+    // Filtra las guardias y dibuja la tabla
+    function renderizarGuardias() {
+      var tbody       = document.getElementById("tabla-body");
+      var filtroFecha = document.getElementById("filtro-fecha").value;
+      var filtroTipo  = document.getElementById("filtro-tipo").value;
+      var filtroEst   = document.getElementById("filtro-estado").value;
+
+      var resultado = [];
+      for (var i = 0; i < GUARDIAS_ASIGNADAS.length; i++) {
+        var g = GUARDIAS_ASIGNADAS[i];
+        var okFecha = !filtroFecha || g.fecha === filtroFecha;
+        var okTipo  = !filtroTipo  || g.tipo_asignacion === filtroTipo;
+        var okEst   = !filtroEst   || g.estado === filtroEst;
+        if (okFecha && okTipo && okEst) resultado.push(g);
+      }
+
+      document.getElementById("contador-texto").textContent =
+        "Mostrando " + resultado.length + " de " + GUARDIAS_ASIGNADAS.length + " guardias";
+
+      if (resultado.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No hay guardias que coincidan con esos filtros</td></tr>';
+        return;
+      }
+
+      var html = "";
+      for (var i = 0; i < resultado.length; i++) {
+        var g = resultado[i];
+        var partes = g.fecha.split("-");
+        var fechaLegible = partes[2] + "/" + partes[1] + "/" + partes[0];
+
+        // Badge de tipo de asignación
+        var claseTipo, textoTipo;
+        if (g.tipo_asignacion === "AUTOMATICA") {
+          claseTipo = "badge-cerrada"; textoTipo = "Automatica";
+        } else {
+          claseTipo = "badge-en-proceso"; textoTipo = "Manual";
+        }
+
+        // Badge de estado
+        var claseEst, textoEst;
+        if (g.estado === "PENDIENTE") {
+          claseEst = "badge-pendiente"; textoEst = "Pendiente";
+        } else if (g.estado === "REALIZADA") {
+          claseEst = "badge-cubierta"; textoEst = "Realizada";
+        } else {
+          claseEst = "badge-en-proceso"; textoEst = "Cancelada";
+        }
+
+        html += '<tr>' +
+                  '<td class="celda-fecha">' + fechaLegible + '</td>' +
+                  '<td class="celda-sm">' + g.tramo + '</td>' +
+                  '<td><div class="profesor-principal">' + g.profesor_sustituto + '</div><div class="profesor-etiqueta">Sustituto</div></td>' +
+                  '<td><div class="celda-sm">' + g.profesor_ausente + '</div><div class="profesor-etiqueta">Ausente</div></td>' +
+                  '<td class="celda-sm">' + g.clase + '</td>' +
+                  '<td><span class="badge-estado ' + claseTipo + '">' + textoTipo + '</span></td>' +
+                  '<td><span class="badge-estado ' + claseEst + '">' + textoEst + '</span></td>' +
+                  '<td><div class="d-flex gap-1">' +
+                    '<button class="btn-accion" title="Editar guardia" onclick="editarGuardia(' + g.id + ')"><i class="bi bi-pencil"></i></button>' +
+                    '<button class="btn-accion peligro" title="Eliminar guardia" onclick="eliminarGuardia(' + g.id + ')"><i class="bi bi-trash"></i></button>' +
+                  '</div></td>' +
+                '</tr>';
+      }
+      tbody.innerHTML = html;
+    }
+
+    // Elimina la guardia del array y actualiza
+    function eliminarGuardia(id) {
+      if (!confirm("¿Eliminar esta guardia definitivamente?")) return;
+      for (var i = 0; i < GUARDIAS_ASIGNADAS.length; i++) {
+        if (GUARDIAS_ASIGNADAS[i].id === id) { GUARDIAS_ASIGNADAS.splice(i, 1); break; }
+      }
+      actualizarResumen();
+      renderizarGuardias();
+    }
+
+    // Resetea los filtros y recarga
+    function limpiarFiltros() {
+      document.getElementById("filtro-fecha").value  = "";
+      document.getElementById("filtro-tipo").value   = "";
+      document.getElementById("filtro-estado").value = "";
+      renderizarGuardias();
+    }
+
+    renderizarGuardias();
+
+    // Rellena los selects de profesor del modal
+    var selectSustituto = document.getElementById("modal-sustituto");
+    var selectAusente   = document.getElementById("modal-ausente");
+    for (var i = 0; i < USUARIOS.length; i++) {
+      var u = USUARIOS[i];
+      var nombreMostrar = u.nombre + " " + u.apellidos + " (" + u.departamento + ")";
+      var optS = document.createElement("option");
+      optS.value = u.nombre + " " + u.apellidos;
+      optS.textContent = nombreMostrar;
+      selectSustituto.appendChild(optS);
+      var optA = document.createElement("option");
+      optA.value = u.nombre + " " + u.apellidos;
+      optA.textContent = nombreMostrar;
+      selectAusente.appendChild(optA);
+    }
+
+    // Al abrir el modal en modo creación, limpia el formulario
+    document.getElementById("modal-nueva-guardia").addEventListener("show.bs.modal", function() {
+      if (guardiaEditandoId === null) {
+        document.getElementById("form-guardia").reset();
+        document.getElementById("modal-error").style.display = "none";
+      }
+    });
+
+    // Al cerrar el modal, restaura el modo creación
+    document.getElementById("modal-nueva-guardia").addEventListener("hidden.bs.modal", function() {
+      guardiaEditandoId = null;
+      document.getElementById("texto-titulo-guardia").textContent = "Nueva Guardia Manual";
+      document.getElementById("btn-guardar-guardia").innerHTML =
+        '<i class="bi bi-check-lg"></i> Crear Guardia';
+    });
+
+    // Guarda la guardia (crea nueva o actualiza la existente)
+    function guardarGuardia(event) {
+      event.preventDefault();
+      document.getElementById("modal-error").style.display = "none";
+
+      var fecha     = document.getElementById("modal-fecha").value;
+      var tramo     = document.getElementById("modal-tramo").value;
+      var sustituto = document.getElementById("modal-sustituto").value;
+      var ausente   = document.getElementById("modal-ausente").value;
+      var clase     = document.getElementById("modal-clase").value.trim();
+
+      // El sustituto y el ausente no pueden ser la misma persona
+      if (sustituto && ausente && sustituto === ausente) {
+        document.getElementById("modal-error").textContent = "El profesor sustituto y el ausente no pueden ser la misma persona.";
+        document.getElementById("modal-error").style.display = "block";
+        return;
+      }
+
+      if (guardiaEditandoId !== null) {
+        // Modo edición: actualiza la guardia existente
+        for (var i = 0; i < GUARDIAS_ASIGNADAS.length; i++) {
+          if (GUARDIAS_ASIGNADAS[i].id === guardiaEditandoId) {
+            GUARDIAS_ASIGNADAS[i].fecha              = fecha;
+            GUARDIAS_ASIGNADAS[i].tramo              = tramo;
+            GUARDIAS_ASIGNADAS[i].profesor_sustituto = sustituto;
+            GUARDIAS_ASIGNADAS[i].profesor_ausente   = ausente;
+            GUARDIAS_ASIGNADAS[i].clase              = clase;
+            break;
+          }
+        }
+        bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-nueva-guardia")).hide();
+        actualizarResumen();
+        renderizarGuardias();
+        alert("Guardia actualizada correctamente.");
+      } else {
+        // Modo creación
+        var nuevoId = 0;
+        for (var i = 0; i < GUARDIAS_ASIGNADAS.length; i++) {
+          if (GUARDIAS_ASIGNADAS[i].id > nuevoId) nuevoId = GUARDIAS_ASIGNADAS[i].id;
+        }
+        nuevoId++;
+        GUARDIAS_ASIGNADAS.push({
+          id: nuevoId, fecha: fecha, tramo: tramo,
+          profesor_sustituto: sustituto, profesor_ausente: ausente, clase: clase,
+          tipo_asignacion: "MANUAL", // Siempre MANUAL porque la creó el admin
+          estado: "PENDIENTE"
+        });
+        bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-nueva-guardia")).hide();
+        actualizarResumen();
+        renderizarGuardias();
+        alert("Guardia manual creada correctamente.");
+      }
+    }
+  </script>
+
+</body>
+</html>

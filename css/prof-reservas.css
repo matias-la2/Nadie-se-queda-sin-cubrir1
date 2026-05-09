@@ -1,0 +1,65 @@
+/* Icono resumen: total reservas (azul) */
+.icono-res-total {
+  background: #eff6ff;
+  color: #1152d4;
+}
+
+/* Icono resumen: próximas (verde) */
+.icono-res-proximas {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+/* Icono resumen: espacios distintos (gris) */
+.icono-res-espacios {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+/* Contador de reservas */
+.contador-res {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Celda sin resultados */
+.sin-resultados {
+  text-align: center;
+  color: #64748b;
+  padding: 32px;
+}
+
+/* Icono del mensaje sin resultados */
+.sin-resultados-icono {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* Enlace de crear reserva en estado vacío */
+.enlace-nueva-reserva {
+  color: #1152d4;
+}
+
+/* Badge de reserva próxima */
+.badge-proxima {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  background: #f0fdf4;
+  color: #16a34a;
+  margin-left: 4px;
+}
+
+/* Fecha en negrita */
+.fecha-peso {
+  font-weight: 500;
+}
+
+/* Celda de motivo */
+.celda-motivo {
+  color: #374151;
+}

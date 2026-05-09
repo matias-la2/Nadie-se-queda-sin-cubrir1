@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nueva Reserva — IES Río Arba</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/estilos.css">
+  <link rel="stylesheet" href="../../css/nueva-reserva.css">
+</head>
+
+<body>
+
+  <div id="sidebar-container"></div>
+
+  <main class="contenido-principal">
+
+    <div class="pagina-header">
+      <h1>Nueva Reserva de Espacio</h1>
+      <p>Reserva un aula o sala del centro para tu actividad.</p>
+    </div>
+
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-8">
+
+        <!-- Aviso de conflicto -->
+        <div class="aviso-conflicto" id="aviso-conflicto">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span id="texto-conflicto">Ese espacio ya está reservado en esa franja horaria.</span>
+        </div>
+
+        <!-- Alerta de error -->
+        <div class="alerta-error" id="alerta-error">
+          <i class="bi bi-exclamation-circle me-1"></i>
+          <span id="texto-error"></span>
+        </div>
+
+        <form id="form-reserva" onsubmit="enviarFormulario(event)">
+
+          <!-- Paso 1: Fecha y tramo -->
+          <div class="tarjeta">
+            <div class="paso-cabecera">
+              <div class="paso-numero">1</div>
+              <span class="paso-titulo">¿Cuándo necesitas el espacio?</span>
+            </div>
+            <div class="row g-3">
+              <div class="col-12 col-sm-6">
+                <div class="campo-grupo mb-0">
+                  <label for="campo-fecha">
+                    Fecha <span class="obligatorio">*</span>
+                  </label>
+                  <input type="date" id="campo-fecha" required onchange="comprobarDisponibilidad()">
+                </div>
+              </div>
+              <div class="col-12 col-sm-6">
+                <div class="campo-grupo mb-0">
+                  <label for="campo-tramo">
+                    Tramo horario <span class="obligatorio">*</span>
+                  </label>
+                  <select id="campo-tramo" required onchange="comprobarDisponibilidad()">
+                    <option value="">Selecciona un tramo...</option>
+                    <option value="08:00-09:00">08:00 - 09:00</option>
+                    <option value="09:00-10:00">09:00 - 10:00</option>
+                    <option value="10:00-11:00">10:00 - 11:00</option>
+                    <option value="11:00-12:00">11:00 - 12:00</option>
+                    <option value="12:00-13:00">12:00 - 13:00</option>
+                    <option value="13:00-14:00">13:00 - 14:00</option>
+                    <option value="14:00-15:00">14:00 - 15:00</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Paso 2: Elegir espacio -->
+          <div class="tarjeta">
+            <div class="paso-cabecera-sm">
+              <div class="paso-numero">2</div>
+              <span class="paso-titulo">¿Qué espacio necesitas?</span>
+            </div>
+            <p class="paso-ayuda">
+              Los espacios marcados en gris ya están reservados en la franja seleccionada.
+            </p>
+            <input type="hidden" id="campo-espacio" value="">
+            <div class="grid-espacios" id="grid-espacios"></div>
+          </div>
+
+          <!-- Paso 3: Motivo -->
+          <div class="tarjeta">
+            <div class="paso-cabecera">
+              <div class="paso-numero">3</div>
+              <span class="paso-titulo">¿Para qué necesitas el espacio?</span>
+            </div>
+            <div class="campo-grupo mb-0">
+              <label for="campo-motivo">
+                Motivo de la reserva <span class="obligatorio">*</span>
+              </label>
+              <input
+                type="text"
+                id="campo-motivo"
+                placeholder="Ej: Examen de recuperación, reunión con familias, charla..."
+                required
+              >
+            </div>
+          </div>
+
+          <!-- Botones -->
+          <button type="submit" class="btn-enviar">
+            <i class="bi bi-calendar-check"></i>
+            Confirmar Reserva
+          </button>
+
+          <div class="cancelar-contenedor">
+            <button type="button" onclick="history.back()" class="btn-cancelar">
+              Cancelar y volver
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+  </main>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../../js/datos-prueba.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/sidebar.js"></script>
+
+  <script>
+    // Inicialización
+    verificarSesion();
+    crearSidebar("reservas", "../../");
+    var usuario = obtenerUsuarioActual();
+
+    // Fecha de hoy por defecto
+    var hoy = new Date();
+    var fechaHoy = hoy.getFullYear() + "-" +
+                   String(hoy.getMonth() + 1).padStart(2, "0") + "-" +
+                   String(hoy.getDate()).padStart(2, "0");
+    document.getElementById("campo-fecha").value = fechaHoy;
+    renderizarEspacios();
+
+    // Dibuja las tarjetas de espacios marcando los ocupados en la franja
+    function renderizarEspacios() {
+      var grid = document.getElementById("grid-espacios");
+      var fecha = document.getElementById("campo-fecha").value;
+      var tramo = document.getElementById("campo-tramo").value;
+      var espacioSeleccionado = document.getElementById("campo-espacio").value;
+
+      var espaciosOcupados = [];
+      if (fecha && tramo) {
+        for (var i = 0; i < RESERVAS.length; i++) {
+          if (RESERVAS[i].fecha === fecha && RESERVAS[i].tramo === tramo) {
+            espaciosOcupados.push(RESERVAS[i].espacio);
+          }
+        }
+      }
+
+      var html = "";
+      for (var i = 0; i < ESPACIOS.length; i++) {
+        var espacio = ESPACIOS[i];
+        var ocupado = espaciosOcupados.indexOf(espacio.nombre) !== -1;
+        var noDisponible = espacio.estado !== "DISPONIBLE" || ocupado;
+
+        var claseExtra = "";
+        if (noDisponible) claseExtra = " no-disponible";
+        else if (espacio.nombre === espacioSeleccionado) claseExtra = " seleccionado";
+
+        var estadoTexto;
+        if (ocupado) {
+          estadoTexto = '<span class="espacio-ocupado"><i class="bi bi-x-circle me-1"></i>Ocupado</span>';
+        } else if (espacio.estado === "DISPONIBLE") {
+          estadoTexto = '<span class="espacio-disponible"><i class="bi bi-check-circle me-1"></i>Disponible</span>';
+        } else {
+          estadoTexto = '<span class="espacio-otro"><i class="bi bi-exclamation-circle me-1"></i>' + espacio.estado + '</span>';
+        }
+
+        var onclick = noDisponible
+          ? 'onclick="mostrarMensajeOcupado(\'' + espacio.nombre + '\')"'
+          : 'onclick="seleccionarEspacio(\'' + espacio.nombre.replace(/'/g, "\\'") + '\')"';
+
+        html += '<div class="tarjeta-espacio' + claseExtra + '" ' + onclick + '>' +
+                  '<div class="espacio-nombre"><i class="bi bi-door-open me-1 icono-espacio-azul"></i>' + espacio.nombre + '</div>' +
+                  '<div class="espacio-info">Cap. ' + espacio.capacidad + ' personas</div>' +
+                  '<div class="espacio-estado-contenedor">' + estadoTexto + '</div>' +
+                '</div>';
+      }
+      grid.innerHTML = html;
+    }
+
+    // Guarda el espacio seleccionado y actualiza el tick
+    function seleccionarEspacio(nombre) {
+      document.getElementById("campo-espacio").value = nombre;
+      document.getElementById("aviso-conflicto").classList.remove("visible");
+      renderizarEspacios();
+    }
+
+    // Muestra aviso cuando el espacio está ocupado
+    function mostrarMensajeOcupado(nombre) {
+      document.getElementById("texto-conflicto").textContent =
+        '"' + nombre + '" ya está reservado en la franja seleccionada.';
+      document.getElementById("aviso-conflicto").classList.add("visible");
+    }
+
+    // Deselecciona si el espacio elegido queda ocupado al cambiar fecha/tramo
+    function comprobarDisponibilidad() {
+      var fecha   = document.getElementById("campo-fecha").value;
+      var tramo   = document.getElementById("campo-tramo").value;
+      var espacio = document.getElementById("campo-espacio").value;
+      if (fecha && tramo && espacio) {
+        var conflicto = false;
+        for (var i = 0; i < RESERVAS.length; i++) {
+          if (RESERVAS[i].fecha === fecha && RESERVAS[i].tramo === tramo && RESERVAS[i].espacio === espacio) {
+            conflicto = true; break;
+          }
+        }
+        if (conflicto) {
+          document.getElementById("campo-espacio").value = "";
+          document.getElementById("texto-conflicto").textContent =
+            '"' + espacio + '" ya está reservado en esa franja. Por favor elige otro espacio.';
+          document.getElementById("aviso-conflicto").classList.add("visible");
+        } else {
+          document.getElementById("aviso-conflicto").classList.remove("visible");
+        }
+      }
+      renderizarEspacios();
+    }
+
+    // Muestra el error y hace scroll hasta él
+    function mostrarError(mensaje) {
+      var alerta = document.getElementById("alerta-error");
+      document.getElementById("texto-error").textContent = mensaje;
+      alerta.style.display = "block";
+      alerta.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    // Valida, comprueba conflicto y guarda la reserva
+    function enviarFormulario(event) {
+      event.preventDefault();
+      document.getElementById("alerta-error").style.display = "none";
+
+      var fecha   = document.getElementById("campo-fecha").value;
+      var tramo   = document.getElementById("campo-tramo").value;
+      var espacio = document.getElementById("campo-espacio").value;
+      var motivo  = document.getElementById("campo-motivo").value.trim();
+
+      if (!fecha)   { mostrarError("La fecha es obligatoria."); return; }
+      if (!tramo)   { mostrarError("Debes seleccionar un tramo horario."); return; }
+      if (!espacio) { mostrarError("Debes seleccionar un espacio del grid."); return; }
+      if (!motivo)  { mostrarError("El motivo de la reserva es obligatorio."); return; }
+
+      var conflicto = false;
+      for (var i = 0; i < RESERVAS.length; i++) {
+        if (RESERVAS[i].fecha === fecha && RESERVAS[i].tramo === tramo && RESERVAS[i].espacio === espacio) {
+          conflicto = true; break;
+        }
+      }
+      if (conflicto) {
+        document.getElementById("texto-conflicto").textContent =
+          'Ese espacio ya está reservado en esa franja horaria. Por favor elige otro.';
+        var aviso = document.getElementById("aviso-conflicto");
+        aviso.classList.add("visible");
+        aviso.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+
+      var nuevoId = 0;
+      for (var i = 0; i < RESERVAS.length; i++) {
+        if (RESERVAS[i].id > nuevoId) nuevoId = RESERVAS[i].id;
+      }
+      nuevoId++;
+      RESERVAS.push({ id: nuevoId, fecha: fecha, tramo: tramo, espacio: espacio,
+                      profesor: usuario.nombre + " " + usuario.apellidos, motivo: motivo });
+
+      alert("Reserva confirmada correctamente.");
+      window.location.href = "../../pages/profesor/reservas.html";
+    }
+  </script>
+
+</body>
+</html>

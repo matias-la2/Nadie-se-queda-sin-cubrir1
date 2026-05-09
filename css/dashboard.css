@@ -1,0 +1,150 @@
+/* Tarjeta de cobertura del día */
+.tarjeta-cobertura {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 10px;
+  background: #ffffff;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  transition: box-shadow 0.15s;
+}
+
+.tarjeta-cobertura:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+
+/* Cuadrado con icono de la cobertura */
+.cobertura-icono {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* Nombre de la clase */
+.cobertura-clase {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1e293b;
+}
+
+/* Tramo horario alineado a la derecha */
+.cobertura-tramo {
+  font-size: 12px;
+  color: #64748b;
+  float: right;
+}
+
+/* Nombre del profesor sustituto */
+.cobertura-sustituto {
+  font-size: 12px;
+  color: #1152d4;
+  font-weight: 500;
+  margin-top: 3px;
+}
+
+/* Nombre del profesor ausente */
+.cobertura-ausente {
+  font-size: 11px;
+  color: #ef4444;
+  margin-top: 2px;
+}
+
+/* Contenedor de texto a la derecha del icono */
+.cobertura-info {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Cobertura ya realizada: icono verde */
+.cobertura-icono-realizada {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+/* Cobertura pendiente: icono azul */
+.cobertura-icono-pendiente {
+  background: #eff6ff;
+  color: #1152d4;
+}
+
+/* Icono resumen: incidencias activas */
+.icono-incidencias {
+  background: #fffbeb;
+  color: #f59e0b;
+}
+
+/* Icono resumen: ausencias de hoy */
+.icono-ausencias {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+/* Icono resumen: aulas reservadas */
+.icono-reservas {
+  background: #eff6ff;
+  color: #1152d4;
+}
+
+/* Icono resumen: profesores activos */
+.icono-profesores {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+/* Tarjeta que ocupa toda la altura de la fila */
+.tarjeta-altura-completa {
+  height: 100%;
+}
+
+/* Botón pequeño de ver todo */
+.btn-ver-todo {
+  font-size: 12px;
+  padding: 5px 12px;
+}
+
+/* Celda cuando no hay incidencias */
+.sin-incidencias {
+  text-align: center;
+  color: #64748b;
+  padding: 20px;
+}
+
+/* Título de la incidencia en la tabla */
+.inc-titulo {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+/* Celda de texto pequeño */
+.celda-sm {
+  font-size: 13px;
+}
+
+/* Celda de fecha en gris */
+.celda-fecha-gris {
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Bloque vacío de coberturas */
+.coberturas-vacias {
+  text-align: center;
+  color: #64748b;
+  padding: 24px;
+  font-size: 13px;
+}
+
+/* Icono del bloque de coberturas vacío */
+.coberturas-vacias-icono {
+  font-size: 24px;
+  display: block;
+  margin-bottom: 8px;
+  color: #16a34a;
+}

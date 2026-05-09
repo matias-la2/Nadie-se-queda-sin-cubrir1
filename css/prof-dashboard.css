@@ -1,0 +1,50 @@
+/* Icono: siguiente guardia (azul) */
+.icono-sig-guardia {
+  background: #eff6ff;
+  color: #1152d4;
+}
+
+/* Icono: incidencias activas (amarillo) */
+.icono-inc-activas {
+  background: #fffbeb;
+  color: #f59e0b;
+}
+
+/* Icono: guardias pendientes (verde) */
+.icono-guard-pend {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+/* Número del siguiente guardia en tamaño reducido */
+.num-siguiente {
+  font-size: 16px;
+  margin-top: 4px;
+}
+
+/* Botón pequeño de ver todo */
+.btn-ver-todo {
+  font-size: 12px;
+  padding: 5px 12px;
+}
+
+/* Celda de carga inicial */
+.celda-cargando {
+  text-align: center;
+  color: #64748b;
+  padding: 24px;
+}
+
+/* Celda sin guardias */
+.sin-guardias {
+  text-align: center;
+  color: #64748b;
+  padding: 24px;
+}
+
+/* Icono grande del mensaje vacío */
+.sin-guardias-icono {
+  font-size: 24px;
+  display: block;
+  margin-bottom: 8px;
+}

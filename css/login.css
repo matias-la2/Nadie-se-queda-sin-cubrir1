@@ -1,0 +1,115 @@
+/* Estilos del login */
+
+/* Fondo azul sólido de la página */
+.pagina-login {
+  min-height: 100vh;
+  background: #1152d4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* Tarjeta blanca central */
+.tarjeta-login {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+/* Título */
+.titulo-login {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+/* Subtítulo */
+.subtitulo-login {
+  font-size: 13px;
+  color: #64748b;
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+/* Etiqueta de campo */
+.etiqueta-campo {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 6px;
+  display: block;
+}
+
+/* Campo de texto */
+.campo-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  color: #1e293b;
+  background: #ffffff;
+  margin-bottom: 16px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.campo-input:focus {
+  outline: none;
+  border-color: #1152d4;
+  box-shadow: 0 0 0 3px rgba(17, 82, 212, 0.12);
+}
+
+/* Botón de iniciar sesión */
+.btn-entrar {
+  width: 100%;
+  padding: 11px;
+  background-color: #1152d4;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  margin-top: 4px;
+}
+
+.btn-entrar:hover {
+  background-color: #0f46b8;
+}
+
+/* Mensaje de error */
+.mensaje-error {
+  display: none;
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+/* Enlace de recuperar contraseña */
+.enlace-olvido {
+  display: block;
+  text-align: center;
+  font-size: 13px;
+  color: #64748b;
+  text-decoration: none;
+  margin-top: 16px;
+  cursor: pointer;
+}
+
+.enlace-olvido:hover {
+  color: #1152d4;
+  text-decoration: underline;
+}

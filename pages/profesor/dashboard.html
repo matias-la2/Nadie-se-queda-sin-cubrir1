@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — IES Río Arba</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/estilos.css">
+  <link rel="stylesheet" href="../../css/prof-dashboard.css">
+</head>
+
+<body>
+
+  <!-- Sidebar inyectado por sidebar.js -->
+  <div id="sidebar-container"></div>
+
+  <!-- Contenido principal -->
+  <main class="contenido-principal">
+
+    <!-- Cabecera de la página -->
+    <div class="pagina-header">
+      <h1 id="saludo">¡Hola!</h1>
+      <p>Bienvenido/a a tu panel de control para hoy.</p>
+    </div>
+
+    <!-- Tarjetas de resumen -->
+    <div class="row g-3 mb-4">
+
+      <!-- Siguiente guardia -->
+      <div class="col-12 col-md-4">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-sig-guardia">
+            <i class="bi bi-shield-check"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Siguiente Guardia</div>
+            <div class="numero num-siguiente" id="siguiente-guardia">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Incidencias activas -->
+      <div class="col-12 col-md-4">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-inc-activas">
+            <i class="bi bi-exclamation-triangle"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Incidencias Activas</div>
+            <div class="numero" id="num-incidencias">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Guardias pendientes -->
+      <div class="col-12 col-md-4">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-guard-pend">
+            <i class="bi bi-bell"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Guardias Pendientes</div>
+            <div class="numero" id="num-guardias">0</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Tabla de próximas guardias -->
+    <div class="tarjeta">
+
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="tarjeta-titulo mb-0">Próximas Guardias y Tareas</h2>
+        <a href="guardias.html" class="btn-secundario btn-ver-todo">
+          Ver todo
+          <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+
+      <div class="tabla-responsive">
+        <table class="tabla-datos">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>Lugar / Clase</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-guardias-body">
+            <tr>
+              <td colspan="5" class="celda-cargando">Cargando...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </main>
+
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Scripts en orden de dependencia: datos → auth → sidebar -->
+  <script src="../../js/datos-prueba.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/sidebar.js"></script>
+
+  <script>
+    // Inicialización
+    verificarSesion();
+    crearSidebar("dashboard", "../../");
+    var usuario = obtenerUsuarioActual();
+    var nombreCompleto = usuario.nombre + " " + usuario.apellidos;
+
+    document.getElementById("saludo").textContent = "¡Hola, " + usuario.nombre + "!";
+
+    // Incidencias activas del usuario
+    var numInc = 0;
+    for (var i = 0; i < INCIDENCIAS.length; i++) {
+      var inc = INCIDENCIAS[i];
+      if (inc.creador === nombreCompleto && (inc.estado === "ABIERTA" || inc.estado === "EN_PROCESO")) numInc++;
+    }
+    document.getElementById("num-incidencias").textContent = numInc;
+
+    // Guardias del usuario como sustituto
+    var misGuardias = [];
+    for (var i = 0; i < GUARDIAS_ASIGNADAS.length; i++) {
+      if (GUARDIAS_ASIGNADAS[i].profesor_sustituto === nombreCompleto) misGuardias.push(GUARDIAS_ASIGNADAS[i]);
+    }
+
+    var guardiasPendientes = [];
+    for (var i = 0; i < misGuardias.length; i++) {
+      if (misGuardias[i].estado === "PENDIENTE") guardiasPendientes.push(misGuardias[i]);
+    }
+    document.getElementById("num-guardias").textContent = guardiasPendientes.length;
+
+    // Siguiente guardia: la primera pendiente ordenada por fecha
+    guardiasPendientes.sort(function(a, b) { return a.fecha.localeCompare(b.fecha); });
+
+    var elementoSiguiente = document.getElementById("siguiente-guardia");
+    if (guardiasPendientes.length > 0) {
+      var sig = guardiasPendientes[0];
+      var partesFecha = sig.fecha.split("-");
+      elementoSiguiente.textContent = sig.clase + " · " + partesFecha[2] + "/" + partesFecha[1] + " · " + sig.tramo;
+    } else {
+      elementoSiguiente.textContent = "Sin guardias pendientes";
+    }
+
+    // Rellenamos la tabla de guardias
+    var tbody = document.getElementById("tabla-guardias-body");
+
+    if (misGuardias.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="sin-guardias"><i class="bi bi-calendar-x sin-guardias-icono"></i>No tienes guardias asignadas</td></tr>';
+    } else {
+      var html = "";
+      for (var i = 0; i < misGuardias.length; i++) {
+        var guardia = misGuardias[i];
+        var claseBadge;
+        if (guardia.estado === "REALIZADA")      claseBadge = "badge-resuelta";
+        else if (guardia.estado === "CANCELADA") claseBadge = "badge-cerrada";
+        else                                      claseBadge = "badge-pendiente";
+
+        var partes = guardia.fecha.split("-");
+        var fechaMostrar = partes[2] + "/" + partes[1] + "/" + partes[0];
+
+        html += '<tr>' +
+                  '<td>' + fechaMostrar + '</td>' +
+                  '<td>' + guardia.tramo + '</td>' +
+                  '<td>' + guardia.clase + '</td>' +
+                  '<td><span class="badge-tipo">Guardia</span></td>' +
+                  '<td><span class="badge-estado ' + claseBadge + '">' +
+                    guardia.estado.charAt(0) + guardia.estado.slice(1).toLowerCase() +
+                  '</span></td>' +
+                '</tr>';
+      }
+      tbody.innerHTML = html;
+    }
+  </script>
+
+</body>
+</html>

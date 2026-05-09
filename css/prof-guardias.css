@@ -1,0 +1,161 @@
+/* Icono resumen: total guardias (azul) */
+.icono-guard-total {
+  background: #eff6ff;
+  color: #1152d4;
+}
+
+/* Icono resumen: pendientes (rojo) */
+.icono-guard-pend {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+/* Icono resumen: realizadas (verde) */
+.icono-guard-real {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+/* Contador de guardias */
+.contador-guard {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Celda sin resultados */
+.sin-resultados {
+  text-align: center;
+  color: #64748b;
+  padding: 32px;
+}
+
+/* Icono del mensaje sin resultados */
+.sin-resultados-icono {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* Celda de fecha con peso */
+.fecha-peso {
+  font-weight: 500;
+}
+
+/* Badge de tipo automática */
+.tipo-automatica {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #eef2ff;
+  color: #6366f1;
+}
+
+/* Badge de tipo manual */
+.tipo-manual {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #ecfeff;
+  color: #0891b2;
+}
+
+/* Guión cuando no hay tarea */
+.sin-tarea {
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+/* Modal: contenido con bordes redondeados */
+.modal-tarea-contenido {
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Modal: cabecera */
+.modal-tarea-cabecera {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 16px 20px;
+}
+
+/* Modal: título */
+.modal-tarea-titulo {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Modal: icono azul del título */
+.modal-tarea-icono {
+  color: #1152d4;
+}
+
+/* Modal: cuerpo */
+.modal-tarea-cuerpo {
+  padding: 20px;
+}
+
+/* Modal: tarjeta de info del profesor/clase */
+.modal-info-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+/* Etiqueta pequeña dentro de la tarjeta de info */
+.modal-info-label {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+/* Valor del profesor ausente */
+.modal-info-profesor {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Etiqueta de clase */
+.modal-info-clase-label {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+/* Valor de la clase */
+.modal-info-clase {
+  font-weight: 500;
+  color: #1e293b;
+}
+
+/* Título de instrucciones */
+.modal-instrucciones-titulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+/* Caja de la tarea (amarilla) */
+.modal-tarea-caja {
+  font-size: 14px;
+  color: #374151;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 14px;
+  line-height: 1.6;
+}
+
+/* Modal: pie */
+.modal-tarea-pie {
+  border-top: 1px solid #e2e8f0;
+  padding: 12px 20px;
+}

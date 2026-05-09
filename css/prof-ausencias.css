@@ -1,0 +1,71 @@
+/* Icono resumen: total ausencias (azul) */
+.icono-aus-total {
+  background: #eff6ff;
+  color: #1152d4;
+}
+
+/* Icono resumen: pendientes (rojo) */
+.icono-aus-pendiente {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+/* Icono resumen: cubiertas (verde) */
+.icono-aus-cubierta {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+/* Icono resumen: sin cubrir (amarillo) */
+.icono-aus-sin-cubrir {
+  background: #fffbeb;
+  color: #f59e0b;
+}
+
+/* Contador de ausencias */
+.contador-aus {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Celda sin resultados */
+.sin-resultados {
+  text-align: center;
+  color: #64748b;
+  padding: 32px;
+}
+
+/* Icono del mensaje sin resultados */
+.sin-resultados-icono {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* Celda de fecha con peso */
+.fecha-peso {
+  font-weight: 500;
+}
+
+/* Badge "Sí" de tarea */
+.tarea-si {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+/* Badge "No" de tarea */
+.tarea-no {
+  color: #94a3b8;
+}
+
+/* Guión cuando no hay comentario */
+.comentario-vacio {
+  color: #cbd5e1;
+}
+
+/* Celda de comentario gris */
+.celda-comentario {
+  color: #64748b;
+  font-size: 13px;
+}

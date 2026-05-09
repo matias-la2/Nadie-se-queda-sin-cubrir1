@@ -1,0 +1,25 @@
+/* Contador de incidencias */
+.contador-inc {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Celda sin resultados */
+.sin-resultados {
+  text-align: center;
+  color: #64748b;
+  padding: 32px;
+}
+
+/* Icono del mensaje sin resultados */
+.sin-resultados-icono {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* Título de incidencia en la tabla */
+.inc-titulo {
+  font-weight: 500;
+}

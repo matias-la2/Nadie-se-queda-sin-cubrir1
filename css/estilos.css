@@ -1,0 +1,642 @@
+/* Colores del proyecto */
+:root {
+  --azul: #1152d4;
+  --azul-claro: #e8effe;
+  --fondo: #f6f6f8;
+  --blanco: #ffffff;
+  --texto: #1e293b;
+  --gris: #64748b;
+  --borde: #e2e8f0;
+  --verde: #16a34a;
+  --amarillo: #f59e0b;
+  --rojo: #ef4444;
+  --sidebar: 240px;
+}
+
+/* Reset básico */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Estilos base de la página */
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f6f6f8;
+  color: #1e293b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Barra lateral fija a la izquierda */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 240px;
+  height: 100vh;
+  background-color: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  z-index: 1;
+}
+
+/* Cabecera del sidebar */
+.sidebar-header {
+  padding: 20px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-header .icono-logo {
+  font-size: 24px;
+  color: #1152d4;
+}
+
+.sidebar-header .nombre-centro {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+/* Navegación del sidebar */
+.sidebar-nav {
+  flex: 1;
+  padding: 12px 8px;
+}
+
+/* Título de sección dentro del menú */
+.sidebar-seccion-titulo {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 8px 8px 4px;
+  margin-top: 8px;
+}
+
+/* Cada enlace del menú lateral */
+.sidebar-enlace {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 6px;
+  color: #64748b;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 2px;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+/* Icono dentro del enlace */
+.sidebar-enlace i {
+  font-size: 16px;
+  width: 18px;
+  text-align: center;
+}
+
+/* Hover del enlace */
+.sidebar-enlace:hover {
+  background-color: #e8effe;
+  color: #1152d4;
+}
+
+/* Enlace activo */
+.sidebar-enlace.activo {
+  background-color: #1152d4;
+  color: #ffffff;
+}
+
+.sidebar-enlace.activo:hover {
+  background-color: #0f46b8;
+  color: #ffffff;
+}
+
+/* Texto del rol debajo del nombre */
+.rol-usuario {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* Pie del sidebar con usuario y botón de salir */
+.sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Fila con avatar, nombre y rol */
+.sidebar-footer-usuario {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-footer img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  min-width: auto; /* No se encoge */
+}
+
+.sidebar-footer .usuario-info {
+  flex: 1;
+  min-width: 0; /* Permite que el texto se corte con ellipsis */
+}
+
+.sidebar-footer .usuario-nombre {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Botón de cerrar sesión */
+.sidebar-footer .btn-cerrar-sesion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  color: #ef4444;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.sidebar-footer .btn-cerrar-sesion:hover {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Área de contenido a la derecha del sidebar */
+.contenido-principal {
+  margin-left: 240px;
+  padding: 28px 32px;
+  min-height: 100vh;
+}
+
+/* Cabecera de página con título y subtítulo */
+.pagina-header {
+  margin-bottom: 24px;
+}
+
+.pagina-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.pagina-header p {
+  color: #64748b;
+  font-size: 14px;
+  margin-top: 2px;
+}
+
+/* Tarjetas del dashboard con icono y número */
+.tarjeta-resumen {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Círculo con el icono */
+.tarjeta-resumen .icono-circulo {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  min-width: auto; /* No se encoge */
+}
+
+.tarjeta-resumen .numero {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.tarjeta-resumen .etiqueta {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* Contenedor blanco con borde para secciones */
+.tarjeta {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.tarjeta-titulo {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 16px;
+}
+
+/* Tabla de datos */
+.tabla-datos {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+/* Cabecera de la tabla */
+.tabla-datos thead th {
+  background-color: #f8fafc;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+/* Celdas de la tabla */
+.tabla-datos tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+/* Filas alternadas */
+.tabla-datos tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+/* Hover en filas */
+.tabla-datos tbody tr:hover {
+  background-color: #f1f5f9;
+}
+
+/* Texto secundario dentro de una celda */
+.tabla-datos .texto-secundario-celda {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* Pastillas de estado en forma de píldora */
+.badge-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Pendiente / Abierta / Sin cubrir */
+.badge-pendiente,
+.badge-abierta,
+.badge-sin-cubrir {
+  background-color: #fef2f2;
+  color: #ef4444;
+}
+
+/* En proceso */
+.badge-en-proceso {
+  background-color: #fffbeb;
+  color: #b45309;
+}
+
+/* Resuelta / Cubierta / Activo */
+.badge-resuelta,
+.badge-cubierta,
+.badge-activo {
+  background-color: #f0fdf4;
+  color: #16a34a;
+}
+
+/* Cerrada / Inactivo */
+.badge-cerrada,
+.badge-inactivo {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+/* Badge de tipo o categoría */
+.badge-tipo {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background-color: #eff6ff;
+  color: #1152d4;
+}
+
+/* Botón principal azul */
+.btn-primario {
+  background-color: #1152d4;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.15s;
+}
+
+.btn-primario:hover {
+  background-color: #0f46b8;
+  color: #ffffff;
+}
+
+/* Botón secundario con borde */
+.btn-secundario {
+  background-color: #ffffff;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.15s;
+}
+
+.btn-secundario:hover {
+  background-color: #f8fafc;
+  color: #1e293b;
+}
+
+/* Botones pequeños dentro de tablas */
+.btn-accion {
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.15s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-accion:hover {
+  background-color: #e8effe;
+  color: #1152d4;
+  border-color: #1152d4;
+}
+
+.btn-accion.peligro:hover {
+  background-color: #fef2f2;
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+/* Barra con buscador y filtros */
+.barra-acciones {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+/* Campo de búsqueda */
+.input-busqueda {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  color: #1e293b;
+  background-color: #ffffff;
+  min-width: 220px;
+}
+
+.input-busqueda:focus {
+  outline: none;
+  border-color: #1152d4;
+  box-shadow: 0 0 0 3px rgba(17, 82, 212, 0.1);
+}
+
+/* Select de filtro */
+.select-filtro {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  color: #1e293b;
+  background-color: #ffffff;
+  cursor: pointer;
+}
+
+/* Pestañas de filtrado */
+.tabs-filtro {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0;
+}
+
+/* Botón de pestaña */
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px; /* Se superpone al borde inferior del contenedor */
+  transition: all 0.15s;
+}
+
+.tab-btn:hover {
+  color: #1e293b;
+}
+
+.tab-btn.activo {
+  color: #1152d4;
+  border-bottom-color: #1152d4;
+  font-weight: 600;
+}
+
+/* Botón hamburguesa, solo visible en móvil */
+.btn-hamburguesa {
+  display: none;
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 2;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 18px;
+  cursor: pointer;
+  color: #1e293b;
+}
+
+/* Capa oscura detrás del sidebar en móvil */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 1;
+}
+
+/* Tablet y móvil */
+@media (max-width: 767px) {
+
+  /* Sidebar oculto por defecto */
+  .sidebar {
+    display: none;
+  }
+
+  .sidebar.abierto {
+    display: flex;
+  }
+
+  .sidebar-overlay.visible {
+    display: block;
+  }
+
+  .btn-hamburguesa {
+    display: block;
+  }
+
+  /* Sin margen del sidebar, padding reducido */
+  .contenido-principal {
+    margin-left: 0;
+    padding: 70px 15px 24px;
+  }
+
+  /* Título más pequeño en móvil */
+  .pagina-header h1 {
+    font-size: 18px;
+  }
+
+  /* Tarjetas de resumen más compactas */
+  .tarjeta-resumen {
+    padding: 14px 12px;
+    gap: 10px;
+  }
+
+  .tarjeta-resumen .icono-circulo {
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+  }
+
+  .tarjeta-resumen .numero {
+    font-size: 22px;
+  }
+
+  .tarjeta-resumen .etiqueta {
+    font-size: 11px;
+  }
+
+  /* Tarjeta general con menos padding */
+  .tarjeta {
+    padding: 14px;
+  }
+
+  /* Filtros en columna, cada uno al 100% */
+  .barra-acciones {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .input-busqueda {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .select-filtro {
+    width: 100%;
+  }
+
+  /* Botones de acción más pequeños */
+  .btn-accion {
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+
+  /* Botones que no se corten en pantallas pequeñas */
+  .btn-primario,
+  .btn-secundario {
+    font-size: 13px;
+    padding: 7px 12px;
+  }
+
+  /* Pestañas más compactas */
+  .tab-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+
+/* Móvil muy pequeño */
+@media (max-width: 479px) {
+
+  /* Tarjetas a 1 por fila */
+  .row > .col-6 {
+    width: 100% !important;
+  }
+
+  /* Modal casi pantalla completa */
+  .modal-dialog {
+    margin: 10px;
+    width: 95%;
+  }
+
+  /* Sidebar ocupa todo */
+  .sidebar {
+    width: 100%;
+  }
+}

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Profesores — IES Río Arba</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/estilos.css">
+  <link rel="stylesheet" href="../../css/profesores.css">
+</head>
+
+<body>
+
+  <div id="sidebar-container"></div>
+
+  <main class="contenido-principal">
+
+    <!-- Cabecera -->
+    <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+      <div class="pagina-header mb-0">
+        <h1>Gestión de Profesores</h1>
+        <p>Administra los usuarios del profesorado y su estado en el sistema.</p>
+      </div>
+      <button class="btn-primario" data-bs-toggle="modal" data-bs-target="#modal-nuevo-profesor">
+        <i class="bi bi-plus-lg"></i>
+        Añadir Profesor
+      </button>
+    </div>
+
+    <!-- Tarjetas resumen -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-activos">
+            <i class="bi bi-person-check"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Activos</div>
+            <div class="numero" id="num-activos">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-inactivos">
+            <i class="bi bi-person-x"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Inactivos</div>
+            <div class="numero" id="num-inactivos">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-total-prof">
+            <i class="bi bi-people"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Total</div>
+            <div class="numero" id="num-total">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-departamentos">
+            <i class="bi bi-diagram-3"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Departamentos</div>
+            <div class="numero" id="num-departamentos">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla con filtros -->
+    <div class="tarjeta">
+
+      <div class="barra-acciones">
+        <input
+          type="text"
+          class="input-busqueda"
+          id="input-busqueda"
+          placeholder="Buscar por nombre, correo o departamento..."
+          oninput="renderizarProfesores()"
+        >
+        <select class="select-filtro" id="filtro-departamento" onchange="renderizarProfesores()">
+          <option value="">Todos los departamentos</option>
+        </select>
+        <select class="select-filtro" id="filtro-estado" onchange="renderizarProfesores()">
+          <option value="">Todos los estados</option>
+          <option value="activo">Activo</option>
+          <option value="inactivo">Inactivo</option>
+        </select>
+        <button class="btn-secundario" onclick="limpiarFiltros()">
+          <i class="bi bi-arrow-counterclockwise"></i>
+          Limpiar
+        </button>
+      </div>
+
+      <!-- Tabla de profesores -->
+      <div class="tabla-responsive">
+        <table class="tabla-datos">
+          <thead>
+            <tr>
+              <th>Profesor</th>
+              <th>Correo electrónico</th>
+              <th>Departamento</th>
+              <th>Roles</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-body"></tbody>
+        </table>
+      </div>
+
+      <!-- Contador -->
+      <div class="contador-profesores" id="contador-texto">
+        Mostrando 0 profesores
+      </div>
+
+    </div>
+
+  </main>
+
+
+  <!-- Modal para añadir o editar profesor -->
+  <div class="modal fade" id="modal-nuevo-profesor" tabindex="-1" aria-labelledby="modal-prof-titulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content modal-contenido">
+
+        <div class="modal-header modal-cabecera">
+          <h5 class="modal-title modal-titulo" id="modal-prof-titulo">
+            <i class="bi bi-person-plus me-2 modal-icono-titulo"></i>
+            <span id="texto-titulo-profesor">Añadir Nuevo Profesor</span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+
+        <div class="modal-body modal-cuerpo">
+
+          <!-- Error dentro del modal -->
+          <div id="modal-prof-error" class="modal-error"></div>
+
+          <form id="form-profesor" onsubmit="guardarProfesor(event)">
+
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-sm-6">
+                <label class="modal-label">
+                  Nombre <span class="campo-obligatorio">*</span>
+                </label>
+                <input type="text" id="modal-nombre" class="select-filtro campo-completo"
+                       placeholder="Ej: Laura" required>
+              </div>
+              <div class="col-12 col-sm-6">
+                <label class="modal-label">
+                  Apellidos <span class="campo-obligatorio">*</span>
+                </label>
+                <input type="text" id="modal-apellidos" class="select-filtro campo-completo"
+                       placeholder="Ej: Martínez López" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="modal-label">
+                Correo electrónico <span class="campo-obligatorio">*</span>
+              </label>
+              <input type="email" id="modal-correo" class="select-filtro campo-completo"
+                     placeholder="nombre@iesrioarba.es" required>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-12 col-sm-6">
+                <label class="modal-label">
+                  Departamento <span class="campo-obligatorio">*</span>
+                </label>
+                <select id="modal-departamento" class="select-filtro campo-completo" required>
+                  <option value="">Seleccionar...</option>
+                  <option value="Matemáticas">Matemáticas</option>
+                  <option value="Lengua Castellana">Lengua Castellana</option>
+                  <option value="Inglés">Inglés</option>
+                  <option value="Informática">Informática</option>
+                  <option value="Física y Química">Física y Química</option>
+                  <option value="Biología">Biología</option>
+                  <option value="Historia">Historia</option>
+                  <option value="Ciencias Naturales">Ciencias Naturales</option>
+                  <option value="Dirección">Dirección</option>
+                  <option value="Administración">Administración</option>
+                </select>
+              </div>
+              <div class="col-12 col-sm-6">
+                <label class="modal-label">
+                  Rol <span class="campo-obligatorio">*</span>
+                </label>
+                <select id="modal-rol" class="select-filtro campo-completo" required>
+                  <option value="PROFESOR">Profesor</option>
+                  <option value="EQUIPO_DIRECTIVO">Equipo Directivo</option>
+                  <option value="ADMINISTRADOR">Administrador</option>
+                </select>
+              </div>
+            </div>
+
+          </form>
+        </div>
+
+        <div class="modal-footer modal-pie">
+          <button type="button" class="btn-secundario" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" form="form-profesor" class="btn-primario" id="btn-guardar-profesor">
+            <i class="bi bi-check-lg"></i>
+            Añadir Profesor
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../../js/datos-prueba.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/sidebar.js"></script>
+
+  <script>
+    // Inicialización
+    verificarSesion();
+    crearSidebar("profesores", "../../");
+    var profesorEditandoId = null; // null = creación, número = edición
+
+    // Actualiza tarjetas contando activos, inactivos y departamentos únicos
+    function actualizarResumen() {
+      var act = 0, inact = 0;
+      var deptos = {};
+      for (var i = 0; i < USUARIOS.length; i++) {
+        if (USUARIOS[i].activo) act++;
+        else inact++;
+        deptos[USUARIOS[i].departamento] = true;
+      }
+      document.getElementById("num-activos").textContent       = act;
+      document.getElementById("num-inactivos").textContent     = inact;
+      document.getElementById("num-total").textContent         = USUARIOS.length;
+      document.getElementById("num-departamentos").textContent = Object.keys(deptos).length;
+    }
+    actualizarResumen();
+
+    // Rellena el select de departamentos
+    var deptoSet = {};
+    for (var i = 0; i < USUARIOS.length; i++) deptoSet[USUARIOS[i].departamento] = true;
+    var selectDepto = document.getElementById("filtro-departamento");
+    Object.keys(deptoSet).forEach(function(d) {
+      var opt = document.createElement("option");
+      opt.value = d; opt.textContent = d;
+      selectDepto.appendChild(opt);
+    });
+
+    // Busca un usuario por id
+    function buscarUsuario(id) {
+      for (var i = 0; i < USUARIOS.length; i++) {
+        if (USUARIOS[i].id === id) return USUARIOS[i];
+      }
+      return null;
+    }
+
+    // Abre el modal rellenado con los datos del profesor para editar
+    function editarProfesor(id) {
+      var u = buscarUsuario(id);
+      if (!u) return;
+
+      profesorEditandoId = id;
+
+      // Rellena los campos del formulario
+      document.getElementById("modal-nombre").value      = u.nombre;
+      document.getElementById("modal-apellidos").value   = u.apellidos;
+      document.getElementById("modal-correo").value      = u.correo;
+      document.getElementById("modal-departamento").value = u.departamento;
+      document.getElementById("modal-rol").value         = u.rol[0];
+
+      // Cambia el título y el botón del modal
+      document.getElementById("texto-titulo-profesor").textContent = "Editar Profesor";
+      document.getElementById("btn-guardar-profesor").innerHTML =
+        '<i class="bi bi-check-lg"></i> Guardar Cambios';
+      document.getElementById("modal-prof-error").style.display = "none";
+
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-nuevo-profesor")).show();
+    }
+
+    // Filtra usuarios y dibuja la tabla
+    function renderizarProfesores() {
+      var tbody    = document.getElementById("tabla-body");
+      var busqueda = document.getElementById("input-busqueda").value.trim().toLowerCase();
+      var depto    = document.getElementById("filtro-departamento").value;
+      var estado   = document.getElementById("filtro-estado").value;
+
+      var resultado = [];
+      for (var i = 0; i < USUARIOS.length; i++) {
+        var u = USUARIOS[i];
+        var nombre = (u.nombre + " " + u.apellidos).toLowerCase();
+        var okTexto  = !busqueda || nombre.indexOf(busqueda) !== -1 || u.correo.toLowerCase().indexOf(busqueda) !== -1 || u.departamento.toLowerCase().indexOf(busqueda) !== -1;
+        var okDepto  = !depto  || u.departamento === depto;
+        // Comparamos booleano con texto del select
+        var okEstado = !estado || (estado === "activo" && u.activo) || (estado === "inactivo" && !u.activo);
+        if (okTexto && okDepto && okEstado) resultado.push(u);
+      }
+
+      document.getElementById("contador-texto").textContent =
+        "Mostrando " + resultado.length + " de " + USUARIOS.length + " profesores";
+
+      if (resultado.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron profesores con esos filtros</td></tr>';
+        return;
+      }
+
+      var html = "";
+      for (var i = 0; i < resultado.length; i++) {
+        var u = resultado[i];
+
+        // Badges de rol
+        var badgesRol = "";
+        for (var j = 0; j < u.rol.length; j++) {
+          var r = u.rol[j];
+          var textoRol, claseRol;
+          if (r === "PROFESOR")              { textoRol = "Profesor";         claseRol = "badge-cerrada"; }
+          else if (r === "EQUIPO_DIRECTIVO") { textoRol = "Equipo Directivo"; claseRol = "badge-en-proceso"; }
+          else if (r === "ADMINISTRADOR")    { textoRol = "Administrador";    claseRol = "badge-tipo"; }
+          else                               { textoRol = r;                  claseRol = "badge-cerrada"; }
+          badgesRol += '<span class="badge-estado ' + claseRol + ' badge-rol">' + textoRol + '</span>';
+        }
+
+        // Badge de estado
+        var badgeEstado;
+        if (u.activo) {
+          badgeEstado = '<span class="badge-estado badge-cubierta"><i class="bi bi-circle-fill me-1 icono-status-mini"></i>Activo</span>';
+        } else {
+          badgeEstado = '<span class="badge-estado badge-cerrada"><i class="bi bi-circle me-1 icono-status-mini"></i>Inactivo</span>';
+        }
+
+        // Botón activar/desactivar
+        var clasePeligro = u.activo ? " peligro" : "";
+        var tituloBtn    = u.activo ? "Desactivar" : "Activar";
+        var iconoBtn     = u.activo ? "bi-person-slash" : "bi-person-check";
+
+        html += '<tr>' +
+                  '<td><div class="celda-profesor">' +
+                    '<img src="' + u.avatar + '" class="avatar-profesor" alt="">' +
+                    '<div><div class="profesor-nombre">' + u.nombre + ' ' + u.apellidos + '</div><div class="profesor-id">ID: ' + String(u.id).padStart(4, "0") + '</div></div>' +
+                  '</div></td>' +
+                  '<td class="celda-sm">' + u.correo + '</td>' +
+                  '<td><span class="badge-departamento">' + u.departamento + '</span></td>' +
+                  '<td>' + badgesRol + '</td>' +
+                  '<td>' + badgeEstado + '</td>' +
+                  '<td><div class="d-flex gap-1">' +
+                    '<button class="btn-accion" title="Editar profesor" onclick="editarProfesor(' + u.id + ')"><i class="bi bi-pencil"></i></button>' +
+                    '<button class="btn-accion' + clasePeligro + '" title="' + tituloBtn + '" onclick="toggleEstado(' + u.id + ')"><i class="bi ' + iconoBtn + '"></i></button>' +
+                  '</div></td>' +
+                '</tr>';
+      }
+      tbody.innerHTML = html;
+    }
+
+    // Alterna el estado activo/inactivo del usuario
+    function toggleEstado(id) {
+      var usuario = buscarUsuario(id);
+      if (!usuario) return;
+      var accion = usuario.activo ? "desactivar" : "activar";
+      if (!confirm("¿Quieres " + accion + " a " + usuario.nombre + " " + usuario.apellidos + "?")) return;
+      usuario.activo = !usuario.activo;
+      actualizarResumen();
+      renderizarProfesores();
+    }
+
+    // Resetea filtros
+    function limpiarFiltros() {
+      document.getElementById("input-busqueda").value      = "";
+      document.getElementById("filtro-departamento").value = "";
+      document.getElementById("filtro-estado").value       = "";
+      renderizarProfesores();
+    }
+
+    renderizarProfesores();
+
+    // Al abrir el modal en modo creación, limpia el formulario
+    document.getElementById("modal-nuevo-profesor").addEventListener("show.bs.modal", function() {
+      if (profesorEditandoId === null) {
+        document.getElementById("form-profesor").reset();
+        document.getElementById("modal-prof-error").style.display = "none";
+      }
+    });
+
+    // Al cerrar el modal, restaura el modo creación
+    document.getElementById("modal-nuevo-profesor").addEventListener("hidden.bs.modal", function() {
+      profesorEditandoId = null;
+      document.getElementById("texto-titulo-profesor").textContent = "Añadir Nuevo Profesor";
+      document.getElementById("btn-guardar-profesor").innerHTML =
+        '<i class="bi bi-check-lg"></i> Añadir Profesor';
+    });
+
+    // Guarda el profesor (crea nuevo o actualiza el existente)
+    function guardarProfesor(event) {
+      event.preventDefault();
+      var errorDiv = document.getElementById("modal-prof-error");
+      errorDiv.style.display = "none";
+
+      var nombre       = document.getElementById("modal-nombre").value.trim();
+      var apellidos    = document.getElementById("modal-apellidos").value.trim();
+      var correo       = document.getElementById("modal-correo").value.trim().toLowerCase();
+      var departamento = document.getElementById("modal-departamento").value;
+      var rol          = document.getElementById("modal-rol").value;
+
+      if (profesorEditandoId !== null) {
+        // Modo edición: actualiza el profesor existente
+        for (var i = 0; i < USUARIOS.length; i++) {
+          if (USUARIOS[i].id === profesorEditandoId) {
+            USUARIOS[i].nombre       = nombre;
+            USUARIOS[i].apellidos    = apellidos;
+            USUARIOS[i].correo       = correo;
+            USUARIOS[i].departamento = departamento;
+            USUARIOS[i].rol          = [rol];
+            break;
+          }
+        }
+        bootstrap.Modal.getInstance(document.getElementById("modal-nuevo-profesor")).hide();
+        actualizarResumen();
+        renderizarProfesores();
+        alert("Profesor " + nombre + " " + apellidos + " actualizado correctamente.");
+      } else {
+        // Modo creación: el correo no puede repetirse
+        for (var i = 0; i < USUARIOS.length; i++) {
+          if (USUARIOS[i].correo === correo) {
+            errorDiv.textContent = "Ya existe un usuario con ese correo electrónico.";
+            errorDiv.style.display = "block";
+            return;
+          }
+        }
+
+        var nuevoId = 0;
+        for (var i = 0; i < USUARIOS.length; i++) {
+          if (USUARIOS[i].id > nuevoId) nuevoId = USUARIOS[i].id;
+        }
+        nuevoId++;
+
+        var avatarUrl = "https://ui-avatars.com/api/?name=" + encodeURIComponent(nombre + "+" + apellidos) + "&background=dbeafe&color=1152d4&bold=true";
+        USUARIOS.push({
+          id: nuevoId, nombre: nombre, apellidos: apellidos, correo: correo,
+          password: "1234", // Contraseña por defecto
+          rol: [rol], departamento: departamento, activo: true, avatar: avatarUrl
+        });
+
+        bootstrap.Modal.getInstance(document.getElementById("modal-nuevo-profesor")).hide();
+        actualizarResumen();
+        renderizarProfesores();
+        alert("Profesor " + nombre + " " + apellidos + " añadido correctamente.");
+      }
+    }
+  </script>
+
+</body>
+</html>

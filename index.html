@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IES Río Arba — Acceso</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Google Fonts Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Estilos globales -->
+  <link rel="stylesheet" href="css/estilos.css">
+  <!-- Estilos login -->
+  <link rel="stylesheet" href="css/login.css">
+</head>
+
+<body>
+
+  <!-- Página de login centrada -->
+  <div class="pagina-login">
+    <div class="tarjeta-login">
+
+      <!-- Título -->
+      <h1 class="titulo-login">IES Río Arba</h1>
+      <p class="subtitulo-login">Accede con tu cuenta del centro</p>
+
+      <!-- Mensaje de error -->
+      <div class="mensaje-error" id="error-login">
+        <i class="bi bi-exclamation-circle me-1"></i>
+        <span></span>
+      </div>
+
+      <!-- Formulario de login -->
+      <form onsubmit="manejarLogin(event)">
+
+        <!-- Campo correo -->
+        <label class="etiqueta-campo" for="campo-correo">
+          Correo electrónico
+        </label>
+        <input
+          type="email"
+          id="campo-correo"
+          class="campo-input"
+          placeholder="nombre@iesrioarba.es"
+          required
+        >
+
+        <!-- Campo contraseña -->
+        <label class="etiqueta-campo" for="campo-password">
+          Contraseña
+        </label>
+        <input
+          type="password"
+          id="campo-password"
+          class="campo-input"
+          placeholder="••••••••"
+          required
+        >
+
+        <!-- Botón de envío -->
+        <button type="submit" class="btn-entrar">
+          Iniciar Sesión
+        </button>
+
+      </form>
+
+      <!-- Enlace de recuperar contraseña -->
+      <a href="pages/compartido/recuperar-cuenta.html" class="enlace-olvido">
+        ¿Has olvidado tu contraseña?
+      </a>
+
+    </div>
+  </div>
+
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Scripts: datos-prueba → auth -->
+  <script src="js/datos-prueba.js"></script>
+  <script src="js/auth.js"></script>
+
+  <script>
+    // Si hay sesión activa, redirige al panel
+    var usuarioYaLogueado = obtenerUsuarioActual();
+    if (usuarioYaLogueado) {
+      if (usuarioYaLogueado.rol.includes("ADMINISTRADOR")) {
+        window.location.href = "pages/admin/dashboard.html";
+      } else {
+        window.location.href = "pages/profesor/dashboard.html";
+      }
+    }
+
+    // Recoge los campos y llama a iniciarSesion()
+    function manejarLogin(event) {
+      event.preventDefault();
+      var correo = document.getElementById("campo-correo").value.trim();
+      var password = document.getElementById("campo-password").value;
+      var errorDiv = document.getElementById("error-login");
+      errorDiv.style.display = "none";
+      iniciarSesion(correo, password);
+    }
+
+    // Muestra el error en el div del login
+    function mostrarError(mensaje) {
+      var errorDiv = document.getElementById("error-login");
+      errorDiv.querySelector("span").textContent = mensaje;
+      errorDiv.style.display = "block";
+    }
+  </script>
+
+</body>
+</html>
