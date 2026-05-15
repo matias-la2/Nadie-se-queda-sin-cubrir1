@@ -38,7 +38,7 @@ app.use('/api/v1/reservas',     require('./routes/reservas.routes'));
 app.use('/api/v1/usuarios',     require('./routes/usuarios.routes'));
 app.use('/api/v1/clases',       require('./routes/clases.routes'));
 
-// ─── Health check ──��──────────────────────────────────��────
+// ─── Health check ─────────────────────────────────────────
 app.get('/api/v1/health', (req, res) => {
   res.json({ ok: true, mensaje: 'API funcionando', timestamp: new Date().toISOString() });
 });
@@ -46,7 +46,7 @@ app.get('/api/v1/health', (req, res) => {
 // ─── Manejador de errores global ───────────────────────────
 app.use(manejadorErrores);
 
-// ─── Arrancar servidor ───���─────────────────────────────────
+// ─── Arrancar servidor ────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
