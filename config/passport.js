@@ -1,6 +1,7 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const pool = require('./db');
+const { esMiembroDelGrupo } = require('../services/google-group.service');
 
 passport.use(new GoogleStrategy(
   {
@@ -15,6 +16,12 @@ passport.use(new GoogleStrategy(
       const nombre   = profile.name.givenName  || '';
       const apellidos = profile.name.familyName || '';
       const avatarUrl = profile.photos[0]?.value || null;
+
+      const perteneceAlGrupo = await esMiembroDelGrupo(correo);
+      if (!perteneceAlGrupo) {
+        console.warn(`[passport] Acceso denegado: ${correo} no pertenece al grupo`);
+        return done(null, false, { message: 'No tienes acceso al portal. Contacta con el administrador del centro.' });
+      }
 
       const [rows] = await pool.query(
         'SELECT id_usuario FROM usuario WHERE google_id = ?',
@@ -46,6 +53,11 @@ passport.use(new GoogleStrategy(
             [idUsuario, rolRows[0].id_rol]
           );
         }
+
+        await pool.query(
+          'INSERT IGNORE INTO profesor (id_usuario, departamento) VALUES (?, NULL)',
+          [idUsuario]
+        );
       }
 
       const [roles] = await pool.query(
@@ -55,6 +67,14 @@ passport.use(new GoogleStrategy(
          WHERE ur.id_usuario = ?`,
         [idUsuario]
       );
+
+      const [activoRows] = await pool.query(
+        'SELECT activo FROM usuario WHERE id_usuario = ?',
+        [idUsuario]
+      );
+      if (!activoRows[0]?.activo) {
+        return done(null, false, { message: 'Tu cuenta está desactivada. Contacta con el administrador.' });
+      }
 
       const usuario = {
         id: idUsuario,

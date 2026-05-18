@@ -1,79 +1,79 @@
-// Login simulado y control de sesión con localStorage
+var _usuarioCache = null;
 
-// Busca el usuario por correo y lo autentica
-function iniciarSesion(correo, password) {
-
-  // .find() recorre USUARIOS y devuelve el primero que tenga ese correo
-  var usuario = USUARIOS.find(function(u) {
-    return u.correo === correo;
-  });
-
-  if (!usuario) {
-    mostrarError("No existe ninguna cuenta con ese correo.");
-    return;
-  }
-
-  if (password !== "1234") {
-    mostrarError("Contraseña incorrecta. Usa: 1234");
-    return;
-  }
-
-  // Login correcto: guardamos el usuario en localStorage como texto JSON
-  localStorage.setItem("usuarioActual", JSON.stringify(usuario));
-
-  // Redirigimos según el rol
-  if (usuario.rol.includes("ADMINISTRADOR")) {
-    window.location.href = "pages/admin/dashboard.html";
-  } else {
-    window.location.href = "pages/profesor/dashboard.html";
-  }
-}
-
-
-// Borra la sesión y vuelve al login
-function cerrarSesion() {
-  localStorage.removeItem("usuarioActual");
-  window.location.href = "/index.html";
-}
-
-
-// Devuelve el objeto del usuario logueado o null si no hay sesión
 function obtenerUsuarioActual() {
-  var datos = localStorage.getItem("usuarioActual");
-  if (!datos) {
-    return null;
-  }
-  // JSON.parse convierte el texto guardado de vuelta a objeto
-  return JSON.parse(datos);
+  if (_usuarioCache) return Promise.resolve(_usuarioCache);
+
+  return fetch('/api/v1/auth/me', { credentials: 'include' })
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (data.ok && data.datos) {
+        _usuarioCache = data.datos;
+        return _usuarioCache;
+      }
+      return null;
+    })
+    .catch(function () { return null; });
 }
 
-
-// Redirige al login si no hay sesión activa
 function verificarSesion() {
-  var usuario = obtenerUsuarioActual();
-  if (!usuario) {
-    window.location.href = "../../index.html";
-  }
+  return obtenerUsuarioActual().then(function (usuario) {
+    if (!usuario) {
+      window.location.href = '/index.html';
+      return null;
+    }
+    return usuario;
+  });
 }
 
-
-// Comprueba si el usuario actual tiene un rol concreto
 function tieneRol(rolBuscado) {
-  var usuario = obtenerUsuarioActual();
-  if (!usuario) {
-    return false;
-  }
-  return usuario.rol.includes(rolBuscado);
+  if (!_usuarioCache || !_usuarioCache.roles) return false;
+  return _usuarioCache.roles.includes(rolBuscado);
 }
 
+function cerrarSesion() {
+  return fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'include' })
+    .finally(function () {
+      _usuarioCache = null;
+      window.location.href = '/index.html';
+    });
+}
 
-// Muestra el error en el formulario o en un alert si no hay div de error
-function mostrarError(mensaje) {
-  var elementoError = document.getElementById("error-login");
-  if (elementoError) {
-    elementoError.textContent = mensaje;
-    elementoError.style.display = "block";
-  } else {
-    alert(mensaje);
+function cerrarSesionDesde(rutaLogin) {
+  return fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'include' })
+    .finally(function () {
+      _usuarioCache = null;
+      window.location.href = rutaLogin;
+    });
+}
+
+function apiFetch(url, opciones) {
+  opciones = opciones || {};
+  opciones.credentials = 'include';
+  opciones.headers = opciones.headers || {};
+
+  if (opciones.body) {
+    opciones.headers['Content-Type'] = 'application/json';
+  }
+
+  return fetch(url, opciones).then(function (res) {
+    if (res.status === 401) {
+      _usuarioCache = null;
+      window.location.href = '/index.html';
+      return;
+    }
+    return res.json();
+  });
+}
+
+function mostrarError(mensaje, elementoId) {
+  var el = document.getElementById(elementoId || 'mensaje-error');
+  if (el) {
+    var span = el.querySelector('span');
+    if (span) {
+      span.textContent = mensaje;
+    } else {
+      el.textContent = mensaje;
+    }
+    el.style.display = 'block';
   }
 }
