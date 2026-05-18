@@ -41,16 +41,6 @@
 
           <form id="form-ausencia" onsubmit="enviarFormulario(event)">
 
-            <!-- Campo profesor, solo visible para admin y directivo -->
-            <div class="campo-grupo" id="grupo-profesor" style="display:none;">
-              <label for="campo-profesor">
-                Profesor <span class="obligatorio">*</span>
-              </label>
-              <select id="campo-profesor">
-                <option value="">Selecciona el profesor ausente...</option>
-              </select>
-            </div>
-
             <!-- Fecha y tramo -->
             <div class="row g-3">
               <div class="col-12 col-sm-6">
@@ -74,7 +64,6 @@
                     <option value="11:00-12:00">11:00 - 12:00</option>
                     <option value="12:00-13:00">12:00 - 13:00</option>
                     <option value="13:00-14:00">13:00 - 14:00</option>
-                    <option value="14:00-15:00">14:00 - 15:00</option>
                   </select>
                 </div>
               </div>
@@ -111,7 +100,6 @@
                 </div>
               </label>
 
-              <!-- Descripción de tarea, oculta hasta marcar el checkbox -->
               <div class="seccion-tarea" id="seccion-tarea">
                 <label for="campo-tarea" class="tarea-label">
                   Descripción de la tarea <span class="obligatorio">*</span>
@@ -124,28 +112,15 @@
               </div>
             </div>
 
-            <!-- Campo justificante -->
+            <!-- Espacios afectados -->
             <div class="campo-grupo">
-              <label for="campo-adjunto">
-                Adjuntar justificante <span class="label-opcional">(opcional)</span>
-              </label>
-              <input
-                type="file"
-                id="campo-adjunto"
-                class="campo-adjunto"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onchange="mostrarAdjunto(this)"
-              >
-              <p class="adjunto-info">Formatos admitidos: PDF, JPG, PNG. Tamaño máximo: 5 MB.</p>
-              <div class="adjunto-seleccionado" id="adjunto-seleccionado" style="display:none;">
-                <i class="bi bi-paperclip"></i>
-                <span id="adjunto-nombre"></span>
-                <button type="button" class="btn-quitar-adjunto" onclick="quitarAdjunto()">×</button>
-              </div>
+              <label>Espacios afectados <span class="label-opcional">(opcional)</span></label>
+              <p class="adjunto-info">Selecciona los espacios donde impartes clase en ese tramo.</p>
+              <div id="contenedor-espacios" class="grid-checkboxes"></div>
             </div>
 
             <!-- Botón enviar -->
-            <button type="submit" class="btn-enviar">
+            <button type="submit" class="btn-enviar" id="btn-enviar">
               <i class="bi bi-calendar-plus"></i>
               Guardar Ausencia
             </button>
@@ -175,55 +150,50 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="../../js/datos-prueba.js"></script>
   <script src="../../js/auth.js"></script>
   <script src="../../js/sidebar.js"></script>
 
   <script>
-    // Inicialización
-    verificarSesion();
-    crearSidebar("ausencias", "../../");
-    var usuario = obtenerUsuarioActual();
+    verificarSesion().then(function (usuario) {
+      if (!usuario) return;
 
-    // Fecha de hoy por defecto
-    var hoy = new Date();
-    var fechaHoy = hoy.getFullYear() + "-" +
-                   String(hoy.getMonth() + 1).padStart(2, "0") + "-" +
-                   String(hoy.getDate()).padStart(2, "0");
-    document.getElementById("campo-fecha").value = fechaHoy;
+      crearSidebar("ausencias", "../../");
 
-    // Admin y directivo pueden registrar ausencias en nombre de otros
-    var puedeRegistrarPorOtros = tieneRol("ADMINISTRADOR") || tieneRol("EQUIPO_DIRECTIVO");
+      var hoy = new Date();
+      document.getElementById("campo-fecha").value =
+        hoy.getFullYear() + "-" +
+        String(hoy.getMonth() + 1).padStart(2, "0") + "-" +
+        String(hoy.getDate()).padStart(2, "0");
 
-    if (puedeRegistrarPorOtros) {
-      document.getElementById("grupo-profesor").style.display = "block";
-      var selectProfesor = document.getElementById("campo-profesor");
-      for (var i = 0; i < USUARIOS.length; i++) {
-        var u = USUARIOS[i];
-        if (!u.rol.includes("ADMINISTRADOR")) {
-          var opt = document.createElement("option");
-          opt.value = u.id;
-          opt.textContent = u.nombre + " " + u.apellidos + " — " + u.departamento;
-          selectProfesor.appendChild(opt);
+      cargarEspacios();
+    });
+
+    function cargarEspacios() {
+      apiFetch('/api/v1/espacios?limit=100').then(function (data) {
+        var espacios = [];
+        if (data && data.datos) {
+          espacios = Array.isArray(data.datos) ? data.datos : (data.datos.registros || []);
         }
-      }
+
+        var contenedor = document.getElementById("contenedor-espacios");
+        if (espacios.length === 0) {
+          contenedor.innerHTML = '<span class="comentario-vacio">No hay espacios disponibles</span>';
+          return;
+        }
+
+        var html = "";
+        for (var i = 0; i < espacios.length; i++) {
+          var e = espacios[i];
+          var edificio = e.edificio_nombre ? " (" + e.edificio_nombre + ")" : "";
+          html += '<label class="checkbox-espacio">' +
+                    '<input type="checkbox" name="espacios" value="' + e.id_espacio + '">' +
+                    '<span>' + e.nombre + edificio + '</span>' +
+                  '</label>';
+        }
+        contenedor.innerHTML = html;
+      }).catch(function () {});
     }
 
-    // Muestra el nombre del archivo adjunto seleccionado
-    function mostrarAdjunto(input) {
-      if (!input.files || input.files.length === 0) return;
-      document.getElementById("adjunto-nombre").textContent = input.files[0].name;
-      document.getElementById("adjunto-seleccionado").style.display = "flex";
-    }
-
-    // Limpia el adjunto seleccionado
-    function quitarAdjunto() {
-      document.getElementById("campo-adjunto").value = "";
-      document.getElementById("adjunto-nombre").textContent = "";
-      document.getElementById("adjunto-seleccionado").style.display = "none";
-    }
-
-    // Muestra u oculta el campo de tarea según el checkbox
     function toggleTarea(checkbox) {
       var seccion = document.getElementById("seccion-tarea");
       if (checkbox.checked) {
@@ -234,7 +204,6 @@
       }
     }
 
-    // Muestra el error y hace scroll hasta él
     function mostrarError(mensaje) {
       var alerta = document.getElementById("alerta-error");
       document.getElementById("texto-error").textContent = mensaje;
@@ -242,71 +211,59 @@
       alerta.scrollIntoView({ behavior: "smooth", block: "center" });
     }
 
-    // Valida, crea la ausencia y redirige
     function enviarFormulario(event) {
       event.preventDefault();
       document.getElementById("alerta-error").style.display = "none";
 
-      var fecha      = document.getElementById("campo-fecha").value;
-      var tramo      = document.getElementById("campo-tramo").value;
+      var fecha = document.getElementById("campo-fecha").value;
+      var tramo = document.getElementById("campo-tramo").value;
       var comentario = document.getElementById("campo-comentario").value.trim();
-      var hayTarea   = document.getElementById("campo-hay-tarea").checked;
-      var tarea      = document.getElementById("campo-tarea").value.trim();
+      var hayTarea = document.getElementById("campo-hay-tarea").checked;
+      var tarea = document.getElementById("campo-tarea").value.trim();
 
       if (!fecha) { mostrarError("La fecha es obligatoria."); return; }
       if (!tramo) { mostrarError("Debes seleccionar un tramo horario."); return; }
       if (hayTarea && !tarea) { mostrarError("Has marcado que hay tarea. Por favor, descríbela."); return; }
 
-      // Validación del adjunto
-      var adjuntoInput = document.getElementById("campo-adjunto");
-      var adjunto = null;
-      if (adjuntoInput.files && adjuntoInput.files.length > 0) {
-        var archivo = adjuntoInput.files[0];
-        if (archivo.size > 5 * 1024 * 1024) {
-          mostrarError("El archivo no puede superar los 5 MB.");
-          return;
+      var espaciosChecked = document.querySelectorAll('input[name="espacios"]:checked');
+      var espaciosIds = [];
+      for (var i = 0; i < espaciosChecked.length; i++) {
+        espaciosIds.push(parseInt(espaciosChecked[i].value));
+      }
+
+      var cuerpo = {
+        fecha: fecha,
+        tramo_horario: tramo,
+        hay_tarea: hayTarea
+      };
+      if (comentario) cuerpo.comentario = comentario;
+      if (hayTarea && tarea) cuerpo.descripcion_tarea = tarea;
+      if (espaciosIds.length > 0) cuerpo.espacios = espaciosIds;
+
+      var btn = document.getElementById("btn-enviar");
+      btn.disabled = true;
+      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando...';
+
+      apiFetch('/api/v1/ausencias', {
+        method: 'POST',
+        body: JSON.stringify(cuerpo)
+      }).then(function (data) {
+        if (data && data.ok) {
+          if (tieneRol("ADMINISTRADOR")) {
+            window.location.href = "../../pages/admin/ausencias.html";
+          } else {
+            window.location.href = "../../pages/profesor/ausencias.html";
+          }
+        } else {
+          mostrarError((data && data.mensaje) || "Error al registrar la ausencia.");
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-calendar-plus"></i> Guardar Ausencia';
         }
-        adjunto = archivo.name;
-      }
-
-      // Admin/directivo usa el select; profesor normal usa su propio nombre
-      var profesorNombre, profesorDepartamento;
-      if (puedeRegistrarPorOtros) {
-        var profesorId  = parseInt(document.getElementById("campo-profesor").value);
-        var profesorObj = null;
-        for (var i = 0; i < USUARIOS.length; i++) {
-          if (USUARIOS[i].id === profesorId) { profesorObj = USUARIOS[i]; break; }
-        }
-        if (!profesorObj) { mostrarError("Debes seleccionar el profesor al que registrar la ausencia."); return; }
-        profesorNombre       = profesorObj.nombre + " " + profesorObj.apellidos;
-        profesorDepartamento = profesorObj.departamento;
-      } else {
-        profesorNombre       = usuario.nombre + " " + usuario.apellidos;
-        profesorDepartamento = usuario.departamento;
-      }
-
-      var nuevoId = 0;
-      for (var i = 0; i < AUSENCIAS.length; i++) {
-        if (AUSENCIAS[i].id > nuevoId) nuevoId = AUSENCIAS[i].id;
-      }
-      nuevoId++;
-
-      AUSENCIAS.push({
-        id: nuevoId, profesor: profesorNombre, departamento: profesorDepartamento,
-        fecha: fecha, tramo_horario: tramo, comentario: comentario,
-        estado: "PENDIENTE", // Toda ausencia nueva empieza como pendiente
-        hay_tarea: hayTarea, tarea_descripcion: hayTarea ? tarea : null,
-        creado_por: usuario.nombre + " " + usuario.apellidos,
-        adjunto: adjunto
+      }).catch(function () {
+        mostrarError("Error de conexión. Inténtalo de nuevo.");
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-calendar-plus"></i> Guardar Ausencia';
       });
-
-      alert("Ausencia registrada correctamente.");
-
-      if (tieneRol("ADMINISTRADOR")) {
-        window.location.href = "../../pages/admin/ausencias.html";
-      } else {
-        window.location.href = "../../pages/profesor/ausencias.html";
-      }
     }
   </script>
 
