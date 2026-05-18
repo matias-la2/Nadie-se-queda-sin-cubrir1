@@ -5,7 +5,11 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "lint": "eslint . --ext .js --ignore-pattern node_modules --ignore-pattern public/js/datos-prueba.js",
+    "lint:fix": "eslint . --ext .js --fix --ignore-pattern node_modules",
+    "format": "prettier --write \"**/*.{js,json,css,html}\"",
+    "test": "jest --detectOpenHandles --forceExit"
   },
   "dependencies": {
     "cookie-parser": "^1.4.6",
@@ -20,9 +24,14 @@
     "nodemailer": "^6.9.14",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
+    "express-rate-limit": "^7.4.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "nodemon": "^3.1.4"
+    "eslint": "^8.57.0",
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.4",
+    "prettier": "^3.3.0",
+    "supertest": "^6.3.4"
   }
 }
