@@ -9,20 +9,32 @@ function crearSidebar(paginaActiva, rutaBase) {
     var nombreCompleto = usuario.nombre + " " + usuario.apellidos;
     var esAdmin = usuario.roles.includes("ADMINISTRADOR");
     var esDirectivo = usuario.roles.includes("EQUIPO_DIRECTIVO");
+    var esConserje = usuario.roles.includes("CONSERJE") && !esAdmin && !esDirectivo;
     var esAdminODirectivo = esAdmin || esDirectivo;
 
-    var enlacesComunes = [
-      { pagina: "dashboard",   icono: "bi-house",           texto: "Dashboard",
-        href: esAdminODirectivo ? rutaBase + "pages/admin/dashboard.html"   : rutaBase + "pages/profesor/dashboard.html" },
-      { pagina: "incidencias", icono: "bi-exclamation-triangle", texto: "Incidencias",
-        href: esAdminODirectivo ? rutaBase + "pages/admin/incidencias.html" : rutaBase + "pages/profesor/incidencias.html" },
-      { pagina: "ausencias",   icono: "bi-calendar-x",      texto: "Ausencias",
-        href: esAdminODirectivo ? rutaBase + "pages/admin/ausencias.html"   : rutaBase + "pages/profesor/ausencias.html" },
-      { pagina: "guardias",    icono: "bi-shield-check",    texto: "Guardias",
-        href: esAdminODirectivo ? rutaBase + "pages/admin/guardias.html"    : rutaBase + "pages/profesor/guardias.html" },
-      { pagina: "reservas",    icono: "bi-calendar-check",  texto: "Reservas",
-        href: rutaBase + "pages/profesor/reservas.html" }
-    ];
+    var enlacesComunes;
+
+    if (esConserje) {
+      enlacesComunes = [
+        { pagina: "dashboard",   icono: "bi-house",               texto: "Dashboard",
+          href: rutaBase + "pages/profesor/dashboard.html" },
+        { pagina: "incidencias", icono: "bi-exclamation-triangle", texto: "Incidencias",
+          href: rutaBase + "pages/profesor/incidencias.html" }
+      ];
+    } else {
+      enlacesComunes = [
+        { pagina: "dashboard",   icono: "bi-house",           texto: "Dashboard",
+          href: esAdminODirectivo ? rutaBase + "pages/admin/dashboard.html"   : rutaBase + "pages/profesor/dashboard.html" },
+        { pagina: "incidencias", icono: "bi-exclamation-triangle", texto: "Incidencias",
+          href: esAdminODirectivo ? rutaBase + "pages/admin/incidencias.html" : rutaBase + "pages/profesor/incidencias.html" },
+        { pagina: "ausencias",   icono: "bi-calendar-x",      texto: "Ausencias",
+          href: esAdminODirectivo ? rutaBase + "pages/admin/ausencias.html"   : rutaBase + "pages/profesor/ausencias.html" },
+        { pagina: "guardias",    icono: "bi-shield-check",    texto: "Guardias",
+          href: esAdminODirectivo ? rutaBase + "pages/admin/guardias.html"    : rutaBase + "pages/profesor/guardias.html" },
+        { pagina: "reservas",    icono: "bi-calendar-check",  texto: "Reservas",
+          href: rutaBase + "pages/profesor/reservas.html" }
+      ];
+    }
 
     var enlacesAdmin = [
       { pagina: "profesores", icono: "bi-people",    texto: "Profesores",       href: rutaBase + "pages/admin/profesores.html" },

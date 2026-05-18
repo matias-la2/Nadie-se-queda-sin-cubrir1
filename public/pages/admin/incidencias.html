@@ -24,7 +24,7 @@
         <h1>Gestión de Incidencias</h1>
         <p>Administra y actualiza el estado de todas las incidencias del centro.</p>
       </div>
-      <a href="../compartido/nueva-incidencia.html" class="btn-primario">
+      <a href="../../pages/compartido/nueva-incidencia.html" class="btn-primario">
         <i class="bi bi-plus-lg"></i>
         Nueva Incidencia
       </a>
@@ -88,16 +88,15 @@
           class="input-busqueda"
           id="input-busqueda"
           placeholder="Buscar por título, espacio o creador..."
-          oninput="renderizarIncidencias()"
         >
-        <select class="select-filtro" id="filtro-estado" onchange="renderizarIncidencias()">
+        <select class="select-filtro" id="filtro-estado">
           <option value="">Todos los estados</option>
           <option value="ABIERTA">Pendiente</option>
           <option value="EN_PROCESO">En proceso</option>
           <option value="RESUELTA">Resuelta</option>
           <option value="CERRADA">Cerrada</option>
         </select>
-        <select class="select-filtro" id="filtro-tipo" onchange="renderizarIncidencias()">
+        <select class="select-filtro" id="filtro-tipo">
           <option value="">Todos los tipos</option>
           <option value="EQUIPAMIENTO">Equipamiento</option>
           <option value="INFRAESTRUCTURA">Infraestructura</option>
@@ -133,120 +132,135 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="../../js/datos-prueba.js"></script>
   <script src="../../js/auth.js"></script>
   <script src="../../js/sidebar.js"></script>
 
   <script>
-    // Inicialización
-    verificarSesion();
-    crearSidebar("incidencias", "../../");
+    var _paginaActual = 1;
 
-    // Tarjetas de resumen
-    function actualizarResumen() {
-      var ab = 0, pr = 0, re = 0;
-      for (var i = 0; i < INCIDENCIAS.length; i++) {
-        if (INCIDENCIAS[i].estado === "ABIERTA")     ab++;
-        else if (INCIDENCIAS[i].estado === "EN_PROCESO") pr++;
-        else if (INCIDENCIAS[i].estado === "RESUELTA")   re++;
-      }
-      document.getElementById("num-abiertas").textContent  = ab;
-      document.getElementById("num-proceso").textContent   = pr;
-      document.getElementById("num-resueltas").textContent = re;
-      document.getElementById("num-total").textContent     = INCIDENCIAS.length;
-    }
-    actualizarResumen();
+    verificarSesion().then(function (usuario) {
+      if (!usuario) return;
 
-    // Filtra y dibuja la tabla de incidencias
-    function renderizarIncidencias() {
-      var tbody    = document.getElementById("tabla-body");
-      var busqueda = document.getElementById("input-busqueda").value.trim().toLowerCase();
-      var estado   = document.getElementById("filtro-estado").value;
-      var tipo     = document.getElementById("filtro-tipo").value;
-
-      var resultado = [];
-      for (var i = 0; i < INCIDENCIAS.length; i++) {
-        var inc = INCIDENCIAS[i];
-        var okTexto  = !busqueda || inc.titulo.toLowerCase().indexOf(busqueda) !== -1 || inc.espacio.toLowerCase().indexOf(busqueda) !== -1 || inc.creador.toLowerCase().indexOf(busqueda) !== -1;
-        var okEstado = !estado || inc.estado === estado;
-        var okTipo   = !tipo   || inc.tipo   === tipo;
-        if (okTexto && okEstado && okTipo) resultado.push(inc);
-      }
-
-      document.getElementById("contador-texto").textContent =
-        "Mostrando " + resultado.length + " de " + INCIDENCIAS.length + " incidencias";
-
-      if (resultado.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron incidencias con esos filtros</td></tr>';
-        return;
-      }
-
-      var html = "";
-      for (var i = 0; i < resultado.length; i++) {
-        var inc = resultado[i];
-        var partes = inc.fecha.split("-");
-        var fecha  = partes[2] + "/" + partes[1] + "/" + partes[0];
-
-        // Badge de estado
-        var claseBadge;
-        if (inc.estado === "ABIERTA")       claseBadge = "badge-pendiente";
-        else if (inc.estado === "EN_PROCESO") claseBadge = "badge-en-proceso";
-        else if (inc.estado === "RESUELTA")  claseBadge = "badge-resuelta";
-        else                                  claseBadge = "badge-cerrada";
-
-        // Texto del tipo
-        var textoTipo;
-        if (inc.tipo === "EQUIPAMIENTO")      textoTipo = "Equipamiento";
-        else if (inc.tipo === "INFRAESTRUCTURA") textoTipo = "Infraestructura";
-        else if (inc.tipo === "SOFTWARE")        textoTipo = "Software";
-        else                                      textoTipo = inc.tipo;
-
-        // Select inline de cambio de estado
-        var estados = ["ABIERTA", "EN_PROCESO", "RESUELTA", "CERRADA"];
-        var textos  = ["Pendiente", "En proceso", "Resuelta", "Cerrada"];
-        var opcionesEstado = "";
-        for (var j = 0; j < estados.length; j++) {
-          opcionesEstado += '<option value="' + estados[j] + '"' + (inc.estado === estados[j] ? " selected" : "") + '>' + textos[j] + '</option>';
-        }
-
-        html += '<tr>' +
-                  '<td><div class="inc-titulo-tabla">' + inc.titulo + '</div><div class="texto-secundario-celda">' + inc.espacio + '</div></td>' +
-                  '<td class="celda-sm">' + inc.creador + '</td>' +
-                  '<td class="celda-fecha-gris">' + fecha + '</td>' +
-                  '<td><span class="badge-tipo">' + textoTipo + '</span></td>' +
-                  '<td><select class="select-filtro select-estado-inline" onchange="cambiarEstado(' + inc.id + ', this.value)">' + opcionesEstado + '</select></td>' +
-                  '<td><div class="d-flex gap-1">' +
-                    '<a href="../compartido/detalle-incidencia.html?id=' + inc.id + '" class="btn-accion" title="Ver detalle"><i class="bi bi-eye"></i></a>' +
-                    '<button class="btn-accion peligro" title="Eliminar" onclick="eliminarIncidencia(' + inc.id + ')"><i class="bi bi-trash"></i></button>' +
-                  '</div></td>' +
-                '</tr>';
-      }
-      tbody.innerHTML = html;
-    }
-
-    // Cambia el estado y refresca tarjetas
-    function cambiarEstado(id, nuevoEstado) {
-      for (var i = 0; i < INCIDENCIAS.length; i++) {
-        if (INCIDENCIAS[i].id === id) {
-          INCIDENCIAS[i].estado = nuevoEstado;
-          break;
-        }
-      }
+      crearSidebar("incidencias", "../../");
       actualizarResumen();
-      renderizarIncidencias();
+      cargarIncidencias();
+
+      document.getElementById("filtro-estado").addEventListener("change", function () { _paginaActual = 1; cargarIncidencias(); });
+      document.getElementById("filtro-tipo").addEventListener("change", function () { _paginaActual = 1; cargarIncidencias(); });
+
+      var timerBusqueda;
+      document.getElementById("input-busqueda").addEventListener("input", function () {
+        clearTimeout(timerBusqueda);
+        timerBusqueda = setTimeout(function () { _paginaActual = 1; cargarIncidencias(); }, 300);
+      });
+    });
+
+    function actualizarResumen() {
+      apiFetch('/api/v1/incidencias?estado=ABIERTA&limit=1').then(function (d) {
+        document.getElementById("num-abiertas").textContent = (d && d.datos && d.datos.paginacion) ? d.datos.paginacion.total : 0;
+      }).catch(function () { document.getElementById("num-abiertas").textContent = "0"; });
+
+      apiFetch('/api/v1/incidencias?estado=EN_PROCESO&limit=1').then(function (d) {
+        document.getElementById("num-proceso").textContent = (d && d.datos && d.datos.paginacion) ? d.datos.paginacion.total : 0;
+      }).catch(function () { document.getElementById("num-proceso").textContent = "0"; });
+
+      apiFetch('/api/v1/incidencias?estado=RESUELTA&limit=1').then(function (d) {
+        document.getElementById("num-resueltas").textContent = (d && d.datos && d.datos.paginacion) ? d.datos.paginacion.total : 0;
+      }).catch(function () { document.getElementById("num-resueltas").textContent = "0"; });
+
+      apiFetch('/api/v1/incidencias?limit=1').then(function (d) {
+        document.getElementById("num-total").textContent = (d && d.datos && d.datos.paginacion) ? d.datos.paginacion.total : 0;
+      }).catch(function () { document.getElementById("num-total").textContent = "0"; });
     }
 
-    // Elimina la incidencia del array
+    function cargarIncidencias() {
+      var estado = document.getElementById("filtro-estado").value;
+      var tipo = document.getElementById("filtro-tipo").value;
+      var busqueda = document.getElementById("input-busqueda").value.trim();
+
+      var url = '/api/v1/incidencias?limit=20&page=' + _paginaActual;
+      if (estado) url += '&estado=' + encodeURIComponent(estado);
+      if (tipo) url += '&tipo=' + encodeURIComponent(tipo);
+      if (busqueda) url += '&busqueda=' + encodeURIComponent(busqueda);
+
+      apiFetch(url).then(function (data) {
+        var tbody = document.getElementById("tabla-body");
+        var filas = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
+        var pag = (data && data.datos && data.datos.paginacion) ? data.datos.paginacion : { total: 0 };
+
+        document.getElementById("contador-texto").textContent =
+          "Mostrando " + filas.length + " de " + pag.total + " incidencias";
+
+        if (filas.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron incidencias</td></tr>';
+          return;
+        }
+
+        var html = "";
+        for (var i = 0; i < filas.length; i++) {
+          var inc = filas[i];
+          var partes = inc.fecha.split("-");
+          var fecha = partes[2] + "/" + partes[1] + "/" + partes[0];
+
+          var claseBadge;
+          if (inc.estado === "ABIERTA") claseBadge = "badge-pendiente";
+          else if (inc.estado === "EN_PROCESO") claseBadge = "badge-en-proceso";
+          else if (inc.estado === "RESUELTA") claseBadge = "badge-resuelta";
+          else claseBadge = "badge-cerrada";
+
+          var textoTipo;
+          if (inc.tipo === "EQUIPAMIENTO") textoTipo = "Equipamiento";
+          else if (inc.tipo === "INFRAESTRUCTURA") textoTipo = "Infraestructura";
+          else if (inc.tipo === "SOFTWARE") textoTipo = "Software";
+          else textoTipo = inc.tipo;
+
+          var estados = ["ABIERTA", "EN_PROCESO", "RESUELTA", "CERRADA"];
+          var textos = ["Pendiente", "En proceso", "Resuelta", "Cerrada"];
+          var opcionesEstado = "";
+          for (var j = 0; j < estados.length; j++) {
+            opcionesEstado += '<option value="' + estados[j] + '"' + (inc.estado === estados[j] ? " selected" : "") + '>' + textos[j] + '</option>';
+          }
+
+          var espacio = inc.espacio_nombre || "—";
+          var creador = inc.creador_nombre || "—";
+
+          html += '<tr>' +
+                    '<td><div class="inc-titulo-tabla">' + inc.titulo + '</div><div class="texto-secundario-celda">' + espacio + '</div></td>' +
+                    '<td class="celda-sm">' + creador + '</td>' +
+                    '<td class="celda-fecha-gris">' + fecha + '</td>' +
+                    '<td><span class="badge-tipo">' + textoTipo + '</span></td>' +
+                    '<td><select class="select-filtro select-estado-inline" onchange="cambiarEstado(' + inc.id_incidencia + ', this.value)">' + opcionesEstado + '</select></td>' +
+                    '<td><div class="d-flex gap-1">' +
+                      '<a href="../../pages/compartido/detalle-incidencia.html?id=' + inc.id_incidencia + '" class="btn-accion" title="Ver detalle"><i class="bi bi-eye"></i></a>' +
+                      '<button class="btn-accion peligro" title="Eliminar" onclick="eliminarIncidencia(' + inc.id_incidencia + ')"><i class="bi bi-trash"></i></button>' +
+                    '</div></td>' +
+                  '</tr>';
+        }
+        tbody.innerHTML = html;
+      }).catch(function () {
+        document.getElementById("tabla-body").innerHTML =
+          '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron incidencias</td></tr>';
+        document.getElementById("contador-texto").textContent = "Mostrando 0 incidencias";
+      });
+    }
+
+    function cambiarEstado(id, nuevoEstado) {
+      apiFetch('/api/v1/incidencias/' + id + '/estado', {
+        method: 'PATCH',
+        body: JSON.stringify({ estado: nuevoEstado })
+      }).then(function () {
+        actualizarResumen();
+        cargarIncidencias();
+      });
+    }
+
     function eliminarIncidencia(id) {
       if (!confirm("¿Eliminar esta incidencia definitivamente?")) return;
-      for (var i = 0; i < INCIDENCIAS.length; i++) {
-        if (INCIDENCIAS[i].id === id) { INCIDENCIAS.splice(i, 1); break; }
-      }
-      actualizarResumen();
-      renderizarIncidencias();
+      apiFetch('/api/v1/incidencias/' + id, { method: 'DELETE' }).then(function () {
+        actualizarResumen();
+        cargarIncidencias();
+      });
     }
-
-    renderizarIncidencias();
   </script>
 
 </body>

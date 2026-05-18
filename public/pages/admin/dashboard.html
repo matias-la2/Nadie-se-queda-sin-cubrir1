@@ -134,122 +134,151 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="../../js/datos-prueba.js"></script>
   <script src="../../js/auth.js"></script>
   <script src="../../js/sidebar.js"></script>
 
   <script>
-    // Inicialización
-    verificarSesion();
-    crearSidebar("dashboard", "../../");
-    var usuario = obtenerUsuarioActual();
-    document.getElementById("saludo").textContent =
-      "Bienvenido/a, " + usuario.nombre + " — Panel de Administración";
+    verificarSesion().then(function (usuario) {
+      if (!usuario) return;
 
-    var hoy = new Date();
-    var fechaHoy = hoy.getFullYear() + "-" +
-                   String(hoy.getMonth() + 1).padStart(2, "0") + "-" +
-                   String(hoy.getDate()).padStart(2, "0");
+      crearSidebar("dashboard", "../../");
+      document.getElementById("saludo").textContent =
+        "Bienvenido/a, " + usuario.nombre + " — Panel de Administración";
 
-    // Tarjeta 1: incidencias activas
-    var numInc = 0;
-    for (var i = 0; i < INCIDENCIAS.length; i++) {
-      if (INCIDENCIAS[i].estado === "ABIERTA" || INCIDENCIAS[i].estado === "EN_PROCESO") numInc++;
-    }
-    document.getElementById("num-incidencias").textContent = numInc;
+      var esAdmin = usuario.roles.includes("ADMINISTRADOR");
 
-    // Tarjeta 2: ausencias de hoy (o pendientes si los datos de prueba no tienen fecha de hoy)
-    var ausHoy = 0, ausPend = 0;
-    for (var i = 0; i < AUSENCIAS.length; i++) {
-      if (AUSENCIAS[i].fecha === fechaHoy) ausHoy++;
-      if (AUSENCIAS[i].estado === "PENDIENTE") ausPend++;
-    }
-    document.getElementById("num-ausencias").textContent = ausHoy > 0 ? ausHoy : ausPend;
+      // Tarjeta incidencias activas (ABIERTA + EN_PROCESO)
+      Promise.all([
+        apiFetch('/api/v1/incidencias?estado=ABIERTA&limit=1'),
+        apiFetch('/api/v1/incidencias?estado=EN_PROCESO&limit=1')
+      ]).then(function (res) {
+        var abiertas = (res[0] && res[0].datos && res[0].datos.paginacion) ? res[0].datos.paginacion.total : 0;
+        var enProceso = (res[1] && res[1].datos && res[1].datos.paginacion) ? res[1].datos.paginacion.total : 0;
+        document.getElementById("num-incidencias").textContent = abiertas + enProceso;
+      }).catch(function () {
+        document.getElementById("num-incidencias").textContent = "0";
+      });
 
-    // Tarjeta 3: total de reservas
-    document.getElementById("num-reservas").textContent = RESERVAS.length;
+      // Tarjeta ausencias pendientes
+      apiFetch('/api/v1/ausencias?estado=PENDIENTE&limit=1').then(function (data) {
+        var total = (data && data.datos && data.datos.paginacion) ? data.datos.paginacion.total : 0;
+        document.getElementById("num-ausencias").textContent = total;
+      }).catch(function () {
+        document.getElementById("num-ausencias").textContent = "0";
+      });
 
-    // Tarjeta 4: profesores activos
-    var numProf = 0;
-    for (var i = 0; i < USUARIOS.length; i++) {
-      if (USUARIOS[i].activo) numProf++;
-    }
-    document.getElementById("num-profesores").textContent = numProf;
+      // Tarjeta reservas
+      apiFetch('/api/v1/reservas?limit=1').then(function (data) {
+        var total = (data && data.datos && data.datos.paginacion) ? data.datos.paginacion.total : 0;
+        document.getElementById("num-reservas").textContent = total;
+      }).catch(function () {
+        document.getElementById("num-reservas").textContent = "0";
+      });
 
-    // Tabla: últimas 4 incidencias ordenadas por id descendente
-    var recientes = INCIDENCIAS.slice().sort(function(a, b) { return b.id - a.id; }).slice(0, 4);
-    var tbody = document.getElementById("tabla-incidencias-body");
+      // Tarjeta profesores activos (solo admin)
+      if (esAdmin) {
+        apiFetch('/api/v1/usuarios?rol=PROFESOR&activo=true&limit=1').then(function (data) {
+          var total = (data && data.datos && data.datos.paginacion) ? data.datos.paginacion.total : 0;
+          document.getElementById("num-profesores").textContent = total;
+        }).catch(function () {
+          document.getElementById("num-profesores").textContent = "0";
+        });
+      } else {
+        document.getElementById("num-profesores").textContent = "—";
+      }
 
-    if (recientes.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" class="sin-incidencias">Sin incidencias</td></tr>';
-    } else {
-      var html = "";
-      for (var i = 0; i < recientes.length; i++) {
-        var inc = recientes[i];
-        var partes = inc.fecha.split("-");
-        var fechaMostrar = partes[2] + "/" + partes[1];
+      // Tabla incidencias recientes
+      apiFetch('/api/v1/incidencias?limit=4').then(function (data) {
+        var tbody = document.getElementById("tabla-incidencias-body");
+        var filas = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
 
-        var claseBadge, textoEstado;
-        if (inc.estado === "ABIERTA") {
-          claseBadge = "badge-pendiente"; textoEstado = "Pendiente";
-        } else if (inc.estado === "EN_PROCESO") {
-          claseBadge = "badge-en-proceso"; textoEstado = "En proceso";
-        } else if (inc.estado === "RESUELTA") {
-          claseBadge = "badge-resuelta"; textoEstado = "Resuelta";
-        } else {
-          claseBadge = "badge-cerrada"; textoEstado = "Cerrada";
+        if (filas.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="sin-incidencias">Sin datos</td></tr>';
+          return;
         }
 
-        html += '<tr>' +
-                  '<td><div class="inc-titulo">' + inc.titulo + '</div><div class="texto-secundario-celda">' + inc.espacio + '</div></td>' +
-                  '<td class="celda-sm">' + inc.creador.split(" ")[0] + '</td>' +
-                  '<td><span class="badge-estado ' + claseBadge + '">' + textoEstado + '</span></td>' +
-                  '<td class="celda-fecha-gris">' + fechaMostrar + '</td>' +
-                '</tr>';
-      }
-      tbody.innerHTML = html;
-    }
+        var html = "";
+        for (var i = 0; i < filas.length; i++) {
+          var inc = filas[i];
+          var partes = inc.fecha.split("-");
+          var fechaMostrar = partes[2] + "/" + partes[1];
 
-    // Coberturas de hoy (o pendientes si no hay datos de hoy)
-    var contenedorCoberturas = document.getElementById("lista-coberturas");
-    var guardiasHoy = [];
-    for (var i = 0; i < GUARDIAS_ASIGNADAS.length; i++) {
-      if (GUARDIAS_ASIGNADAS[i].fecha === fechaHoy) guardiasHoy.push(GUARDIAS_ASIGNADAS[i]);
-    }
-    var coberturasAMostrar = guardiasHoy;
-    if (guardiasHoy.length === 0) {
-      for (var i = 0; i < GUARDIAS_ASIGNADAS.length; i++) {
-        if (GUARDIAS_ASIGNADAS[i].estado === "PENDIENTE") coberturasAMostrar.push(GUARDIAS_ASIGNADAS[i]);
-      }
-    }
+          var claseBadge, textoEstado;
+          if (inc.estado === "ABIERTA") {
+            claseBadge = "badge-pendiente"; textoEstado = "Pendiente";
+          } else if (inc.estado === "EN_PROCESO") {
+            claseBadge = "badge-en-proceso"; textoEstado = "En proceso";
+          } else if (inc.estado === "RESUELTA") {
+            claseBadge = "badge-resuelta"; textoEstado = "Resuelta";
+          } else {
+            claseBadge = "badge-cerrada"; textoEstado = "Cerrada";
+          }
 
-    if (coberturasAMostrar.length === 0) {
-      contenedorCoberturas.innerHTML =
-        '<div class="coberturas-vacias">' +
-          '<i class="bi bi-shield-check coberturas-vacias-icono"></i>' +
-          'Sin coberturas pendientes hoy' +
-        '</div>';
-    } else {
-      var htmlCob = "";
-      for (var i = 0; i < coberturasAMostrar.length; i++) {
-        var g = coberturasAMostrar[i];
-        var claseIcono, iconoClass;
-        if (g.estado === "REALIZADA") {
-          claseIcono = "cobertura-icono-realizada"; iconoClass = "bi-check-circle";
-        } else {
-          claseIcono = "cobertura-icono-pendiente"; iconoClass = "bi-shield-check";
+          var espacio = inc.espacio_nombre || "—";
+          var creador = inc.creador_nombre || "—";
+
+          html += '<tr>' +
+                    '<td><div class="inc-titulo">' + inc.titulo + '</div><div class="texto-secundario-celda">' + espacio + '</div></td>' +
+                    '<td class="celda-sm">' + creador + '</td>' +
+                    '<td><span class="badge-estado ' + claseBadge + '">' + textoEstado + '</span></td>' +
+                    '<td class="celda-fecha-gris">' + fechaMostrar + '</td>' +
+                  '</tr>';
         }
-        htmlCob += '<div class="tarjeta-cobertura">' +
-                     '<div class="cobertura-icono ' + claseIcono + '"><i class="bi ' + iconoClass + '"></i></div>' +
-                     '<div class="cobertura-info">' +
-                       '<div><span class="cobertura-clase">' + g.clase + '</span><span class="cobertura-tramo">' + g.tramo + '</span></div>' +
-                       '<div class="cobertura-sustituto"><i class="bi bi-person-check me-1"></i>' + g.profesor_sustituto + '</div>' +
-                       '<div class="cobertura-ausente"><i class="bi bi-person-x me-1"></i>Ausente: ' + g.profesor_ausente.split(" ")[0] + ' ' + g.profesor_ausente.split(" ")[1] + '</div>' +
-                     '</div>' +
-                   '</div>';
-      }
-      contenedorCoberturas.innerHTML = htmlCob;
-    }
+        tbody.innerHTML = html;
+      }).catch(function () {
+        document.getElementById("tabla-incidencias-body").innerHTML =
+          '<tr><td colspan="4" class="sin-incidencias">Sin datos</td></tr>';
+      });
+
+      // Coberturas de hoy
+      var contenedorCoberturas = document.getElementById("lista-coberturas");
+      apiFetch('/api/v1/guardias/hoy').then(function (data) {
+        var info = (data && data.datos) ? data.datos : {};
+        var asignadas = info.asignadas || [];
+
+        if (asignadas.length === 0) {
+          contenedorCoberturas.innerHTML =
+            '<div class="coberturas-vacias">' +
+              '<i class="bi bi-shield-check coberturas-vacias-icono"></i>' +
+              'Sin coberturas pendientes hoy' +
+            '</div>';
+          return;
+        }
+
+        var htmlCob = "";
+        for (var i = 0; i < asignadas.length; i++) {
+          var g = asignadas[i];
+          var claseIcono = "cobertura-icono-pendiente";
+          var iconoClass = "bi-shield-check";
+
+          if (g.estado === "REALIZADA") {
+            claseIcono = "cobertura-icono-realizada";
+            iconoClass = "bi-check-circle";
+          }
+
+          var clase = g.clase || g.curso || "—";
+          var tramo = g.tramo_horario || g.tramo || "";
+          var sustituto = g.profesor_sustituto || g.sustituto_nombre || "—";
+          var ausente = g.profesor_ausente || g.ausente_nombre || "—";
+
+          htmlCob += '<div class="tarjeta-cobertura">' +
+                       '<div class="cobertura-icono ' + claseIcono + '"><i class="bi ' + iconoClass + '"></i></div>' +
+                       '<div class="cobertura-info">' +
+                         '<div><span class="cobertura-clase">' + clase + '</span><span class="cobertura-tramo">' + tramo + '</span></div>' +
+                         '<div class="cobertura-sustituto"><i class="bi bi-person-check me-1"></i>' + sustituto + '</div>' +
+                         '<div class="cobertura-ausente"><i class="bi bi-person-x me-1"></i>Ausente: ' + ausente + '</div>' +
+                       '</div>' +
+                     '</div>';
+        }
+        contenedorCoberturas.innerHTML = htmlCob;
+      }).catch(function () {
+        contenedorCoberturas.innerHTML =
+          '<div class="coberturas-vacias">' +
+            '<i class="bi bi-shield-check coberturas-vacias-icono"></i>' +
+            'Sin coberturas pendientes hoy' +
+          '</div>';
+      });
+    });
   </script>
 
 </body>

@@ -9,7 +9,8 @@ SET NAMES utf8mb4;
 INSERT INTO rol (nombre_rol) VALUES
   ('PROFESOR'),
   ('EQUIPO_DIRECTIVO'),
-  ('ADMINISTRADOR');
+  ('ADMINISTRADOR'),
+  ('CONSERJE');
 
 -- ─── Edificios ─────────────────────────────────────────────
 INSERT INTO edificio (nombre, piso) VALUES

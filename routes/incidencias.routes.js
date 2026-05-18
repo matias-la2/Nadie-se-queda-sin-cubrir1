@@ -26,7 +26,7 @@ router.put('/:id',
 );
 
 router.patch('/:id/estado',
-  requiereRol('EQUIPO_DIRECTIVO', 'ADMINISTRADOR'),
+  requiereRol('EQUIPO_DIRECTIVO', 'ADMINISTRADOR', 'CONSERJE'),
   validar(cambiarEstadoSchema),
   registrarAccion('CAMBIAR_ESTADO_INCIDENCIA', 'incidencia'),
   controller.cambiarEstado

@@ -33,9 +33,15 @@ async function listar(req, res, next) {
       params.push(`%${req.query.busqueda}%`, `%${req.query.busqueda}%`);
     }
 
-    const esProfesor = req.usuario.roles.length === 1 && req.usuario.roles[0] === 'PROFESOR';
+    const rolesUsuario = req.usuario.roles;
+    const esProfesor = rolesUsuario.length === 1 && rolesUsuario[0] === 'PROFESOR';
+    const esConserje = rolesUsuario.length === 1 && rolesUsuario[0] === 'CONSERJE';
+
     if (esProfesor) {
       where.push('i.id_usuario_creador = ?');
+      params.push(req.usuario.id);
+    } else if (esConserje) {
+      where.push('i.id_equipo_directivo = ?');
       params.push(req.usuario.id);
     }
 

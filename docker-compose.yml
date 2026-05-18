@@ -1,0 +1,44 @@
+# Portal IES Río Arba - Docker Compose
+# Uso: cp .env.example .env (rellenar valores) → docker compose up -d
+# La BD se crea automáticamente con schema.sql y seed.sql en el primer arranque
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: portal_ies_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: portal_ies
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: portal_ies_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+    volumes:
+      - ./service-account.json:/app/service-account.json:ro
+
+volumes:
+  db_data:
