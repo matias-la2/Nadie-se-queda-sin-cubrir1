@@ -14,13 +14,11 @@
 
 <body>
 
-  <!-- Sidebar inyectado por sidebar.js -->
   <div id="sidebar-container"></div>
 
-  <!-- Contenido principal -->
   <main class="contenido-principal">
 
-    <!-- Cabecera de la página -->
+    <!-- Cabecera -->
     <div class="pagina-header">
       <h1 id="saludo">¡Hola!</h1>
       <p>Bienvenido/a a tu panel de control para hoy.</p>
@@ -29,75 +27,94 @@
     <!-- Tarjetas de resumen -->
     <div class="row g-3 mb-4">
 
-      <!-- Siguiente guardia -->
-      <div class="col-12 col-md-4">
+      <div class="col-6 col-md-3">
         <div class="tarjeta-resumen">
           <div class="icono-circulo icono-sig-guardia">
             <i class="bi bi-shield-check"></i>
           </div>
           <div>
-            <div class="etiqueta">Siguiente Guardia</div>
-            <div class="numero num-siguiente" id="siguiente-guardia">—</div>
+            <div class="etiqueta">Guardias hoy</div>
+            <div class="numero" id="num-guardias-hoy">0</div>
           </div>
         </div>
       </div>
 
-      <!-- Incidencias activas -->
-      <div class="col-12 col-md-4">
+      <div class="col-6 col-md-3">
         <div class="tarjeta-resumen">
           <div class="icono-circulo icono-inc-activas">
             <i class="bi bi-exclamation-triangle"></i>
           </div>
           <div>
-            <div class="etiqueta">Incidencias Activas</div>
+            <div class="etiqueta">Mis incidencias</div>
             <div class="numero" id="num-incidencias">0</div>
           </div>
         </div>
       </div>
 
-      <!-- Guardias pendientes -->
-      <div class="col-12 col-md-4">
+      <div class="col-6 col-md-3">
         <div class="tarjeta-resumen">
           <div class="icono-circulo icono-guard-pend">
-            <i class="bi bi-bell"></i>
+            <i class="bi bi-calendar-check"></i>
           </div>
           <div>
-            <div class="etiqueta">Guardias Pendientes</div>
-            <div class="numero" id="num-guardias">0</div>
+            <div class="etiqueta">Mis reservas</div>
+            <div class="numero" id="num-reservas">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-guard-pend">
+            <i class="bi bi-calendar-x"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Mis ausencias</div>
+            <div class="numero" id="num-ausencias">0</div>
           </div>
         </div>
       </div>
 
     </div>
 
-    <!-- Tabla de próximas guardias -->
-    <div class="tarjeta">
+    <!-- Fila inferior -->
+    <div class="row g-3">
 
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="tarjeta-titulo mb-0">Próximas Guardias y Tareas</h2>
-        <a href="guardias.html" class="btn-secundario btn-ver-todo">
-          Ver todo
-          <i class="bi bi-arrow-right"></i>
-        </a>
+      <!-- Mis guardias de hoy -->
+      <div class="col-12 col-md-5">
+        <div class="tarjeta tarjeta-altura-completa">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="tarjeta-titulo mb-0">Mis guardias de hoy</h2>
+            <a href="guardias.html" class="btn-secundario btn-ver-todo">
+              Ver todo <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+          <div id="lista-guardias-hoy"></div>
+        </div>
       </div>
 
-      <div class="tabla-responsive">
-        <table class="tabla-datos">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Hora</th>
-              <th>Lugar / Clase</th>
-              <th>Tipo</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-guardias-body">
-            <tr>
-              <td colspan="5" class="celda-cargando">Cargando...</td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Incidencias recientes -->
+      <div class="col-12 col-md-7">
+        <div class="tarjeta tarjeta-altura-completa">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="tarjeta-titulo mb-0">Incidencias recientes</h2>
+            <a href="incidencias.html" class="btn-secundario btn-ver-todo">
+              Ver todas <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+          <div class="tabla-responsive">
+            <table class="tabla-datos">
+              <thead>
+                <tr>
+                  <th>Incidencia</th>
+                  <th>Estado</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-incidencias-body"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -105,83 +122,123 @@
   </main>
 
 
-  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Scripts en orden de dependencia: datos → auth → sidebar -->
-  <script src="../../js/datos-prueba.js"></script>
   <script src="../../js/auth.js"></script>
   <script src="../../js/sidebar.js"></script>
 
   <script>
-    // Inicialización
-    verificarSesion();
-    crearSidebar("dashboard", "../../");
-    var usuario = obtenerUsuarioActual();
-    var nombreCompleto = usuario.nombre + " " + usuario.apellidos;
+    verificarSesion().then(function (usuario) {
+      if (!usuario) return;
 
-    document.getElementById("saludo").textContent = "¡Hola, " + usuario.nombre + "!";
+      crearSidebar("dashboard", "../../");
+      document.getElementById("saludo").textContent = "Bienvenido/a, " + usuario.nombre;
 
-    // Incidencias activas del usuario
-    var numInc = 0;
-    for (var i = 0; i < INCIDENCIAS.length; i++) {
-      var inc = INCIDENCIAS[i];
-      if (inc.creador === nombreCompleto && (inc.estado === "ABIERTA" || inc.estado === "EN_PROCESO")) numInc++;
-    }
-    document.getElementById("num-incidencias").textContent = numInc;
+      // Tarjeta incidencias
+      apiFetch('/api/v1/incidencias?limit=1').then(function (data) {
+        document.getElementById("num-incidencias").textContent =
+          (data && data.datos && data.datos.paginacion) ? data.datos.paginacion.total : 0;
+      }).catch(function () { document.getElementById("num-incidencias").textContent = "0"; });
 
-    // Guardias del usuario como sustituto
-    var misGuardias = [];
-    for (var i = 0; i < GUARDIAS_ASIGNADAS.length; i++) {
-      if (GUARDIAS_ASIGNADAS[i].profesor_sustituto === nombreCompleto) misGuardias.push(GUARDIAS_ASIGNADAS[i]);
-    }
+      // Tarjeta reservas
+      apiFetch('/api/v1/reservas?limit=1').then(function (data) {
+        document.getElementById("num-reservas").textContent =
+          (data && data.datos && data.datos.paginacion) ? data.datos.paginacion.total : 0;
+      }).catch(function () { document.getElementById("num-reservas").textContent = "0"; });
 
-    var guardiasPendientes = [];
-    for (var i = 0; i < misGuardias.length; i++) {
-      if (misGuardias[i].estado === "PENDIENTE") guardiasPendientes.push(misGuardias[i]);
-    }
-    document.getElementById("num-guardias").textContent = guardiasPendientes.length;
+      // Tarjeta ausencias
+      apiFetch('/api/v1/ausencias?limit=1').then(function (data) {
+        document.getElementById("num-ausencias").textContent =
+          (data && data.datos && data.datos.paginacion) ? data.datos.paginacion.total : 0;
+      }).catch(function () { document.getElementById("num-ausencias").textContent = "0"; });
 
-    // Siguiente guardia: la primera pendiente ordenada por fecha
-    guardiasPendientes.sort(function(a, b) { return a.fecha.localeCompare(b.fecha); });
+      // Guardias de hoy
+      apiFetch('/api/v1/guardias/hoy').then(function (data) {
+        var info = (data && data.datos) ? data.datos : {};
+        var asignadas = info.asignadas || [];
 
-    var elementoSiguiente = document.getElementById("siguiente-guardia");
-    if (guardiasPendientes.length > 0) {
-      var sig = guardiasPendientes[0];
-      var partesFecha = sig.fecha.split("-");
-      elementoSiguiente.textContent = sig.clase + " · " + partesFecha[2] + "/" + partesFecha[1] + " · " + sig.tramo;
-    } else {
-      elementoSiguiente.textContent = "Sin guardias pendientes";
-    }
+        var misGuardias = [];
+        var nombreUsuario = (usuario.nombre + " " + usuario.apellidos).toLowerCase();
 
-    // Rellenamos la tabla de guardias
-    var tbody = document.getElementById("tabla-guardias-body");
+        for (var i = 0; i < asignadas.length; i++) {
+          var g = asignadas[i];
+          var sustituto = (g.sustituto_nombre || g.profesor_sustituto || "").toLowerCase();
+          var idSustituto = g.id_profesor_sustituto || null;
 
-    if (misGuardias.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="sin-guardias"><i class="bi bi-calendar-x sin-guardias-icono"></i>No tienes guardias asignadas</td></tr>';
-    } else {
-      var html = "";
-      for (var i = 0; i < misGuardias.length; i++) {
-        var guardia = misGuardias[i];
-        var claseBadge;
-        if (guardia.estado === "REALIZADA")      claseBadge = "badge-resuelta";
-        else if (guardia.estado === "CANCELADA") claseBadge = "badge-cerrada";
-        else                                      claseBadge = "badge-pendiente";
+          if (idSustituto === usuario.id || sustituto.indexOf(usuario.nombre.toLowerCase()) !== -1) {
+            misGuardias.push(g);
+          }
+        }
 
-        var partes = guardia.fecha.split("-");
-        var fechaMostrar = partes[2] + "/" + partes[1] + "/" + partes[0];
+        document.getElementById("num-guardias-hoy").textContent = misGuardias.length;
 
-        html += '<tr>' +
-                  '<td>' + fechaMostrar + '</td>' +
-                  '<td>' + guardia.tramo + '</td>' +
-                  '<td>' + guardia.clase + '</td>' +
-                  '<td><span class="badge-tipo">Guardia</span></td>' +
-                  '<td><span class="badge-estado ' + claseBadge + '">' +
-                    guardia.estado.charAt(0) + guardia.estado.slice(1).toLowerCase() +
-                  '</span></td>' +
-                '</tr>';
-      }
-      tbody.innerHTML = html;
-    }
+        var contenedor = document.getElementById("lista-guardias-hoy");
+        if (misGuardias.length === 0) {
+          contenedor.innerHTML =
+            '<div class="sin-resultados" style="text-align:center;padding:24px;color:#64748b;">' +
+              '<i class="bi bi-shield-check" style="font-size:28px;display:block;margin-bottom:8px;"></i>' +
+              'No tienes guardias hoy' +
+            '</div>';
+          return;
+        }
+
+        var html = "";
+        for (var i = 0; i < misGuardias.length; i++) {
+          var g = misGuardias[i];
+          var clase = g.clase || g.curso || "—";
+          var tramo = g.tramo_horario || g.tramo || "—";
+          var ausente = g.ausente_nombre || g.profesor_ausente || "—";
+
+          html += '<div style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;">' +
+                    '<div style="font-weight:600;font-size:14px;">' + clase + '</div>' +
+                    '<div style="font-size:13px;color:#64748b;margin-top:2px;">' +
+                      '<i class="bi bi-clock me-1"></i>' + tramo +
+                    '</div>' +
+                    '<div style="font-size:13px;color:#64748b;margin-top:2px;">' +
+                      '<i class="bi bi-person-x me-1"></i>Ausente: ' + ausente +
+                    '</div>' +
+                  '</div>';
+        }
+        contenedor.innerHTML = html;
+      }).catch(function () {
+        document.getElementById("num-guardias-hoy").textContent = "0";
+        document.getElementById("lista-guardias-hoy").innerHTML =
+          '<div class="sin-resultados" style="text-align:center;padding:24px;color:#64748b;">No tienes guardias hoy</div>';
+      });
+
+      // Incidencias recientes
+      apiFetch('/api/v1/incidencias?limit=3').then(function (data) {
+        var tbody = document.getElementById("tabla-incidencias-body");
+        var filas = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
+
+        if (filas.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" class="sin-resultados" style="text-align:center;padding:24px;color:#64748b;">Sin incidencias</td></tr>';
+          return;
+        }
+
+        var html = "";
+        for (var i = 0; i < filas.length; i++) {
+          var inc = filas[i];
+          var partes = inc.fecha.split("-");
+          var fecha = partes[2] + "/" + partes[1];
+
+          var claseBadge, textoEstado;
+          if (inc.estado === "ABIERTA") { claseBadge = "badge-pendiente"; textoEstado = "Pendiente"; }
+          else if (inc.estado === "EN_PROCESO") { claseBadge = "badge-en-proceso"; textoEstado = "En proceso"; }
+          else if (inc.estado === "RESUELTA") { claseBadge = "badge-resuelta"; textoEstado = "Resuelta"; }
+          else { claseBadge = "badge-cerrada"; textoEstado = "Cerrada"; }
+
+          html += '<tr>' +
+                    '<td><div style="font-weight:500;font-size:13px;">' + inc.titulo + '</div></td>' +
+                    '<td><span class="badge-estado ' + claseBadge + '">' + textoEstado + '</span></td>' +
+                    '<td class="celda-fecha-gris">' + fecha + '</td>' +
+                  '</tr>';
+        }
+        tbody.innerHTML = html;
+      }).catch(function () {
+        document.getElementById("tabla-incidencias-body").innerHTML =
+          '<tr><td colspan="3" class="sin-resultados" style="text-align:center;padding:24px;color:#64748b;">Sin incidencias</td></tr>';
+      });
+    });
   </script>
 
 </body>

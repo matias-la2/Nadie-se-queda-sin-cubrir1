@@ -65,51 +65,41 @@
 
               <div class="col-12 col-md-6">
                 <div class="campo-grupo mb-0">
-                  <label>
-                    Categoría <span class="obligatorio">*</span>
+                  <label for="campo-tipo">
+                    Tipo <span class="obligatorio">*</span>
                   </label>
-                  <input type="hidden" id="campo-tipo" value="">
-                  <div class="categoria-opciones">
-                    <button type="button" class="categoria-btn" onclick="seleccionarCategoria(this, 'EQUIPAMIENTO')">Equipamiento</button>
-                    <button type="button" class="categoria-btn" onclick="seleccionarCategoria(this, 'INFRAESTRUCTURA')">Infraestructura</button>
-                    <button type="button" class="categoria-btn" onclick="seleccionarCategoria(this, 'SOFTWARE')">Software</button>
-                  </div>
+                  <select id="campo-tipo" required>
+                    <option value="">Selecciona un tipo...</option>
+                    <option value="EQUIPAMIENTO">Equipamiento</option>
+                    <option value="INFRAESTRUCTURA">Infraestructura</option>
+                    <option value="SOFTWARE">Software</option>
+                  </select>
                 </div>
               </div>
             </div>
 
-            <!-- Descripción -->
+            <!-- Fecha -->
             <div class="campo-grupo campo-grupo-mt">
+              <label for="campo-fecha">
+                Fecha
+              </label>
+              <input type="date" id="campo-fecha">
+            </div>
+
+            <!-- Descripción -->
+            <div class="campo-grupo">
               <label for="campo-descripcion">
-                Descripción <span class="obligatorio">*</span>
+                Descripción <span class="label-opcional">(opcional)</span>
               </label>
               <textarea
                 id="campo-descripcion"
                 placeholder="Describe el problema detalladamente: cuándo ocurre, qué has probado, si afecta a otros..."
-                required
               ></textarea>
-            </div>
-
-            <!-- Campo de imágenes adjuntas -->
-            <div class="campo-grupo">
-              <label for="campo-imagenes">
-                Adjuntar imágenes <span class="label-opcional">(opcional)</span>
-              </label>
-              <input
-                type="file"
-                id="campo-imagenes"
-                class="campo-imagenes"
-                accept=".jpg,.jpeg,.png"
-                multiple
-                onchange="agregarImagenes(this)"
-              >
-              <p class="imagenes-info">Formatos: JPG, PNG. Máximo 3 imágenes, 5 MB cada una.</p>
-              <div class="preview-contenedor" id="preview-imagenes"></div>
             </div>
 
             <!-- Botones -->
             <div class="d-flex gap-2 flex-wrap">
-              <button type="submit" class="btn-enviar">
+              <button type="submit" class="btn-enviar" id="btn-enviar">
                 <i class="bi bi-send"></i>
                 Crear Incidencia
               </button>
@@ -131,94 +121,72 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="../../js/datos-prueba.js"></script>
   <script src="../../js/auth.js"></script>
   <script src="../../js/sidebar.js"></script>
 
   <script>
-    // Inicialización
-    verificarSesion();
-    crearSidebar("incidencias", "../../");
-    var usuario = obtenerUsuarioActual();
-    var imagenesSeleccionadas = []; // Guarda los archivos de imagen seleccionados
+    var _usuario = null;
 
-    // Actualiza el preview de miniaturas
-    function actualizarPreview() {
-      var contenedor = document.getElementById("preview-imagenes");
-      contenedor.innerHTML = "";
-      for (var i = 0; i < imagenesSeleccionadas.length; i++) {
-        var item = document.createElement("div");
-        item.className = "preview-item";
+    verificarSesion().then(function (usuario) {
+      if (!usuario) return;
+      _usuario = usuario;
 
-        var img = document.createElement("img");
-        img.alt = imagenesSeleccionadas[i].name;
+      crearSidebar("incidencias", "../../");
 
-        // Cierre para capturar i y img correctamente
-        (function(imgEl, archivo) {
-          var reader = new FileReader();
-          reader.onload = function(e) { imgEl.src = e.target.result; };
-          reader.readAsDataURL(archivo);
-        })(img, imagenesSeleccionadas[i]);
+      var hoy = new Date();
+      document.getElementById("campo-fecha").value =
+        hoy.getFullYear() + "-" +
+        String(hoy.getMonth() + 1).padStart(2, "0") + "-" +
+        String(hoy.getDate()).padStart(2, "0");
 
-        var btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "btn-quitar-imagen";
-        btn.textContent = "x";
-        btn.setAttribute("onclick", "quitarImagen(" + i + ")");
+      cargarEspacios();
+    });
 
-        item.appendChild(img);
-        item.appendChild(btn);
-        contenedor.appendChild(item);
-      }
-    }
-
-    // Quita una imagen del array y actualiza el preview
-    function quitarImagen(indice) {
-      imagenesSeleccionadas.splice(indice, 1);
-      actualizarPreview();
-    }
-
-    // Valida y añade imágenes al array al seleccionarlas
-    function agregarImagenes(input) {
-      if (!input.files) return;
-      for (var i = 0; i < input.files.length; i++) {
-        if (imagenesSeleccionadas.length >= 3) {
-          mostrarError("Solo puedes adjuntar un máximo de 3 imágenes.");
-          break;
+    function cargarEspacios() {
+      apiFetch('/api/v1/espacios?limit=100').then(function (data) {
+        var espacios = [];
+        if (data && data.datos) {
+          espacios = Array.isArray(data.datos) ? data.datos : (data.datos.registros || []);
         }
-        if (input.files[i].size > 5 * 1024 * 1024) {
-          mostrarError("La imagen \"" + input.files[i].name + "\" supera los 5 MB.");
-          continue;
+
+        var select = document.getElementById("campo-espacio");
+
+        var porEdificio = {};
+        var sinEdificio = [];
+        for (var i = 0; i < espacios.length; i++) {
+          var e = espacios[i];
+          var edificio = e.edificio_nombre || "";
+          if (edificio) {
+            if (!porEdificio[edificio]) porEdificio[edificio] = [];
+            porEdificio[edificio].push(e);
+          } else {
+            sinEdificio.push(e);
+          }
         }
-        imagenesSeleccionadas.push(input.files[i]);
-      }
-      input.value = ""; // Permite volver a seleccionar la misma imagen si se quitó
-      actualizarPreview();
+
+        var edificios = Object.keys(porEdificio).sort();
+        for (var i = 0; i < edificios.length; i++) {
+          var grupo = document.createElement("optgroup");
+          grupo.label = edificios[i];
+          var lista = porEdificio[edificios[i]];
+          for (var j = 0; j < lista.length; j++) {
+            var opt = document.createElement("option");
+            opt.value = lista[j].id_espacio;
+            opt.textContent = lista[j].nombre;
+            grupo.appendChild(opt);
+          }
+          select.appendChild(grupo);
+        }
+
+        for (var i = 0; i < sinEdificio.length; i++) {
+          var opt = document.createElement("option");
+          opt.value = sinEdificio[i].id_espacio;
+          opt.textContent = sinEdificio[i].nombre;
+          select.appendChild(opt);
+        }
+      }).catch(function () {});
     }
 
-    // Rellena el select de espacios
-    var selectEspacio = document.getElementById("campo-espacio");
-    for (var i = 0; i < ESPACIOS.length; i++) {
-      var espacio = ESPACIOS[i];
-      var opcion = document.createElement("option");
-      opcion.value = espacio.nombre;
-      opcion.textContent = espacio.nombre + " (cap. " + espacio.capacidad + ")";
-      if (espacio.estado !== "DISPONIBLE") {
-        opcion.disabled = true;
-        opcion.textContent += " — " + espacio.estado;
-      }
-      selectEspacio.appendChild(opcion);
-    }
-
-    // Marca el botón de categoría pulsado y guarda el valor
-    function seleccionarCategoria(boton, valor) {
-      var btns = document.querySelectorAll(".categoria-btn");
-      for (var i = 0; i < btns.length; i++) btns[i].classList.remove("seleccionado");
-      boton.classList.add("seleccionado");
-      document.getElementById("campo-tipo").value = valor;
-    }
-
-    // Muestra el error y hace scroll hasta él
     function mostrarError(mensaje) {
       var alerta = document.getElementById("alerta-error");
       document.getElementById("texto-error").textContent = mensaje;
@@ -226,55 +194,48 @@
       alerta.scrollIntoView({ behavior: "smooth", block: "center" });
     }
 
-    // Valida el form, crea la incidencia y redirige
     function enviarFormulario(event) {
       event.preventDefault();
       document.getElementById("alerta-error").style.display = "none";
 
-      var titulo      = document.getElementById("campo-titulo").value.trim();
-      var espacio     = document.getElementById("campo-espacio").value;
-      var tipo        = document.getElementById("campo-tipo").value;
+      var titulo = document.getElementById("campo-titulo").value.trim();
+      var tipo = document.getElementById("campo-tipo").value;
+      var idEspacio = document.getElementById("campo-espacio").value;
+      var fecha = document.getElementById("campo-fecha").value;
       var descripcion = document.getElementById("campo-descripcion").value.trim();
 
-      if (!titulo)      { mostrarError("El título es obligatorio."); return; }
-      if (!espacio)     { mostrarError("Debes seleccionar un espacio."); return; }
-      if (!tipo)        { mostrarError("Debes seleccionar una categoría (Equipamiento, Infraestructura o Software)."); return; }
-      if (!descripcion) { mostrarError("La descripción es obligatoria."); return; }
+      if (!titulo) { mostrarError("El título es obligatorio."); return; }
+      if (!tipo) { mostrarError("Debes seleccionar un tipo."); return; }
 
-      var nuevoId = 0;
-      for (var i = 0; i < INCIDENCIAS.length; i++) {
-        if (INCIDENCIAS[i].id > nuevoId) nuevoId = INCIDENCIAS[i].id;
-      }
-      nuevoId++;
+      var cuerpo = { titulo: titulo, tipo: tipo };
+      if (idEspacio) cuerpo.id_espacio = parseInt(idEspacio);
+      if (fecha) cuerpo.fecha = fecha;
+      if (descripcion) cuerpo.descripcion = descripcion;
 
-      var hoy = new Date();
-      var fechaHoy = hoy.getFullYear() + "-" +
-                     String(hoy.getMonth() + 1).padStart(2, "0") + "-" +
-                     String(hoy.getDate()).padStart(2, "0");
+      var btn = document.getElementById("btn-enviar");
+      btn.disabled = true;
+      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando...';
 
-      // Guarda los nombres de las imágenes adjuntas
-      var nombreImagenes = null;
-      if (imagenesSeleccionadas.length > 0) {
-        nombreImagenes = [];
-        for (var i = 0; i < imagenesSeleccionadas.length; i++) {
-          nombreImagenes.push(imagenesSeleccionadas[i].name);
+      apiFetch('/api/v1/incidencias', {
+        method: 'POST',
+        body: JSON.stringify(cuerpo)
+      }).then(function (data) {
+        if (data && data.ok) {
+          if (_usuario && tieneRol("ADMINISTRADOR")) {
+            window.location.href = "../../pages/admin/incidencias.html";
+          } else {
+            window.location.href = "../../pages/profesor/incidencias.html";
+          }
+        } else {
+          mostrarError((data && data.mensaje) || "Error al crear la incidencia.");
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-send"></i> Crear Incidencia';
         }
-      }
-
-      INCIDENCIAS.push({
-        id: nuevoId, titulo: titulo, descripcion: descripcion, tipo: tipo,
-        fecha: fechaHoy, estado: "ABIERTA", // Toda incidencia nueva empieza en ABIERTA
-        espacio: espacio, creador: usuario.nombre + " " + usuario.apellidos,
-        asignado_a: null, imagenes: nombreImagenes
+      }).catch(function () {
+        mostrarError("Error de conexión. Inténtalo de nuevo.");
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-send"></i> Crear Incidencia';
       });
-
-      alert("Incidencia creada correctamente.");
-
-      if (tieneRol("ADMINISTRADOR")) {
-        window.location.href = "../../pages/admin/incidencias.html";
-      } else {
-        window.location.href = "../../pages/profesor/incidencias.html";
-      }
     }
   </script>
 

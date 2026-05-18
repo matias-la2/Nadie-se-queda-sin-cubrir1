@@ -18,7 +18,7 @@
 
   <main class="contenido-principal">
 
-    <!-- Enlace de volver (la ruta se construye según el rol) -->
+    <!-- Enlace de volver -->
     <div class="volver-contenedor">
       <a id="enlace-volver" href="#" class="enlace-volver">
         <i class="bi bi-arrow-left"></i>
@@ -35,16 +35,15 @@
       </div>
     </div>
 
-    <!-- Zona de contenido, visible cuando la incidencia existe -->
+    <!-- Zona de contenido -->
     <div id="zona-contenido" style="display:none;">
 
       <div class="row g-4">
 
-        <!-- Columna principal: detalle -->
+        <!-- Columna principal -->
         <div class="col-12 col-lg-8">
           <div class="tarjeta">
 
-            <!-- Título con badges -->
             <div class="cabecera-detalle">
               <div class="badges-cabecera">
                 <span id="badge-tipo" class="badge-tipo"></span>
@@ -55,7 +54,6 @@
 
             <hr class="separador-inc">
 
-            <!-- Metadatos en 2 columnas -->
             <div class="row g-3 mb-4">
               <div class="col-6">
                 <div class="metadato-label">Fecha de creación</div>
@@ -70,12 +68,11 @@
                 <div id="inc-creador" class="metadato-valor"></div>
               </div>
               <div class="col-6">
-                <div class="metadato-label">Asignada a</div>
-                <div id="inc-asignado" class="metadato-valor"></div>
+                <div class="metadato-label">Gestionada por</div>
+                <div id="inc-directivo" class="metadato-valor"></div>
               </div>
             </div>
 
-            <!-- Descripción -->
             <div>
               <div class="descripcion-label">Descripción</div>
               <p id="inc-descripcion" class="descripcion-caja"></p>
@@ -84,32 +81,21 @@
           </div>
         </div>
 
-        <!-- Columna lateral: gestión de estado -->
+        <!-- Columna lateral -->
         <div class="col-12 col-lg-4">
 
-          <!-- Estado actual -->
           <div class="tarjeta mb-3">
             <div class="panel-titulo">Estado actual</div>
             <div id="estado-actual-texto"></div>
           </div>
 
-          <!-- Panel de cambio de estado (solo admin/directivo) -->
+          <!-- Panel de cambio de estado (solo gestores) -->
           <div class="tarjeta mb-3" id="panel-cambiar-estado" style="display:none;">
             <div class="panel-titulo-sm">Actualizar estado</div>
-            <p class="panel-ayuda">Selecciona el nuevo estado y guarda el cambio.</p>
-            <select class="select-filtro select-estado-panel" id="select-nuevo-estado">
-              <option value="ABIERTA">Pendiente</option>
-              <option value="EN_PROCESO">En proceso</option>
-              <option value="RESUELTA">Resuelta</option>
-              <option value="CERRADA">Cerrada</option>
-            </select>
-            <button class="btn-primario btn-guardar-estado" onclick="guardarEstado()">
-              <i class="bi bi-check-lg"></i>
-              Guardar cambio
-            </button>
+            <p class="panel-ayuda">Avanza la incidencia al siguiente estado.</p>
+            <div id="botones-estado"></div>
           </div>
 
-          <!-- Referencia -->
           <div class="tarjeta tarjeta-referencia">
             <div class="referencia-label">Referencia</div>
             <div id="inc-referencia" class="referencia-codigo"></div>
@@ -124,102 +110,137 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="../../js/datos-prueba.js"></script>
   <script src="../../js/auth.js"></script>
   <script src="../../js/sidebar.js"></script>
 
   <script>
-    // Inicialización
-    verificarSesion();
-    crearSidebar("incidencias", "../../");
+    var _incId = new URLSearchParams(window.location.search).get('id');
+    var _usuario = null;
 
-    // Leemos el id de la URL y buscamos la incidencia
-    var params     = new URLSearchParams(window.location.search);
-    var idTexto    = params.get("id");
-    var id         = idTexto ? parseInt(idTexto) : null;
-    var incidencia = null;
-    for (var i = 0; i < INCIDENCIAS.length; i++) {
-      if (INCIDENCIAS[i].id === id) { incidencia = INCIDENCIAS[i]; break; }
-    }
-
-    var esAdmin    = tieneRol("ADMINISTRADOR");
-    var esDirectivo = tieneRol("EQUIPO_DIRECTIVO");
-
-    // El enlace de volver va a la lista del rol correspondiente
-    document.getElementById("enlace-volver").href = (esAdmin || esDirectivo)
-      ? "../admin/incidencias.html"
-      : "../profesor/incidencias.html";
-
-    // Determina la clase del badge según el estado
     function claseBadgePor(estado) {
-      if (estado === "ABIERTA")       return "badge-pendiente";
-      if (estado === "EN_PROCESO")    return "badge-en-proceso";
-      if (estado === "RESUELTA")      return "badge-resuelta";
+      if (estado === "ABIERTA") return "badge-pendiente";
+      if (estado === "EN_PROCESO") return "badge-en-proceso";
+      if (estado === "RESUELTA") return "badge-resuelta";
       return "badge-cerrada";
     }
 
-    // Determina el texto del badge según el estado
     function textoBadgePor(estado) {
-      if (estado === "ABIERTA")       return "Pendiente";
-      if (estado === "EN_PROCESO")    return "En proceso";
-      if (estado === "RESUELTA")      return "Resuelta";
+      if (estado === "ABIERTA") return "Pendiente";
+      if (estado === "EN_PROCESO") return "En proceso";
+      if (estado === "RESUELTA") return "Resuelta";
       return "Cerrada";
     }
 
-    if (!incidencia) {
-      document.getElementById("zona-error").style.display     = "block";
-      document.getElementById("zona-contenido").style.display = "none";
-    } else {
-      document.getElementById("zona-error").style.display     = "none";
-      document.getElementById("zona-contenido").style.display = "block";
+    verificarSesion().then(function (usuario) {
+      if (!usuario) return;
+      _usuario = usuario;
 
-      document.getElementById("inc-titulo").textContent     = incidencia.titulo;
-      document.getElementById("inc-referencia").textContent = "INC-" + String(incidencia.id).padStart(4, "0");
+      crearSidebar("incidencias", "../../");
 
-      var partes = incidencia.fecha.split("-");
-      document.getElementById("inc-fecha").textContent    = partes[2] + "/" + partes[1] + "/" + partes[0];
-      document.getElementById("inc-espacio").textContent  = incidencia.espacio;
-      document.getElementById("inc-creador").textContent  = incidencia.creador;
-      document.getElementById("inc-asignado").textContent = incidencia.asignado_a || "Sin asignar";
-      document.getElementById("inc-descripcion").textContent = incidencia.descripcion;
+      var esAdmin = tieneRol("ADMINISTRADOR");
+      var esDirectivo = tieneRol("EQUIPO_DIRECTIVO");
 
-      // Badge de tipo
-      var textosTipo = { "EQUIPAMIENTO":"Equipamiento", "INFRAESTRUCTURA":"Infraestructura", "SOFTWARE":"Software" };
-      document.getElementById("badge-tipo").textContent = textosTipo[incidencia.tipo] || incidencia.tipo;
+      document.getElementById("enlace-volver").href = (esAdmin || esDirectivo)
+        ? "../admin/incidencias.html"
+        : "../profesor/incidencias.html";
 
-      // Badge de estado
-      var badgeEstado = document.getElementById("badge-estado");
-      badgeEstado.className   = "badge-estado " + claseBadgePor(incidencia.estado);
-      badgeEstado.textContent = textoBadgePor(incidencia.estado);
+      if (!_incId) {
+        document.getElementById("zona-error").style.display = "block";
+        return;
+      }
 
-      // Estado actual en el panel lateral
-      document.getElementById("estado-actual-texto").innerHTML =
-        '<span class="badge-estado badge-estado-grande ' + claseBadgePor(incidencia.estado) + '">' +
-          textoBadgePor(incidencia.estado) +
-        '</span>';
+      cargarIncidencia();
+    });
 
-      // Panel de cambio, solo para admin o directivo
-      if (esAdmin || esDirectivo) {
-        document.getElementById("panel-cambiar-estado").style.display = "block";
-        document.getElementById("select-nuevo-estado").value = incidencia.estado;
+    function cargarIncidencia() {
+      apiFetch('/api/v1/incidencias/' + _incId).then(function (data) {
+        if (!data || !data.ok || !data.datos) {
+          document.getElementById("zona-error").style.display = "block";
+          return;
+        }
+
+        var inc = data.datos;
+        document.getElementById("zona-contenido").style.display = "block";
+
+        document.getElementById("inc-titulo").textContent = inc.titulo;
+        document.getElementById("inc-referencia").textContent = "INC-" + String(inc.id_incidencia).padStart(4, "0");
+
+        if (inc.fecha) {
+          var partes = inc.fecha.split("-");
+          document.getElementById("inc-fecha").textContent = partes[2] + "/" + partes[1] + "/" + partes[0];
+        } else {
+          document.getElementById("inc-fecha").textContent = "—";
+        }
+
+        document.getElementById("inc-espacio").textContent = inc.espacio_nombre || "—";
+
+        var creador = ((inc.creador_nombre || "") + " " + (inc.creador_apellidos || "")).trim();
+        document.getElementById("inc-creador").textContent = creador || "—";
+
+        var directivo = inc.directivo_nombre || "";
+        document.getElementById("inc-directivo").textContent = directivo || "Sin asignar";
+
+        document.getElementById("inc-descripcion").textContent = inc.descripcion || "Sin descripción.";
+
+        var textosTipo = { "EQUIPAMIENTO": "Equipamiento", "INFRAESTRUCTURA": "Infraestructura", "SOFTWARE": "Software" };
+        document.getElementById("badge-tipo").textContent = textosTipo[inc.tipo] || inc.tipo;
+
+        var badgeEstado = document.getElementById("badge-estado");
+        badgeEstado.className = "badge-estado " + claseBadgePor(inc.estado);
+        badgeEstado.textContent = textoBadgePor(inc.estado);
+
+        document.getElementById("estado-actual-texto").innerHTML =
+          '<span class="badge-estado badge-estado-grande ' + claseBadgePor(inc.estado) + '">' +
+            textoBadgePor(inc.estado) +
+          '</span>';
+
+        var esGestor = tieneRol("ADMINISTRADOR") || tieneRol("EQUIPO_DIRECTIVO") || tieneRol("CONSERJE");
+        if (esGestor) {
+          renderizarBotonesEstado(inc.estado);
+        }
+      }).catch(function () {
+        document.getElementById("zona-error").style.display = "block";
+      });
+    }
+
+    function renderizarBotonesEstado(estadoActual) {
+      var panel = document.getElementById("panel-cambiar-estado");
+      var contenedor = document.getElementById("botones-estado");
+      var html = "";
+
+      if (estadoActual === "ABIERTA") {
+        html = '<button class="btn-primario btn-guardar-estado" onclick="cambiarEstado(\'EN_PROCESO\')">' +
+                 '<i class="bi bi-arrow-right-circle me-1"></i>Pasar a En proceso' +
+               '</button>';
+      } else if (estadoActual === "EN_PROCESO") {
+        html = '<button class="btn-primario btn-guardar-estado" onclick="cambiarEstado(\'RESUELTA\')">' +
+                 '<i class="bi bi-check-circle me-1"></i>Marcar como Resuelta' +
+               '</button>';
+      } else if (estadoActual === "RESUELTA") {
+        html = '<button class="btn-primario btn-guardar-estado" onclick="cambiarEstado(\'CERRADA\')">' +
+                 '<i class="bi bi-lock me-1"></i>Cerrar incidencia' +
+               '</button>';
+      }
+
+      if (html) {
+        panel.style.display = "block";
+        contenedor.innerHTML = html;
       }
     }
 
-    // Actualiza el estado en memoria y refresca los badges sin recargar
-    function guardarEstado() {
-      var nuevoEstado = document.getElementById("select-nuevo-estado").value;
-      incidencia.estado = nuevoEstado;
-
-      var badgeEstado = document.getElementById("badge-estado");
-      badgeEstado.className   = "badge-estado " + claseBadgePor(nuevoEstado);
-      badgeEstado.textContent = textoBadgePor(nuevoEstado);
-
-      document.getElementById("estado-actual-texto").innerHTML =
-        '<span class="badge-estado badge-estado-grande ' + claseBadgePor(nuevoEstado) + '">' +
-          textoBadgePor(nuevoEstado) +
-        '</span>';
-
-      alert("Estado actualizado a: " + textoBadgePor(nuevoEstado));
+    function cambiarEstado(nuevoEstado) {
+      apiFetch('/api/v1/incidencias/' + _incId + '/estado', {
+        method: 'PATCH',
+        body: JSON.stringify({ estado: nuevoEstado })
+      }).then(function (data) {
+        if (data && data.ok) {
+          cargarIncidencia();
+        } else {
+          alert((data && data.mensaje) || "Error al actualizar estado");
+        }
+      }).catch(function () {
+        alert("Error de conexión");
+      });
     }
   </script>
 

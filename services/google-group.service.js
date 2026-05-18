@@ -5,9 +5,6 @@ const fs = require('fs');
 const KEY_PATH = path.join(__dirname, '..', 'service-account.json');
 
 async function esMiembroDelGrupo(correo) {
-  // TODO: quitar cuando el superadmin configure la delegación de dominio
-  return true;
-
   let auth;
   try {
     auth = new google.auth.GoogleAuth({

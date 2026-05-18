@@ -16,239 +16,146 @@
 
   <div id="sidebar-container"></div>
 
-  <!-- Modal para ver la tarea de los alumnos -->
-  <div class="modal fade" id="modal-tarea" tabindex="-1" aria-labelledby="modal-tarea-titulo" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content modal-tarea-contenido">
-
-        <div class="modal-header modal-tarea-cabecera">
-          <h5 class="modal-title modal-tarea-titulo" id="modal-tarea-titulo">
-            <i class="bi bi-journal-text me-2 modal-tarea-icono"></i>
-            Tarea para los alumnos
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        </div>
-
-        <div class="modal-body modal-tarea-cuerpo">
-          <!-- Info del profesor ausente y clase -->
-          <div class="modal-info-card">
-            <div class="modal-info-label">Profesor ausente</div>
-            <div class="modal-info-profesor" id="modal-profesor-ausente">—</div>
-            <div class="modal-info-clase-label">Clase</div>
-            <div class="modal-info-clase" id="modal-clase">—</div>
-          </div>
-
-          <div class="modal-instrucciones-titulo">Instrucciones para los alumnos:</div>
-          <div id="modal-tarea-descripcion" class="modal-tarea-caja">—</div>
-        </div>
-
-        <div class="modal-footer modal-tarea-pie">
-          <button type="button" class="btn-secundario" data-bs-dismiss="modal">Cerrar</button>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-
   <main class="contenido-principal">
 
     <div class="pagina-header">
       <h1>Mis Guardias</h1>
-      <p>Guardias que tienes asignadas como sustituto.</p>
+      <p>Consulta tus guardias planificadas y las que has cubierto como sustituto.</p>
     </div>
 
-    <!-- Tarjetas resumen -->
-    <div class="row g-3 mb-4">
-      <div class="col-6 col-md-4">
-        <div class="tarjeta-resumen">
-          <div class="icono-circulo icono-guard-total">
-            <i class="bi bi-shield-check"></i>
-          </div>
-          <div>
-            <div class="etiqueta">Total guardias</div>
-            <div class="numero" id="total-guardias">0</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 col-md-4">
-        <div class="tarjeta-resumen">
-          <div class="icono-circulo icono-guard-pend">
-            <i class="bi bi-hourglass-split"></i>
-          </div>
-          <div>
-            <div class="etiqueta">Pendientes</div>
-            <div class="numero" id="total-pendientes">0</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 col-md-4">
-        <div class="tarjeta-resumen">
-          <div class="icono-circulo icono-guard-real">
-            <i class="bi bi-check-circle"></i>
-          </div>
-          <div>
-            <div class="etiqueta">Realizadas</div>
-            <div class="numero" id="total-realizadas">0</div>
-          </div>
-        </div>
+    <!-- Guardias planificadas -->
+    <div class="tarjeta mb-4">
+      <h2 class="tarjeta-titulo mb-3"><i class="bi bi-calendar-week me-2"></i>Mis guardias planificadas</h2>
+      <div class="tabla-responsive">
+        <table class="tabla-datos">
+          <thead>
+            <tr>
+              <th>Día</th>
+              <th>Tramo horario</th>
+              <th>Espacio</th>
+              <th>Curso escolar</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-planificadas"></tbody>
+        </table>
       </div>
     </div>
 
-    <!-- Tabla con pestañas -->
+    <!-- Guardias cubiertas -->
     <div class="tarjeta">
-
-      <div class="tabs-filtro">
-        <button class="tab-btn activo" onclick="cambiarTab(this, 'todas')">Todas</button>
-        <button class="tab-btn" onclick="cambiarTab(this, 'PENDIENTE')">Pendientes</button>
-        <button class="tab-btn" onclick="cambiarTab(this, 'REALIZADA')">Realizadas</button>
-        <button class="tab-btn" onclick="cambiarTab(this, 'CANCELADA')">Canceladas</button>
-      </div>
-
+      <h2 class="tarjeta-titulo mb-3"><i class="bi bi-shield-check me-2"></i>Guardias cubiertas</h2>
       <div class="tabla-responsive">
         <table class="tabla-datos">
           <thead>
             <tr>
               <th>Fecha</th>
-              <th>Tramo</th>
-              <th>Profesor Ausente</th>
+              <th>Tramo horario</th>
+              <th>Profesor ausente</th>
               <th>Clase</th>
               <th>Tipo</th>
-              <th>Estado</th>
-              <th>Tarea</th>
             </tr>
           </thead>
-          <tbody id="tabla-body"></tbody>
+          <tbody id="tabla-cubiertas"></tbody>
         </table>
       </div>
-
-      <!-- Contador -->
-      <div class="contador-guard" id="contador-texto">
-        Mostrando 0 guardias
-      </div>
-
     </div>
 
   </main>
 
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="../../js/datos-prueba.js"></script>
   <script src="../../js/auth.js"></script>
   <script src="../../js/sidebar.js"></script>
 
   <script>
-    // Inicialización
-    verificarSesion();
-    crearSidebar("guardias", "../../");
-    var usuario = obtenerUsuarioActual();
-    var nombreCompleto = usuario.nombre + " " + usuario.apellidos;
-    var filtroActual = "todas";
+    verificarSesion().then(function (usuario) {
+      if (!usuario) return;
 
-    // Guardias donde el usuario es el sustituto
-    var misGuardias = [];
-    for (var i = 0; i < GUARDIAS_ASIGNADAS.length; i++) {
-      if (GUARDIAS_ASIGNADAS[i].profesor_sustituto === nombreCompleto) misGuardias.push(GUARDIAS_ASIGNADAS[i]);
-    }
+      crearSidebar("guardias", "../../");
+      cargarPlanificadas(usuario);
+      cargarCubiertas(usuario);
+    });
 
-    // Tarjetas de resumen
-    var pend = 0, real = 0;
-    for (var i = 0; i < misGuardias.length; i++) {
-      if (misGuardias[i].estado === "PENDIENTE") pend++;
-      else if (misGuardias[i].estado === "REALIZADA") real++;
-    }
-    document.getElementById("total-guardias").textContent   = misGuardias.length;
-    document.getElementById("total-pendientes").textContent = pend;
-    document.getElementById("total-realizadas").textContent = real;
+    function cargarPlanificadas(usuario) {
+      var diasSemana = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
-    // Cambia la pestaña activa y re-renderiza
-    function cambiarTab(boton, filtro) {
-      var btns = document.querySelectorAll(".tab-btn");
-      for (var i = 0; i < btns.length; i++) btns[i].classList.remove("activo");
-      boton.classList.add("activo");
-      filtroActual = filtro;
-      renderizarGuardias(filtro);
-    }
+      apiFetch('/api/v1/guardias/creadas?id_usuario=' + usuario.id).then(function (data) {
+        var tbody = document.getElementById("tabla-planificadas");
+        var filas = [];
 
-    // Filtra y dibuja las guardias del usuario
-    function renderizarGuardias(filtro) {
-      var tbody = document.getElementById("tabla-body");
-
-      var resultado = [];
-      for (var i = 0; i < misGuardias.length; i++) {
-        if (filtro === "todas" || misGuardias[i].estado === filtro) resultado.push(misGuardias[i]);
-      }
-
-      document.getElementById("contador-texto").textContent =
-        "Mostrando " + resultado.length + " de " + misGuardias.length + " guardias";
-
-      if (resultado.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="sin-resultados"><i class="bi bi-shield-x sin-resultados-icono"></i>No hay guardias en esta categoría</td></tr>';
-        return;
-      }
-
-      var html = "";
-      for (var i = 0; i < resultado.length; i++) {
-        var guardia = resultado[i];
-        var partes = guardia.fecha.split("-");
-        var fechaMostrar = partes[2] + "/" + partes[1] + "/" + partes[0];
-
-        // Badge de estado
-        var claseBadge, textoEstado;
-        if (guardia.estado === "PENDIENTE")      { claseBadge = "badge-pendiente"; textoEstado = "Pendiente"; }
-        else if (guardia.estado === "REALIZADA") { claseBadge = "badge-resuelta";  textoEstado = "Realizada"; }
-        else                                      { claseBadge = "badge-cerrada";   textoEstado = "Cancelada"; }
-
-        // Badge de tipo de asignación
-        var tipoBadge;
-        if (guardia.tipo_asignacion === "AUTOMATICA") {
-          tipoBadge = '<span class="tipo-automatica">Automática</span>';
-        } else {
-          tipoBadge = '<span class="tipo-manual">Manual</span>';
+        if (data && data.datos) {
+          filas = Array.isArray(data.datos) ? data.datos : (data.datos.registros || []);
         }
 
-        // Botón de tarea
-        var ausenciaRelacionada = null;
-        for (var j = 0; j < AUSENCIAS.length; j++) {
-          var a = AUSENCIAS[j];
-          if (a.profesor === guardia.profesor_ausente && a.fecha === guardia.fecha && a.tramo_horario === guardia.tramo) {
-            ausenciaRelacionada = a; break;
+        if (filas.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="sin-resultados"><i class="bi bi-calendar-x sin-resultados-icono"></i>No tienes guardias planificadas</td></tr>';
+          return;
+        }
+
+        var html = "";
+        for (var i = 0; i < filas.length; i++) {
+          var g = filas[i];
+          var dia = g.dia_semana ? diasSemana[g.dia_semana] : "—";
+
+          html += '<tr>' +
+                    '<td>' + dia + '</td>' +
+                    '<td>' + (g.tramo_horario || "—") + '</td>' +
+                    '<td>' + (g.espacio_nombre || "—") + '</td>' +
+                    '<td>' + (g.curso_escolar || "—") + '</td>' +
+                  '</tr>';
+        }
+        tbody.innerHTML = html;
+      }).catch(function () {
+        document.getElementById("tabla-planificadas").innerHTML =
+          '<tr><td colspan="4" class="sin-resultados"><i class="bi bi-calendar-x sin-resultados-icono"></i>No tienes guardias planificadas</td></tr>';
+      });
+    }
+
+    function cargarCubiertas(usuario) {
+      apiFetch('/api/v1/guardias/asignadas?id_profesor_sustituto=' + usuario.id).then(function (data) {
+        var tbody = document.getElementById("tabla-cubiertas");
+        var filas = [];
+
+        if (data && data.datos) {
+          filas = Array.isArray(data.datos) ? data.datos : (data.datos.registros || []);
+        }
+
+        if (filas.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="sin-resultados"><i class="bi bi-shield-x sin-resultados-icono"></i>No has cubierto guardias</td></tr>';
+          return;
+        }
+
+        var html = "";
+        for (var i = 0; i < filas.length; i++) {
+          var g = filas[i];
+
+          var fecha = "—";
+          if (g.fecha) {
+            var partes = g.fecha.split("-");
+            fecha = partes[2] + "/" + partes[1] + "/" + partes[0];
           }
+
+          var tipoBadge;
+          if (g.tipo_asignacion === "AUTOMATICA") {
+            tipoBadge = '<span class="tipo-automatica">Automática</span>';
+          } else {
+            tipoBadge = '<span class="tipo-manual">Manual</span>';
+          }
+
+          html += '<tr>' +
+                    '<td class="fecha-peso">' + fecha + '</td>' +
+                    '<td>' + (g.tramo_horario || "—") + '</td>' +
+                    '<td>' + (g.ausente_nombre || g.profesor_ausente || "—") + '</td>' +
+                    '<td>' + (g.clase_curso || g.clase || "—") + '</td>' +
+                    '<td>' + tipoBadge + '</td>' +
+                  '</tr>';
         }
-
-        var botonTarea;
-        if (ausenciaRelacionada && ausenciaRelacionada.hay_tarea) {
-          // Escapamos comillas para el onclick
-          var descEsc    = ausenciaRelacionada.tarea_descripcion ? ausenciaRelacionada.tarea_descripcion.replace(/'/g, "\\'") : "";
-          var profEsc    = guardia.profesor_ausente.replace(/'/g, "\\'");
-          var claseEsc   = guardia.clase.replace(/'/g, "\\'");
-          botonTarea = '<button class="btn-accion" title="Ver tarea" onclick="abrirModalTarea(\'' + profEsc + '\', \'' + claseEsc + '\', \'' + descEsc + '\')"><i class="bi bi-journal-text"></i></button>';
-        } else {
-          botonTarea = '<span class="sin-tarea">—</span>';
-        }
-
-        html += '<tr>' +
-                  '<td class="fecha-peso">' + fechaMostrar + '</td>' +
-                  '<td>' + guardia.tramo + '</td>' +
-                  '<td>' + guardia.profesor_ausente + '</td>' +
-                  '<td>' + guardia.clase + '</td>' +
-                  '<td>' + tipoBadge + '</td>' +
-                  '<td><span class="badge-estado ' + claseBadge + '">' + textoEstado + '</span></td>' +
-                  '<td>' + botonTarea + '</td>' +
-                '</tr>';
-      }
-      tbody.innerHTML = html;
+        tbody.innerHTML = html;
+      }).catch(function () {
+        document.getElementById("tabla-cubiertas").innerHTML =
+          '<tr><td colspan="5" class="sin-resultados"><i class="bi bi-shield-x sin-resultados-icono"></i>No has cubierto guardias</td></tr>';
+      });
     }
-
-    // Rellena el modal con los datos de la tarea y lo abre
-    function abrirModalTarea(profesor, clase, descripcion) {
-      document.getElementById("modal-profesor-ausente").textContent  = profesor;
-      document.getElementById("modal-clase").textContent             = clase;
-      document.getElementById("modal-tarea-descripcion").textContent = descripcion || "Sin descripción.";
-      bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-tarea")).show();
-    }
-
-    renderizarGuardias("todas");
   </script>
 
 </body>

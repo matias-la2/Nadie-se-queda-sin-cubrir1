@@ -14,122 +14,149 @@
 
 <body>
 
-  <!-- Sidebar inyectado por sidebar.js -->
   <div id="sidebar-container"></div>
 
   <main class="contenido-principal">
 
-    <!-- Cabecera con título y botón de acción -->
+    <!-- Cabecera -->
     <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
       <div class="pagina-header mb-0">
         <h1>Gestión Global de Guardias</h1>
-        <p>Visualiza y administra todas las guardias asignadas del centro.</p>
+        <p>Visualiza y administra todas las guardias del centro.</p>
       </div>
-      <button class="btn-primario" data-bs-toggle="modal" data-bs-target="#modal-nueva-guardia">
-        <i class="bi bi-plus-lg"></i>
-        Crear Guardia Manual
-      </button>
     </div>
 
-    <!-- Tarjetas resumen: contadores rápidos de estado -->
+    <!-- Tarjetas resumen -->
     <div class="row g-3 mb-4">
       <div class="col-6 col-md-3">
         <div class="tarjeta-resumen">
           <div class="icono-circulo icono-pendientes">
-            <i class="bi bi-hourglass-split"></i>
+            <i class="bi bi-calendar-x"></i>
           </div>
           <div>
-            <div class="etiqueta">Pendientes</div>
-            <div class="numero" id="num-pendientes">0</div>
+            <div class="etiqueta">Ausencias hoy</div>
+            <div class="numero" id="num-ausencias-hoy">0</div>
           </div>
         </div>
       </div>
       <div class="col-6 col-md-3">
         <div class="tarjeta-resumen">
           <div class="icono-circulo icono-realizadas">
-            <i class="bi bi-check-circle"></i>
+            <i class="bi bi-person-check"></i>
           </div>
           <div>
-            <div class="etiqueta">Realizadas</div>
-            <div class="numero" id="num-realizadas">0</div>
+            <div class="etiqueta">Disponibles</div>
+            <div class="numero" id="num-disponibles">0</div>
           </div>
         </div>
       </div>
       <div class="col-6 col-md-3">
         <div class="tarjeta-resumen">
           <div class="icono-circulo icono-canceladas">
-            <i class="bi bi-x-circle"></i>
+            <i class="bi bi-shield-check"></i>
           </div>
           <div>
-            <div class="etiqueta">Canceladas</div>
-            <div class="numero" id="num-canceladas">0</div>
+            <div class="etiqueta">Asignadas hoy</div>
+            <div class="numero" id="num-asignadas-hoy">0</div>
           </div>
         </div>
       </div>
       <div class="col-6 col-md-3">
         <div class="tarjeta-resumen">
           <div class="icono-circulo icono-total">
-            <i class="bi bi-shield-check"></i>
+            <i class="bi bi-calendar-week"></i>
           </div>
           <div>
-            <div class="etiqueta">Total</div>
-            <div class="numero" id="num-total">0</div>
+            <div class="etiqueta">Planificadas</div>
+            <div class="numero" id="num-planificadas">0</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Tarjeta principal con filtros y tabla -->
-    <div class="tarjeta">
-
-      <!-- Barra de filtros -->
-      <div class="barra-acciones">
-        <input
-          type="date"
-          class="select-filtro"
-          id="filtro-fecha"
-          title="Filtrar por fecha"
-          onchange="renderizarGuardias()"
-        >
-        <select class="select-filtro" id="filtro-tipo" onchange="renderizarGuardias()">
-          <option value="">Todos los tipos</option>
-          <option value="AUTOMATICA">Automática</option>
-          <option value="MANUAL">Manual</option>
-        </select>
-        <select class="select-filtro" id="filtro-estado" onchange="renderizarGuardias()">
-          <option value="">Todos los estados</option>
-          <option value="PENDIENTE">Pendiente</option>
-          <option value="REALIZADA">Realizada</option>
-          <option value="CANCELADA">Cancelada</option>
-        </select>
-        <button class="btn-secundario" onclick="limpiarFiltros()">
-          <i class="bi bi-arrow-counterclockwise"></i>
-          Limpiar
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tab-hoy" data-bs-toggle="tab" data-bs-target="#panel-hoy" type="button" role="tab">
+          <i class="bi bi-clock me-1"></i> Guardias de Hoy
         </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-planificadas" data-bs-toggle="tab" data-bs-target="#panel-planificadas" type="button" role="tab">
+          <i class="bi bi-calendar-week me-1"></i> Guardias Planificadas
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+
+      <!-- TAB: Guardias de Hoy -->
+      <div class="tab-pane fade show active" id="panel-hoy" role="tabpanel">
+
+        <!-- Ausencias sin cubrir -->
+        <div class="tarjeta mb-3">
+          <h2 class="tarjeta-titulo mb-3"><i class="bi bi-exclamation-triangle me-2"></i>Ausencias sin cubrir</h2>
+          <div id="lista-sin-cubrir"></div>
+        </div>
+
+        <!-- Profesores disponibles -->
+        <div class="tarjeta mb-3">
+          <h2 class="tarjeta-titulo mb-3"><i class="bi bi-person-check me-2"></i>Profesores disponibles</h2>
+          <div id="lista-disponibles"></div>
+        </div>
+
+        <!-- Guardias ya asignadas -->
+        <div class="tarjeta">
+          <h2 class="tarjeta-titulo mb-3"><i class="bi bi-shield-check me-2"></i>Guardias asignadas hoy</h2>
+          <div class="tabla-responsive">
+            <table class="tabla-datos">
+              <thead>
+                <tr>
+                  <th>Tramo</th>
+                  <th>Profesor Sustituto</th>
+                  <th>Profesor Ausente</th>
+                  <th>Clase</th>
+                  <th>Tipo</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-asignadas-hoy"></tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
 
-      <!-- Tabla de guardias -->
-      <div class="tabla-responsive">
-        <table class="tabla-datos">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Tramo</th>
-              <th>Profesor Sustituto</th>
-              <th>Profesor Ausente</th>
-              <th>Clase</th>
-              <th>Tipo</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-body"></tbody>
-        </table>
-      </div>
+      <!-- TAB: Guardias Planificadas -->
+      <div class="tab-pane fade" id="panel-planificadas" role="tabpanel">
 
-      <!-- Contador de resultados -->
-      <div class="contador-guardias" id="contador-texto">
-        Mostrando 0 guardias
+        <div class="tarjeta">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="tarjeta-titulo mb-0">Guardias planificadas</h2>
+            <button class="btn-primario" data-bs-toggle="modal" data-bs-target="#modal-nueva-guardia">
+              <i class="bi bi-plus-lg"></i> Nueva Guardia
+            </button>
+          </div>
+
+          <div class="tabla-responsive">
+            <table class="tabla-datos">
+              <thead>
+                <tr>
+                  <th>Profesor</th>
+                  <th>Día</th>
+                  <th>Tramo</th>
+                  <th>Espacio</th>
+                  <th>Curso escolar</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-planificadas"></tbody>
+            </table>
+          </div>
+
+          <div class="contador-guardias" id="contador-planificadas">Mostrando 0 guardias</div>
+        </div>
+
       </div>
 
     </div>
@@ -137,37 +164,46 @@
   </main>
 
 
-  <!-- Modal para crear o editar guardia -->
-  <div class="modal fade" id="modal-nueva-guardia" tabindex="-1" aria-labelledby="modal-titulo" aria-hidden="true">
+  <!-- Modal nueva guardia planificada -->
+  <div class="modal fade" id="modal-nueva-guardia" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content modal-contenido">
 
         <div class="modal-header modal-cabecera">
-          <h5 class="modal-title modal-titulo" id="modal-titulo">
+          <h5 class="modal-title modal-titulo">
             <i class="bi bi-shield-plus me-2 modal-icono-titulo"></i>
-            <span id="texto-titulo-guardia">Nueva Guardia Manual</span>
+            Nueva Guardia Planificada
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
 
         <div class="modal-body modal-cuerpo">
-
-          <!-- Error dentro del modal -->
           <div id="modal-error" class="modal-error"></div>
 
-          <form id="form-guardia" onsubmit="guardarGuardia(event)">
+          <form id="form-guardia">
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-sm-6">
+                <label class="modal-label">Profesor <span class="campo-obligatorio">*</span></label>
+                <select id="modal-profesor" class="select-filtro campo-completo" required>
+                  <option value="">Seleccionar...</option>
+                </select>
+              </div>
+              <div class="col-12 col-sm-6">
+                <label class="modal-label">Día de la semana <span class="campo-obligatorio">*</span></label>
+                <select id="modal-dia" class="select-filtro campo-completo" required>
+                  <option value="">Seleccionar...</option>
+                  <option value="1">Lunes</option>
+                  <option value="2">Martes</option>
+                  <option value="3">Miércoles</option>
+                  <option value="4">Jueves</option>
+                  <option value="5">Viernes</option>
+                </select>
+              </div>
+            </div>
 
             <div class="row g-3 mb-3">
               <div class="col-12 col-sm-6">
-                <label class="modal-label">
-                  Fecha <span class="campo-obligatorio">*</span>
-                </label>
-                <input type="date" id="modal-fecha" class="select-filtro campo-completo" required>
-              </div>
-              <div class="col-12 col-sm-6">
-                <label class="modal-label">
-                  Tramo horario <span class="campo-obligatorio">*</span>
-                </label>
+                <label class="modal-label">Tramo horario <span class="campo-obligatorio">*</span></label>
                 <select id="modal-tramo" class="select-filtro campo-completo" required>
                   <option value="">Seleccionar...</option>
                   <option value="08:00-09:00">08:00 - 09:00</option>
@@ -179,58 +215,25 @@
                   <option value="14:00-15:00">14:00 - 15:00</option>
                 </select>
               </div>
+              <div class="col-12 col-sm-6">
+                <label class="modal-label">Curso escolar <span class="campo-obligatorio">*</span></label>
+                <input type="text" id="modal-curso" class="select-filtro campo-completo" placeholder="Ej: 2025-2026" required>
+              </div>
             </div>
 
             <div class="mb-3">
-              <label class="modal-label">
-                Profesor sustituto <span class="campo-obligatorio">*</span>
-              </label>
-              <select id="modal-sustituto" class="select-filtro campo-completo" required>
-                <option value="">Seleccionar sustituto...</option>
+              <label class="modal-label">Espacio <span class="label-opcional">(opcional)</span></label>
+              <select id="modal-espacio" class="select-filtro campo-completo">
+                <option value="">Sin asignar</option>
               </select>
             </div>
-
-            <div class="mb-3">
-              <label class="modal-label">
-                Profesor ausente <span class="campo-obligatorio">*</span>
-              </label>
-              <select id="modal-ausente" class="select-filtro campo-completo" required>
-                <option value="">Seleccionar ausente...</option>
-              </select>
-            </div>
-
-            <div class="mb-3">
-              <label class="modal-label">
-                Clase <span class="campo-obligatorio">*</span>
-              </label>
-              <input
-                type="text"
-                id="modal-clase"
-                class="select-filtro campo-completo"
-                placeholder="Ej: 1 ESO A, 2 Bachillerato C..."
-                required
-              >
-            </div>
-
-            <div class="mb-3">
-              <label class="modal-label">
-                Observaciones <span class="label-opcional">(opcional)</span>
-              </label>
-              <textarea
-                id="modal-observaciones"
-                class="select-filtro campo-completo textarea-obs"
-                placeholder="Cualquier nota relevante para el sustituto..."
-              ></textarea>
-            </div>
-
           </form>
         </div>
 
         <div class="modal-footer modal-pie">
           <button type="button" class="btn-secundario" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" form="form-guardia" class="btn-primario" id="btn-guardar-guardia">
-            <i class="bi bi-check-lg"></i>
-            Crear Guardia
+            <i class="bi bi-check-lg"></i> Crear Guardia
           </button>
         </div>
 
@@ -238,246 +241,291 @@
     </div>
   </div>
 
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="../../js/datos-prueba.js"></script>
   <script src="../../js/auth.js"></script>
   <script src="../../js/sidebar.js"></script>
 
   <script>
-    // Inicialización
-    verificarSesion();
-    crearSidebar("guardias", "../../");
-    var guardiaEditandoId = null; // null = creación, número = edición
+    var _profesoresDisponibles = [];
 
-    // Actualiza las tarjetas de resumen
-    function actualizarResumen() {
-      var pend = 0, real = 0, canc = 0;
-      for (var i = 0; i < GUARDIAS_ASIGNADAS.length; i++) {
-        if (GUARDIAS_ASIGNADAS[i].estado === "PENDIENTE")  pend++;
-        else if (GUARDIAS_ASIGNADAS[i].estado === "REALIZADA")  real++;
-        else if (GUARDIAS_ASIGNADAS[i].estado === "CANCELADA") canc++;
-      }
-      document.getElementById("num-pendientes").textContent = pend;
-      document.getElementById("num-realizadas").textContent = real;
-      document.getElementById("num-canceladas").textContent = canc;
-      document.getElementById("num-total").textContent      = GUARDIAS_ASIGNADAS.length;
-    }
-    actualizarResumen();
+    verificarSesion().then(function (usuario) {
+      if (!usuario) return;
 
-    // Busca una guardia por id
-    function buscarGuardia(id) {
-      for (var i = 0; i < GUARDIAS_ASIGNADAS.length; i++) {
-        if (GUARDIAS_ASIGNADAS[i].id === id) return GUARDIAS_ASIGNADAS[i];
-      }
-      return null;
+      crearSidebar("guardias", "../../");
+      cargarSelectsModal();
+      recargar();
+
+      document.getElementById("form-guardia").addEventListener("submit", guardarGuardia);
+    });
+
+    function recargar() {
+      cargarGuardiasHoy();
+      cargarPlanificadas();
     }
 
-    // Abre el modal relleno con los datos de la guardia para editar
-    function editarGuardia(id) {
-      var g = buscarGuardia(id);
-      if (!g) return;
+    // ─── Guardias de Hoy ─────────────────────────────────
 
-      guardiaEditandoId = id;
+    function cargarGuardiasHoy() {
+      apiFetch('/api/v1/guardias/hoy').then(function (data) {
+        var info = (data && data.datos) ? data.datos : {};
+        var ausencias = info.ausencias || [];
+        var disponibles = info.disponibles || [];
+        var asignadas = info.asignadas || [];
 
-      // Rellena los campos
-      document.getElementById("modal-fecha").value = g.fecha;
-      document.getElementById("modal-tramo").value = g.tramo;
-      document.getElementById("modal-clase").value = g.clase;
+        _profesoresDisponibles = disponibles;
 
-      // Selecciona el sustituto correcto
-      var selSust = document.getElementById("modal-sustituto");
-      for (var i = 0; i < selSust.options.length; i++) {
-        if (selSust.options[i].value === g.profesor_sustituto) {
-          selSust.selectedIndex = i; break;
-        }
-      }
+        document.getElementById("num-ausencias-hoy").textContent = ausencias.length;
+        document.getElementById("num-disponibles").textContent = disponibles.length;
+        document.getElementById("num-asignadas-hoy").textContent = asignadas.length;
 
-      // Selecciona el ausente correcto
-      var selAus = document.getElementById("modal-ausente");
-      for (var i = 0; i < selAus.options.length; i++) {
-        if (selAus.options[i].value === g.profesor_ausente) {
-          selAus.selectedIndex = i; break;
-        }
-      }
-
-      // Cambia título y botón
-      document.getElementById("texto-titulo-guardia").textContent = "Editar Guardia";
-      document.getElementById("btn-guardar-guardia").innerHTML =
-        '<i class="bi bi-check-lg"></i> Guardar Cambios';
-      document.getElementById("modal-error").style.display = "none";
-
-      bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-nueva-guardia")).show();
+        renderSinCubrir(ausencias, disponibles);
+        renderDisponibles(disponibles);
+        renderAsignadasHoy(asignadas);
+      }).catch(function () {
+        document.getElementById("num-ausencias-hoy").textContent = "0";
+        document.getElementById("num-disponibles").textContent = "0";
+        document.getElementById("num-asignadas-hoy").textContent = "0";
+        document.getElementById("lista-sin-cubrir").innerHTML = '<div class="sin-resultados">Sin datos</div>';
+        document.getElementById("lista-disponibles").innerHTML = '<div class="sin-resultados">Sin datos</div>';
+        document.getElementById("tabla-asignadas-hoy").innerHTML = '<tr><td colspan="6" class="sin-resultados">Sin datos</td></tr>';
+      });
     }
 
-    // Filtra las guardias y dibuja la tabla
-    function renderizarGuardias() {
-      var tbody       = document.getElementById("tabla-body");
-      var filtroFecha = document.getElementById("filtro-fecha").value;
-      var filtroTipo  = document.getElementById("filtro-tipo").value;
-      var filtroEst   = document.getElementById("filtro-estado").value;
+    function renderSinCubrir(ausencias, disponibles) {
+      var contenedor = document.getElementById("lista-sin-cubrir");
 
-      var resultado = [];
-      for (var i = 0; i < GUARDIAS_ASIGNADAS.length; i++) {
-        var g = GUARDIAS_ASIGNADAS[i];
-        var okFecha = !filtroFecha || g.fecha === filtroFecha;
-        var okTipo  = !filtroTipo  || g.tipo_asignacion === filtroTipo;
-        var okEst   = !filtroEst   || g.estado === filtroEst;
-        if (okFecha && okTipo && okEst) resultado.push(g);
-      }
-
-      document.getElementById("contador-texto").textContent =
-        "Mostrando " + resultado.length + " de " + GUARDIAS_ASIGNADAS.length + " guardias";
-
-      if (resultado.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No hay guardias que coincidan con esos filtros</td></tr>';
+      if (ausencias.length === 0) {
+        contenedor.innerHTML = '<div class="sin-resultados"><i class="bi bi-check-circle sin-resultados-icono"></i>Todas las ausencias están cubiertas</div>';
         return;
       }
 
       var html = "";
-      for (var i = 0; i < resultado.length; i++) {
-        var g = resultado[i];
-        var partes = g.fecha.split("-");
-        var fechaLegible = partes[2] + "/" + partes[1] + "/" + partes[0];
+      for (var i = 0; i < ausencias.length; i++) {
+        var a = ausencias[i];
+        var profesor = a.profesor_nombre || a.nombre || "—";
+        var tramo = a.tramo_horario || a.tramo || "—";
+        var idAusencia = a.id_ausencia || a.id;
 
-        // Badge de tipo de asignación
-        var claseTipo, textoTipo;
-        if (g.tipo_asignacion === "AUTOMATICA") {
-          claseTipo = "badge-cerrada"; textoTipo = "Automatica";
-        } else {
-          claseTipo = "badge-en-proceso"; textoTipo = "Manual";
+        var opcionesSust = '<option value="">Seleccionar sustituto...</option>';
+        for (var j = 0; j < disponibles.length; j++) {
+          var d = disponibles[j];
+          var nombreDisp = (d.nombre || "") + " " + (d.apellidos || "");
+          var idDisp = d.id_usuario || d.id;
+          opcionesSust += '<option value="' + idDisp + '">' + nombreDisp.trim() + '</option>';
         }
 
-        // Badge de estado
-        var claseEst, textoEst;
-        if (g.estado === "PENDIENTE") {
-          claseEst = "badge-pendiente"; textoEst = "Pendiente";
-        } else if (g.estado === "REALIZADA") {
-          claseEst = "badge-cubierta"; textoEst = "Realizada";
-        } else {
-          claseEst = "badge-en-proceso"; textoEst = "Cancelada";
-        }
+        html += '<div class="tarjeta-cobertura d-flex justify-content-between align-items-center mb-2" style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;">' +
+                  '<div>' +
+                    '<strong>' + profesor + '</strong> — ' + tramo +
+                  '</div>' +
+                  '<div class="d-flex gap-2 align-items-center">' +
+                    '<select class="select-filtro" id="sust-' + idAusencia + '" style="min-width:200px;">' + opcionesSust + '</select>' +
+                    '<button class="btn-primario" onclick="asignarSustituto(' + idAusencia + ')" style="white-space:nowrap;">' +
+                      '<i class="bi bi-person-plus me-1"></i>Asignar' +
+                    '</button>' +
+                  '</div>' +
+                '</div>';
+      }
+      contenedor.innerHTML = html;
+    }
+
+    function renderDisponibles(disponibles) {
+      var contenedor = document.getElementById("lista-disponibles");
+
+      if (disponibles.length === 0) {
+        contenedor.innerHTML = '<div class="sin-resultados"><i class="bi bi-person-x sin-resultados-icono"></i>No hay profesores disponibles</div>';
+        return;
+      }
+
+      var html = '<div class="d-flex flex-wrap gap-2">';
+      for (var i = 0; i < disponibles.length; i++) {
+        var d = disponibles[i];
+        var nombre = (d.nombre || "") + " " + (d.apellidos || "");
+        html += '<span class="badge-estado badge-cubierta" style="padding:6px 12px;">' +
+                  '<i class="bi bi-person-check me-1"></i>' + nombre.trim() +
+                '</span>';
+      }
+      html += '</div>';
+      contenedor.innerHTML = html;
+    }
+
+    function renderAsignadasHoy(asignadas) {
+      var tbody = document.getElementById("tabla-asignadas-hoy");
+
+      if (asignadas.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No hay guardias asignadas hoy</td></tr>';
+        return;
+      }
+
+      var html = "";
+      for (var i = 0; i < asignadas.length; i++) {
+        var g = asignadas[i];
+        var tramo = g.tramo_horario || g.tramo || "—";
+        var sustituto = g.sustituto_nombre || g.profesor_sustituto || "—";
+        var ausente = g.ausente_nombre || g.profesor_ausente || "—";
+        var clase = g.clase || g.curso || "—";
+        var idAsignada = g.id_guardia_asignada || g.id;
+
+        var claseTipo = g.tipo_asignacion === "AUTOMATICA" ? "badge-cerrada" : "badge-en-proceso";
+        var textoTipo = g.tipo_asignacion === "AUTOMATICA" ? "Auto" : "Manual";
 
         html += '<tr>' +
-                  '<td class="celda-fecha">' + fechaLegible + '</td>' +
-                  '<td class="celda-sm">' + g.tramo + '</td>' +
-                  '<td><div class="profesor-principal">' + g.profesor_sustituto + '</div><div class="profesor-etiqueta">Sustituto</div></td>' +
-                  '<td><div class="celda-sm">' + g.profesor_ausente + '</div><div class="profesor-etiqueta">Ausente</div></td>' +
-                  '<td class="celda-sm">' + g.clase + '</td>' +
+                  '<td class="celda-sm">' + tramo + '</td>' +
+                  '<td><div class="profesor-principal">' + sustituto + '</div><div class="profesor-etiqueta">Sustituto</div></td>' +
+                  '<td><div class="celda-sm">' + ausente + '</div><div class="profesor-etiqueta">Ausente</div></td>' +
+                  '<td class="celda-sm">' + clase + '</td>' +
                   '<td><span class="badge-estado ' + claseTipo + '">' + textoTipo + '</span></td>' +
-                  '<td><span class="badge-estado ' + claseEst + '">' + textoEst + '</span></td>' +
-                  '<td><div class="d-flex gap-1">' +
-                    '<button class="btn-accion" title="Editar guardia" onclick="editarGuardia(' + g.id + ')"><i class="bi bi-pencil"></i></button>' +
-                    '<button class="btn-accion peligro" title="Eliminar guardia" onclick="eliminarGuardia(' + g.id + ')"><i class="bi bi-trash"></i></button>' +
-                  '</div></td>' +
+                  '<td>' +
+                    '<button class="btn-accion peligro" title="Eliminar" onclick="eliminarAsignada(' + idAsignada + ')"><i class="bi bi-trash"></i></button>' +
+                  '</td>' +
                 '</tr>';
       }
       tbody.innerHTML = html;
     }
 
-    // Elimina la guardia del array y actualiza
-    function eliminarGuardia(id) {
-      if (!confirm("¿Eliminar esta guardia definitivamente?")) return;
-      for (var i = 0; i < GUARDIAS_ASIGNADAS.length; i++) {
-        if (GUARDIAS_ASIGNADAS[i].id === id) { GUARDIAS_ASIGNADAS.splice(i, 1); break; }
-      }
-      actualizarResumen();
-      renderizarGuardias();
+    function asignarSustituto(idAusencia) {
+      var select = document.getElementById("sust-" + idAusencia);
+      if (!select || !select.value) { alert("Selecciona un profesor sustituto."); return; }
+
+      var hoy = new Date();
+      var fechaHoy = hoy.getFullYear() + "-" + String(hoy.getMonth() + 1).padStart(2, "0") + "-" + String(hoy.getDate()).padStart(2, "0");
+
+      apiFetch('/api/v1/guardias/asignadas', {
+        method: 'POST',
+        body: JSON.stringify({
+          id_ausencia: idAusencia,
+          id_profesor_sustituto: parseInt(select.value),
+          fecha: fechaHoy,
+          tramo_horario: "pendiente",
+          tipo_asignacion: "MANUAL"
+        })
+      }).then(function (data) {
+        if (data && data.ok) {
+          recargar();
+        } else {
+          alert((data && data.mensaje) || "Error al asignar sustituto");
+        }
+      }).catch(function () { alert("Error de conexión"); });
     }
 
-    // Resetea los filtros y recarga
-    function limpiarFiltros() {
-      document.getElementById("filtro-fecha").value  = "";
-      document.getElementById("filtro-tipo").value   = "";
-      document.getElementById("filtro-estado").value = "";
-      renderizarGuardias();
+    function eliminarAsignada(id) {
+      if (!confirm("¿Eliminar esta guardia asignada?")) return;
+      apiFetch('/api/v1/guardias/asignadas/' + id, { method: 'DELETE' }).then(function () {
+        recargar();
+      });
     }
 
-    renderizarGuardias();
+    // ─── Guardias Planificadas ───────────────────────────
 
-    // Rellena los selects de profesor del modal
-    var selectSustituto = document.getElementById("modal-sustituto");
-    var selectAusente   = document.getElementById("modal-ausente");
-    for (var i = 0; i < USUARIOS.length; i++) {
-      var u = USUARIOS[i];
-      var nombreMostrar = u.nombre + " " + u.apellidos + " (" + u.departamento + ")";
-      var optS = document.createElement("option");
-      optS.value = u.nombre + " " + u.apellidos;
-      optS.textContent = nombreMostrar;
-      selectSustituto.appendChild(optS);
-      var optA = document.createElement("option");
-      optA.value = u.nombre + " " + u.apellidos;
-      optA.textContent = nombreMostrar;
-      selectAusente.appendChild(optA);
+    function cargarPlanificadas() {
+      apiFetch('/api/v1/guardias/creadas?limit=20').then(function (data) {
+        var tbody = document.getElementById("tabla-planificadas");
+        var filas = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
+        var pag = (data && data.datos && data.datos.paginacion) ? data.datos.paginacion : { total: 0 };
+
+        document.getElementById("num-planificadas").textContent = pag.total;
+        document.getElementById("contador-planificadas").textContent =
+          "Mostrando " + filas.length + " de " + pag.total + " guardias";
+
+        if (filas.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No hay guardias planificadas</td></tr>';
+          return;
+        }
+
+        var diasSemana = ["", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+        var html = "";
+        for (var i = 0; i < filas.length; i++) {
+          var g = filas[i];
+          var profesor = g.profesor_nombre ? (g.profesor_nombre + " " + (g.profesor_apellidos || "")) : "—";
+          var dia = g.dia_semana ? diasSemana[g.dia_semana] : "—";
+          var espacio = g.espacio_nombre || "—";
+
+          html += '<tr>' +
+                    '<td class="celda-sm">' + profesor.trim() + '</td>' +
+                    '<td class="celda-sm">' + dia + '</td>' +
+                    '<td class="celda-sm">' + (g.tramo_horario || "—") + '</td>' +
+                    '<td class="celda-sm">' + espacio + '</td>' +
+                    '<td class="celda-sm">' + (g.curso_escolar || "—") + '</td>' +
+                    '<td>' +
+                      '<button class="btn-accion peligro" title="Eliminar" onclick="eliminarPlanificada(' + g.id_guardia_creada + ')"><i class="bi bi-trash"></i></button>' +
+                    '</td>' +
+                  '</tr>';
+        }
+        tbody.innerHTML = html;
+      }).catch(function () {
+        document.getElementById("tabla-planificadas").innerHTML =
+          '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No hay guardias planificadas</td></tr>';
+        document.getElementById("contador-planificadas").textContent = "Mostrando 0 guardias";
+      });
     }
 
-    // Al abrir el modal en modo creación, limpia el formulario
-    document.getElementById("modal-nueva-guardia").addEventListener("show.bs.modal", function() {
-      if (guardiaEditandoId === null) {
-        document.getElementById("form-guardia").reset();
-        document.getElementById("modal-error").style.display = "none";
-      }
-    });
+    function eliminarPlanificada(id) {
+      if (!confirm("¿Eliminar esta guardia planificada?")) return;
+      apiFetch('/api/v1/guardias/creadas/' + id, { method: 'DELETE' }).then(function () {
+        recargar();
+      });
+    }
 
-    // Al cerrar el modal, restaura el modo creación
-    document.getElementById("modal-nueva-guardia").addEventListener("hidden.bs.modal", function() {
-      guardiaEditandoId = null;
-      document.getElementById("texto-titulo-guardia").textContent = "Nueva Guardia Manual";
-      document.getElementById("btn-guardar-guardia").innerHTML =
-        '<i class="bi bi-check-lg"></i> Crear Guardia';
-    });
+    // ─── Modal nueva guardia planificada ─────────────────
 
-    // Guarda la guardia (crea nueva o actualiza la existente)
+    function cargarSelectsModal() {
+      apiFetch('/api/v1/usuarios?rol=PROFESOR&activo=true&limit=100').then(function (data) {
+        var usuarios = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
+        var select = document.getElementById("modal-profesor");
+        for (var i = 0; i < usuarios.length; i++) {
+          var u = usuarios[i];
+          var opt = document.createElement("option");
+          opt.value = u.id_usuario;
+          opt.textContent = u.nombre + " " + u.apellidos;
+          select.appendChild(opt);
+        }
+      });
+
+      apiFetch('/api/v1/espacios?limit=100').then(function (data) {
+        var espacios = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
+        var select = document.getElementById("modal-espacio");
+        for (var i = 0; i < espacios.length; i++) {
+          var e = espacios[i];
+          var opt = document.createElement("option");
+          opt.value = e.id_espacio;
+          opt.textContent = e.nombre;
+          select.appendChild(opt);
+        }
+      });
+    }
+
     function guardarGuardia(event) {
       event.preventDefault();
-      document.getElementById("modal-error").style.display = "none";
+      var errorDiv = document.getElementById("modal-error");
+      errorDiv.style.display = "none";
 
-      var fecha     = document.getElementById("modal-fecha").value;
-      var tramo     = document.getElementById("modal-tramo").value;
-      var sustituto = document.getElementById("modal-sustituto").value;
-      var ausente   = document.getElementById("modal-ausente").value;
-      var clase     = document.getElementById("modal-clase").value.trim();
+      var body = {
+        id_usuario: parseInt(document.getElementById("modal-profesor").value),
+        dia_semana: parseInt(document.getElementById("modal-dia").value),
+        tramo_horario: document.getElementById("modal-tramo").value,
+        curso_escolar: document.getElementById("modal-curso").value.trim()
+      };
 
-      // El sustituto y el ausente no pueden ser la misma persona
-      if (sustituto && ausente && sustituto === ausente) {
-        document.getElementById("modal-error").textContent = "El profesor sustituto y el ausente no pueden ser la misma persona.";
-        document.getElementById("modal-error").style.display = "block";
-        return;
-      }
+      var espacio = document.getElementById("modal-espacio").value;
+      if (espacio) body.id_espacio = parseInt(espacio);
 
-      if (guardiaEditandoId !== null) {
-        // Modo edición: actualiza la guardia existente
-        for (var i = 0; i < GUARDIAS_ASIGNADAS.length; i++) {
-          if (GUARDIAS_ASIGNADAS[i].id === guardiaEditandoId) {
-            GUARDIAS_ASIGNADAS[i].fecha              = fecha;
-            GUARDIAS_ASIGNADAS[i].tramo              = tramo;
-            GUARDIAS_ASIGNADAS[i].profesor_sustituto = sustituto;
-            GUARDIAS_ASIGNADAS[i].profesor_ausente   = ausente;
-            GUARDIAS_ASIGNADAS[i].clase              = clase;
-            break;
-          }
+      apiFetch('/api/v1/guardias/creadas', {
+        method: 'POST',
+        body: JSON.stringify(body)
+      }).then(function (data) {
+        if (data && data.ok) {
+          bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-nueva-guardia")).hide();
+          document.getElementById("form-guardia").reset();
+          recargar();
+        } else {
+          errorDiv.textContent = (data && data.mensaje) || "Error al crear la guardia";
+          errorDiv.style.display = "block";
         }
-        bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-nueva-guardia")).hide();
-        actualizarResumen();
-        renderizarGuardias();
-        alert("Guardia actualizada correctamente.");
-      } else {
-        // Modo creación
-        var nuevoId = 0;
-        for (var i = 0; i < GUARDIAS_ASIGNADAS.length; i++) {
-          if (GUARDIAS_ASIGNADAS[i].id > nuevoId) nuevoId = GUARDIAS_ASIGNADAS[i].id;
-        }
-        nuevoId++;
-        GUARDIAS_ASIGNADAS.push({
-          id: nuevoId, fecha: fecha, tramo: tramo,
-          profesor_sustituto: sustituto, profesor_ausente: ausente, clase: clase,
-          tipo_asignacion: "MANUAL", // Siempre MANUAL porque la creó el admin
-          estado: "PENDIENTE"
-        });
-        bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-nueva-guardia")).hide();
-        actualizarResumen();
-        renderizarGuardias();
-        alert("Guardia manual creada correctamente.");
-      }
+      }).catch(function () {
+        errorDiv.textContent = "Error de conexión";
+        errorDiv.style.display = "block";
+      });
     }
   </script>
 

@@ -24,10 +24,6 @@
         <h1>Gestión de Profesores</h1>
         <p>Administra los usuarios del profesorado y su estado en el sistema.</p>
       </div>
-      <button class="btn-primario" data-bs-toggle="modal" data-bs-target="#modal-nuevo-profesor">
-        <i class="bi bi-plus-lg"></i>
-        Añadir Profesor
-      </button>
     </div>
 
     <!-- Tarjetas resumen -->
@@ -72,7 +68,7 @@
           </div>
           <div>
             <div class="etiqueta">Departamentos</div>
-            <div class="numero" id="num-departamentos">0</div>
+            <div class="numero" id="num-departamentos">—</div>
           </div>
         </div>
       </div>
@@ -86,31 +82,29 @@
           type="text"
           class="input-busqueda"
           id="input-busqueda"
-          placeholder="Buscar por nombre, correo o departamento..."
-          oninput="renderizarProfesores()"
+          placeholder="Buscar por nombre o correo..."
         >
-        <select class="select-filtro" id="filtro-departamento" onchange="renderizarProfesores()">
-          <option value="">Todos los departamentos</option>
+        <select class="select-filtro" id="filtro-rol">
+          <option value="">Todos los roles</option>
+          <option value="PROFESOR">Profesor</option>
+          <option value="EQUIPO_DIRECTIVO">Equipo Directivo</option>
+          <option value="ADMINISTRADOR">Administrador</option>
+          <option value="CONSERJE">Conserje</option>
         </select>
-        <select class="select-filtro" id="filtro-estado" onchange="renderizarProfesores()">
+        <select class="select-filtro" id="filtro-estado">
           <option value="">Todos los estados</option>
-          <option value="activo">Activo</option>
-          <option value="inactivo">Inactivo</option>
+          <option value="true">Activo</option>
+          <option value="false">Inactivo</option>
         </select>
-        <button class="btn-secundario" onclick="limpiarFiltros()">
-          <i class="bi bi-arrow-counterclockwise"></i>
-          Limpiar
-        </button>
       </div>
 
-      <!-- Tabla de profesores -->
+      <!-- Tabla de usuarios -->
       <div class="tabla-responsive">
         <table class="tabla-datos">
           <thead>
             <tr>
-              <th>Profesor</th>
+              <th>Usuario</th>
               <th>Correo electrónico</th>
-              <th>Departamento</th>
               <th>Roles</th>
               <th>Estado</th>
               <th>Acciones</th>
@@ -130,90 +124,51 @@
   </main>
 
 
-  <!-- Modal para añadir o editar profesor -->
-  <div class="modal fade" id="modal-nuevo-profesor" tabindex="-1" aria-labelledby="modal-prof-titulo" aria-hidden="true">
+  <!-- Modal editar roles -->
+  <div class="modal fade" id="modal-roles" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content modal-contenido">
 
         <div class="modal-header modal-cabecera">
-          <h5 class="modal-title modal-titulo" id="modal-prof-titulo">
-            <i class="bi bi-person-plus me-2 modal-icono-titulo"></i>
-            <span id="texto-titulo-profesor">Añadir Nuevo Profesor</span>
+          <h5 class="modal-title modal-titulo">
+            <i class="bi bi-person-gear me-2 modal-icono-titulo"></i>
+            Editar Roles
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
 
         <div class="modal-body modal-cuerpo">
+          <div id="modal-roles-error" class="modal-error"></div>
+          <p class="mb-3" id="modal-roles-nombre" style="font-weight:600;"></p>
 
-          <!-- Error dentro del modal -->
-          <div id="modal-prof-error" class="modal-error"></div>
+          <input type="hidden" id="modal-roles-id">
 
-          <form id="form-profesor" onsubmit="guardarProfesor(event)">
-
-            <div class="row g-3 mb-3">
-              <div class="col-12 col-sm-6">
-                <label class="modal-label">
-                  Nombre <span class="campo-obligatorio">*</span>
-                </label>
-                <input type="text" id="modal-nombre" class="select-filtro campo-completo"
-                       placeholder="Ej: Laura" required>
-              </div>
-              <div class="col-12 col-sm-6">
-                <label class="modal-label">
-                  Apellidos <span class="campo-obligatorio">*</span>
-                </label>
-                <input type="text" id="modal-apellidos" class="select-filtro campo-completo"
-                       placeholder="Ej: Martínez López" required>
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label class="modal-label">
-                Correo electrónico <span class="campo-obligatorio">*</span>
-              </label>
-              <input type="email" id="modal-correo" class="select-filtro campo-completo"
-                     placeholder="nombre@iesrioarba.es" required>
-            </div>
-
-            <div class="row g-3">
-              <div class="col-12 col-sm-6">
-                <label class="modal-label">
-                  Departamento <span class="campo-obligatorio">*</span>
-                </label>
-                <select id="modal-departamento" class="select-filtro campo-completo" required>
-                  <option value="">Seleccionar...</option>
-                  <option value="Matemáticas">Matemáticas</option>
-                  <option value="Lengua Castellana">Lengua Castellana</option>
-                  <option value="Inglés">Inglés</option>
-                  <option value="Informática">Informática</option>
-                  <option value="Física y Química">Física y Química</option>
-                  <option value="Biología">Biología</option>
-                  <option value="Historia">Historia</option>
-                  <option value="Ciencias Naturales">Ciencias Naturales</option>
-                  <option value="Dirección">Dirección</option>
-                  <option value="Administración">Administración</option>
-                </select>
-              </div>
-              <div class="col-12 col-sm-6">
-                <label class="modal-label">
-                  Rol <span class="campo-obligatorio">*</span>
-                </label>
-                <select id="modal-rol" class="select-filtro campo-completo" required>
-                  <option value="PROFESOR">Profesor</option>
-                  <option value="EQUIPO_DIRECTIVO">Equipo Directivo</option>
-                  <option value="ADMINISTRADOR">Administrador</option>
-                </select>
-              </div>
-            </div>
-
-          </form>
+          <div class="mb-2">
+            <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
+              <input type="checkbox" id="chk-profesor" value="PROFESOR"> Profesor
+            </label>
+          </div>
+          <div class="mb-2">
+            <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
+              <input type="checkbox" id="chk-directivo" value="EQUIPO_DIRECTIVO"> Equipo Directivo
+            </label>
+          </div>
+          <div class="mb-2">
+            <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
+              <input type="checkbox" id="chk-admin" value="ADMINISTRADOR"> Administrador
+            </label>
+          </div>
+          <div class="mb-2">
+            <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
+              <input type="checkbox" id="chk-conserje" value="CONSERJE"> Conserje
+            </label>
+          </div>
         </div>
 
         <div class="modal-footer modal-pie">
           <button type="button" class="btn-secundario" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" form="form-profesor" class="btn-primario" id="btn-guardar-profesor">
-            <i class="bi bi-check-lg"></i>
-            Añadir Profesor
+          <button type="button" class="btn-primario" onclick="guardarRoles()">
+            <i class="bi bi-check-lg"></i> Guardar Roles
           </button>
         </div>
 
@@ -221,240 +176,182 @@
     </div>
   </div>
 
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="../../js/datos-prueba.js"></script>
   <script src="../../js/auth.js"></script>
   <script src="../../js/sidebar.js"></script>
 
   <script>
-    // Inicialización
-    verificarSesion();
-    crearSidebar("profesores", "../../");
-    var profesorEditandoId = null; // null = creación, número = edición
+    verificarSesion().then(function (usuario) {
+      if (!usuario) return;
 
-    // Actualiza tarjetas contando activos, inactivos y departamentos únicos
-    function actualizarResumen() {
-      var act = 0, inact = 0;
-      var deptos = {};
-      for (var i = 0; i < USUARIOS.length; i++) {
-        if (USUARIOS[i].activo) act++;
-        else inact++;
-        deptos[USUARIOS[i].departamento] = true;
-      }
-      document.getElementById("num-activos").textContent       = act;
-      document.getElementById("num-inactivos").textContent     = inact;
-      document.getElementById("num-total").textContent         = USUARIOS.length;
-      document.getElementById("num-departamentos").textContent = Object.keys(deptos).length;
-    }
-    actualizarResumen();
+      crearSidebar("profesores", "../../");
+      actualizarResumen();
+      cargarUsuarios();
 
-    // Rellena el select de departamentos
-    var deptoSet = {};
-    for (var i = 0; i < USUARIOS.length; i++) deptoSet[USUARIOS[i].departamento] = true;
-    var selectDepto = document.getElementById("filtro-departamento");
-    Object.keys(deptoSet).forEach(function(d) {
-      var opt = document.createElement("option");
-      opt.value = d; opt.textContent = d;
-      selectDepto.appendChild(opt);
+      document.getElementById("filtro-rol").addEventListener("change", function () { cargarUsuarios(); });
+      document.getElementById("filtro-estado").addEventListener("change", function () { cargarUsuarios(); });
+
+      var timerBusqueda;
+      document.getElementById("input-busqueda").addEventListener("input", function () {
+        clearTimeout(timerBusqueda);
+        timerBusqueda = setTimeout(function () { cargarUsuarios(); }, 300);
+      });
     });
 
-    // Busca un usuario por id
-    function buscarUsuario(id) {
-      for (var i = 0; i < USUARIOS.length; i++) {
-        if (USUARIOS[i].id === id) return USUARIOS[i];
-      }
-      return null;
+    function actualizarResumen() {
+      apiFetch('/api/v1/usuarios?activo=true&limit=1').then(function (d) {
+        document.getElementById("num-activos").textContent = (d && d.datos && d.datos.paginacion) ? d.datos.paginacion.total : 0;
+      }).catch(function () { document.getElementById("num-activos").textContent = "0"; });
+
+      apiFetch('/api/v1/usuarios?activo=false&limit=1').then(function (d) {
+        document.getElementById("num-inactivos").textContent = (d && d.datos && d.datos.paginacion) ? d.datos.paginacion.total : 0;
+      }).catch(function () { document.getElementById("num-inactivos").textContent = "0"; });
+
+      apiFetch('/api/v1/usuarios?limit=1').then(function (d) {
+        document.getElementById("num-total").textContent = (d && d.datos && d.datos.paginacion) ? d.datos.paginacion.total : 0;
+      }).catch(function () { document.getElementById("num-total").textContent = "0"; });
     }
 
-    // Abre el modal rellenado con los datos del profesor para editar
-    function editarProfesor(id) {
-      var u = buscarUsuario(id);
-      if (!u) return;
+    function cargarUsuarios() {
+      var busqueda = document.getElementById("input-busqueda").value.trim();
+      var rol = document.getElementById("filtro-rol").value;
+      var activo = document.getElementById("filtro-estado").value;
 
-      profesorEditandoId = id;
+      var url = '/api/v1/usuarios?limit=20';
+      if (busqueda) url += '&busqueda=' + encodeURIComponent(busqueda);
+      if (rol) url += '&rol=' + encodeURIComponent(rol);
+      if (activo) url += '&activo=' + encodeURIComponent(activo);
 
-      // Rellena los campos del formulario
-      document.getElementById("modal-nombre").value      = u.nombre;
-      document.getElementById("modal-apellidos").value   = u.apellidos;
-      document.getElementById("modal-correo").value      = u.correo;
-      document.getElementById("modal-departamento").value = u.departamento;
-      document.getElementById("modal-rol").value         = u.rol[0];
+      apiFetch(url).then(function (data) {
+        var tbody = document.getElementById("tabla-body");
+        var filas = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
+        var pag = (data && data.datos && data.datos.paginacion) ? data.datos.paginacion : { total: 0 };
 
-      // Cambia el título y el botón del modal
-      document.getElementById("texto-titulo-profesor").textContent = "Editar Profesor";
-      document.getElementById("btn-guardar-profesor").innerHTML =
-        '<i class="bi bi-check-lg"></i> Guardar Cambios';
-      document.getElementById("modal-prof-error").style.display = "none";
+        document.getElementById("contador-texto").textContent =
+          "Mostrando " + filas.length + " de " + pag.total + " profesores";
 
-      bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-nuevo-profesor")).show();
+        if (filas.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron usuarios</td></tr>';
+          return;
+        }
+
+        var html = "";
+        for (var i = 0; i < filas.length; i++) {
+          var u = filas[i];
+          var nombreCompleto = (u.nombre || "") + " " + (u.apellidos || "");
+          var avatarSrc = u.avatar_url || "https://ui-avatars.com/api/?name=" + encodeURIComponent(nombreCompleto.trim()) + "&background=dbeafe&color=1152d4&bold=true";
+
+          var roles = u.roles || [];
+          var badgesRol = "";
+          for (var j = 0; j < roles.length; j++) {
+            var r = roles[j];
+            var textoRol, claseRol;
+            if (r === "PROFESOR")              { textoRol = "Profesor";         claseRol = "badge-cerrada"; }
+            else if (r === "EQUIPO_DIRECTIVO") { textoRol = "Equipo Directivo"; claseRol = "badge-en-proceso"; }
+            else if (r === "ADMINISTRADOR")    { textoRol = "Administrador";    claseRol = "badge-tipo"; }
+            else if (r === "CONSERJE")         { textoRol = "Conserje";         claseRol = "badge-pendiente"; }
+            else                               { textoRol = r;                  claseRol = "badge-cerrada"; }
+            badgesRol += '<span class="badge-estado ' + claseRol + ' badge-rol">' + textoRol + '</span>';
+          }
+
+          var badgeEstado;
+          if (u.activo) {
+            badgeEstado = '<span class="badge-estado badge-cubierta"><i class="bi bi-circle-fill me-1 icono-status-mini"></i>Activo</span>';
+          } else {
+            badgeEstado = '<span class="badge-estado badge-cerrada"><i class="bi bi-circle me-1 icono-status-mini"></i>Inactivo</span>';
+          }
+
+          var clasePeligro = u.activo ? " peligro" : "";
+          var tituloToggle = u.activo ? "Desactivar" : "Activar";
+          var iconoToggle = u.activo ? "bi-person-slash" : "bi-person-check";
+
+          var rolesJson = JSON.stringify(roles).replace(/"/g, '&quot;');
+
+          html += '<tr>' +
+                    '<td><div class="celda-profesor">' +
+                      '<img src="' + avatarSrc + '" class="avatar-profesor" alt="">' +
+                      '<div><div class="profesor-nombre">' + nombreCompleto.trim() + '</div><div class="profesor-id">ID: ' + String(u.id_usuario).padStart(4, "0") + '</div></div>' +
+                    '</div></td>' +
+                    '<td class="celda-sm">' + (u.correo || "—") + '</td>' +
+                    '<td>' + badgesRol + '</td>' +
+                    '<td>' + badgeEstado + '</td>' +
+                    '<td><div class="d-flex gap-1">' +
+                      '<button class="btn-accion" title="Editar roles" onclick="abrirModalRoles(' + u.id_usuario + ', \'' + nombreCompleto.trim().replace(/'/g, "\\'") + '\', ' + rolesJson + ')"><i class="bi bi-person-gear"></i></button>' +
+                      '<button class="btn-accion' + clasePeligro + '" title="' + tituloToggle + '" onclick="toggleActivo(' + u.id_usuario + ', \'' + nombreCompleto.trim().replace(/'/g, "\\'") + '\', ' + (u.activo ? 'true' : 'false') + ')"><i class="bi ' + iconoToggle + '"></i></button>' +
+                    '</div></td>' +
+                  '</tr>';
+        }
+        tbody.innerHTML = html;
+      }).catch(function () {
+        document.getElementById("tabla-body").innerHTML =
+          '<tr><td colspan="5" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron usuarios</td></tr>';
+        document.getElementById("contador-texto").textContent = "Mostrando 0 profesores";
+      });
     }
 
-    // Filtra usuarios y dibuja la tabla
-    function renderizarProfesores() {
-      var tbody    = document.getElementById("tabla-body");
-      var busqueda = document.getElementById("input-busqueda").value.trim().toLowerCase();
-      var depto    = document.getElementById("filtro-departamento").value;
-      var estado   = document.getElementById("filtro-estado").value;
+    function abrirModalRoles(id, nombre, rolesActuales) {
+      document.getElementById("modal-roles-id").value = id;
+      document.getElementById("modal-roles-nombre").textContent = nombre;
+      document.getElementById("modal-roles-error").style.display = "none";
 
-      var resultado = [];
-      for (var i = 0; i < USUARIOS.length; i++) {
-        var u = USUARIOS[i];
-        var nombre = (u.nombre + " " + u.apellidos).toLowerCase();
-        var okTexto  = !busqueda || nombre.indexOf(busqueda) !== -1 || u.correo.toLowerCase().indexOf(busqueda) !== -1 || u.departamento.toLowerCase().indexOf(busqueda) !== -1;
-        var okDepto  = !depto  || u.departamento === depto;
-        // Comparamos booleano con texto del select
-        var okEstado = !estado || (estado === "activo" && u.activo) || (estado === "inactivo" && !u.activo);
-        if (okTexto && okDepto && okEstado) resultado.push(u);
-      }
+      document.getElementById("chk-profesor").checked = rolesActuales.indexOf("PROFESOR") !== -1;
+      document.getElementById("chk-directivo").checked = rolesActuales.indexOf("EQUIPO_DIRECTIVO") !== -1;
+      document.getElementById("chk-admin").checked = rolesActuales.indexOf("ADMINISTRADOR") !== -1;
+      document.getElementById("chk-conserje").checked = rolesActuales.indexOf("CONSERJE") !== -1;
 
-      document.getElementById("contador-texto").textContent =
-        "Mostrando " + resultado.length + " de " + USUARIOS.length + " profesores";
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-roles")).show();
+    }
 
-      if (resultado.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron profesores con esos filtros</td></tr>';
+    function guardarRoles() {
+      var id = document.getElementById("modal-roles-id").value;
+      var errorDiv = document.getElementById("modal-roles-error");
+      errorDiv.style.display = "none";
+
+      var roles = [];
+      if (document.getElementById("chk-profesor").checked) roles.push("PROFESOR");
+      if (document.getElementById("chk-directivo").checked) roles.push("EQUIPO_DIRECTIVO");
+      if (document.getElementById("chk-admin").checked) roles.push("ADMINISTRADOR");
+      if (document.getElementById("chk-conserje").checked) roles.push("CONSERJE");
+
+      if (roles.length === 0) {
+        errorDiv.textContent = "Debes seleccionar al menos un rol.";
+        errorDiv.style.display = "block";
         return;
       }
 
-      var html = "";
-      for (var i = 0; i < resultado.length; i++) {
-        var u = resultado[i];
-
-        // Badges de rol
-        var badgesRol = "";
-        for (var j = 0; j < u.rol.length; j++) {
-          var r = u.rol[j];
-          var textoRol, claseRol;
-          if (r === "PROFESOR")              { textoRol = "Profesor";         claseRol = "badge-cerrada"; }
-          else if (r === "EQUIPO_DIRECTIVO") { textoRol = "Equipo Directivo"; claseRol = "badge-en-proceso"; }
-          else if (r === "ADMINISTRADOR")    { textoRol = "Administrador";    claseRol = "badge-tipo"; }
-          else                               { textoRol = r;                  claseRol = "badge-cerrada"; }
-          badgesRol += '<span class="badge-estado ' + claseRol + ' badge-rol">' + textoRol + '</span>';
-        }
-
-        // Badge de estado
-        var badgeEstado;
-        if (u.activo) {
-          badgeEstado = '<span class="badge-estado badge-cubierta"><i class="bi bi-circle-fill me-1 icono-status-mini"></i>Activo</span>';
+      apiFetch('/api/v1/usuarios/' + id + '/roles', {
+        method: 'PUT',
+        body: JSON.stringify({ roles: roles })
+      }).then(function (data) {
+        if (data && data.ok) {
+          bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-roles")).hide();
+          actualizarResumen();
+          cargarUsuarios();
         } else {
-          badgeEstado = '<span class="badge-estado badge-cerrada"><i class="bi bi-circle me-1 icono-status-mini"></i>Inactivo</span>';
+          errorDiv.textContent = (data && data.mensaje) || "Error al actualizar roles";
+          errorDiv.style.display = "block";
         }
-
-        // Botón activar/desactivar
-        var clasePeligro = u.activo ? " peligro" : "";
-        var tituloBtn    = u.activo ? "Desactivar" : "Activar";
-        var iconoBtn     = u.activo ? "bi-person-slash" : "bi-person-check";
-
-        html += '<tr>' +
-                  '<td><div class="celda-profesor">' +
-                    '<img src="' + u.avatar + '" class="avatar-profesor" alt="">' +
-                    '<div><div class="profesor-nombre">' + u.nombre + ' ' + u.apellidos + '</div><div class="profesor-id">ID: ' + String(u.id).padStart(4, "0") + '</div></div>' +
-                  '</div></td>' +
-                  '<td class="celda-sm">' + u.correo + '</td>' +
-                  '<td><span class="badge-departamento">' + u.departamento + '</span></td>' +
-                  '<td>' + badgesRol + '</td>' +
-                  '<td>' + badgeEstado + '</td>' +
-                  '<td><div class="d-flex gap-1">' +
-                    '<button class="btn-accion" title="Editar profesor" onclick="editarProfesor(' + u.id + ')"><i class="bi bi-pencil"></i></button>' +
-                    '<button class="btn-accion' + clasePeligro + '" title="' + tituloBtn + '" onclick="toggleEstado(' + u.id + ')"><i class="bi ' + iconoBtn + '"></i></button>' +
-                  '</div></td>' +
-                '</tr>';
-      }
-      tbody.innerHTML = html;
+      }).catch(function () {
+        errorDiv.textContent = "Error de conexión";
+        errorDiv.style.display = "block";
+      });
     }
 
-    // Alterna el estado activo/inactivo del usuario
-    function toggleEstado(id) {
-      var usuario = buscarUsuario(id);
-      if (!usuario) return;
-      var accion = usuario.activo ? "desactivar" : "activar";
-      if (!confirm("¿Quieres " + accion + " a " + usuario.nombre + " " + usuario.apellidos + "?")) return;
-      usuario.activo = !usuario.activo;
-      actualizarResumen();
-      renderizarProfesores();
-    }
+    function toggleActivo(id, nombre, estaActivo) {
+      var accion = estaActivo ? "desactivar" : "activar";
+      if (!confirm("¿Quieres " + accion + " a " + nombre + "?")) return;
 
-    // Resetea filtros
-    function limpiarFiltros() {
-      document.getElementById("input-busqueda").value      = "";
-      document.getElementById("filtro-departamento").value = "";
-      document.getElementById("filtro-estado").value       = "";
-      renderizarProfesores();
-    }
-
-    renderizarProfesores();
-
-    // Al abrir el modal en modo creación, limpia el formulario
-    document.getElementById("modal-nuevo-profesor").addEventListener("show.bs.modal", function() {
-      if (profesorEditandoId === null) {
-        document.getElementById("form-profesor").reset();
-        document.getElementById("modal-prof-error").style.display = "none";
-      }
-    });
-
-    // Al cerrar el modal, restaura el modo creación
-    document.getElementById("modal-nuevo-profesor").addEventListener("hidden.bs.modal", function() {
-      profesorEditandoId = null;
-      document.getElementById("texto-titulo-profesor").textContent = "Añadir Nuevo Profesor";
-      document.getElementById("btn-guardar-profesor").innerHTML =
-        '<i class="bi bi-check-lg"></i> Añadir Profesor';
-    });
-
-    // Guarda el profesor (crea nuevo o actualiza el existente)
-    function guardarProfesor(event) {
-      event.preventDefault();
-      var errorDiv = document.getElementById("modal-prof-error");
-      errorDiv.style.display = "none";
-
-      var nombre       = document.getElementById("modal-nombre").value.trim();
-      var apellidos    = document.getElementById("modal-apellidos").value.trim();
-      var correo       = document.getElementById("modal-correo").value.trim().toLowerCase();
-      var departamento = document.getElementById("modal-departamento").value;
-      var rol          = document.getElementById("modal-rol").value;
-
-      if (profesorEditandoId !== null) {
-        // Modo edición: actualiza el profesor existente
-        for (var i = 0; i < USUARIOS.length; i++) {
-          if (USUARIOS[i].id === profesorEditandoId) {
-            USUARIOS[i].nombre       = nombre;
-            USUARIOS[i].apellidos    = apellidos;
-            USUARIOS[i].correo       = correo;
-            USUARIOS[i].departamento = departamento;
-            USUARIOS[i].rol          = [rol];
-            break;
-          }
+      apiFetch('/api/v1/usuarios/' + id + '/toggle-activo', {
+        method: 'PATCH'
+      }).then(function (data) {
+        if (data && data.ok) {
+          actualizarResumen();
+          cargarUsuarios();
+        } else {
+          alert((data && data.mensaje) || "Error al cambiar estado");
         }
-        bootstrap.Modal.getInstance(document.getElementById("modal-nuevo-profesor")).hide();
-        actualizarResumen();
-        renderizarProfesores();
-        alert("Profesor " + nombre + " " + apellidos + " actualizado correctamente.");
-      } else {
-        // Modo creación: el correo no puede repetirse
-        for (var i = 0; i < USUARIOS.length; i++) {
-          if (USUARIOS[i].correo === correo) {
-            errorDiv.textContent = "Ya existe un usuario con ese correo electrónico.";
-            errorDiv.style.display = "block";
-            return;
-          }
-        }
-
-        var nuevoId = 0;
-        for (var i = 0; i < USUARIOS.length; i++) {
-          if (USUARIOS[i].id > nuevoId) nuevoId = USUARIOS[i].id;
-        }
-        nuevoId++;
-
-        var avatarUrl = "https://ui-avatars.com/api/?name=" + encodeURIComponent(nombre + "+" + apellidos) + "&background=dbeafe&color=1152d4&bold=true";
-        USUARIOS.push({
-          id: nuevoId, nombre: nombre, apellidos: apellidos, correo: correo,
-          password: "1234", // Contraseña por defecto
-          rol: [rol], departamento: departamento, activo: true, avatar: avatarUrl
-        });
-
-        bootstrap.Modal.getInstance(document.getElementById("modal-nuevo-profesor")).hide();
-        actualizarResumen();
-        renderizarProfesores();
-        alert("Profesor " + nombre + " " + apellidos + " añadido correctamente.");
-      }
+      }).catch(function () { alert("Error de conexión"); });
     }
   </script>
 
