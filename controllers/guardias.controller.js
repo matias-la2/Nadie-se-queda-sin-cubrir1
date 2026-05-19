@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const { success, error } = require('../helpers/response.helper');
 const { paginar, respuestaPaginada } = require('../helpers/pagination.helper');
+const { enviarEmail, plantillaNotificacion } = require('../services/email.service');
 
 // ─── GUARDIAS CREADAS (planificadas) ───────────────────
 
@@ -186,11 +187,12 @@ async function listarAsignadas(req, res, next) {
 }
 
 async function crearAsignada(req, res, next) {
+  const conn = await pool.getConnection();
   try {
     const { fecha, tramo_horario, tipo_asignacion, comentario,
             id_ausencia, id_profesor_sustituto, id_clase, id_guardia_creada } = req.body;
 
-    const [[{ conflictos }]] = await pool.query(
+    const [[{ conflictos }]] = await conn.query(
       `SELECT COUNT(*) as conflictos FROM guardia_asignada
        WHERE id_profesor_sustituto = ? AND fecha = ? AND tramo_horario = ?`,
       [id_profesor_sustituto, fecha, tramo_horario]
@@ -199,17 +201,96 @@ async function crearAsignada(req, res, next) {
       return error(res, 'El profesor sustituto ya tiene una guardia asignada en ese horario', 409);
     }
 
-    const [result] = await pool.query(
+    const [edificiosAusencia] = await conn.query(
+      `SELECT DISTINCT es.id_edificio
+       FROM ausencia_espacio ae
+       JOIN espacio es ON ae.id_espacio = es.id_espacio
+       WHERE ae.id_ausencia = ?`,
+      [id_ausencia]
+    );
+
+    if (edificiosAusencia.length > 0) {
+      const idsEdificioAusencia = edificiosAusencia.map(e => e.id_edificio);
+      const [[{ coincide }]] = await conn.query(
+        `SELECT COUNT(*) as coincide FROM profesor_edificio
+         WHERE id_usuario = ? AND id_edificio IN (?)`,
+        [id_profesor_sustituto, idsEdificioAusencia]
+      );
+      if (coincide === 0) {
+        return error(res, 'El profesor sustituto no pertenece al edificio de la ausencia', 400);
+      }
+    }
+
+    await conn.beginTransaction();
+
+    const [result] = await conn.query(
       `INSERT INTO guardia_asignada
        (fecha, tramo_horario, tipo_asignacion, comentario, id_ausencia, id_profesor_sustituto, id_clase, id_guardia_creada)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [fecha, tramo_horario, tipo_asignacion || 'MANUAL', comentario || null,
        id_ausencia, id_profesor_sustituto, id_clase || null, id_guardia_creada || null]
     );
-    res.registroId = result.insertId;
-    return success(res, { id: result.insertId }, 201);
+    const idGuardiaAsignada = result.insertId;
+
+    await conn.query(
+      `UPDATE ausencia SET estado = 'CUBIERTA' WHERE id_ausencia = ?`,
+      [id_ausencia]
+    );
+
+    const [[ausencia]] = await conn.query(
+      `SELECT a.*, u.nombre AS ausente_nombre, u.apellidos AS ausente_apellidos
+       FROM ausencia a
+       JOIN usuario u ON a.id_profesor = u.id_usuario
+       WHERE a.id_ausencia = ?`,
+      [id_ausencia]
+    );
+
+    let mensaje = `Se te ha asignado una guardia el ${fecha} en el tramo ${tramo_horario}.`;
+    if (ausencia.hay_tarea) {
+      mensaje += ' Hay tarea para los alumnos.';
+    }
+
+    await conn.query(
+      `INSERT INTO notificacion (id_usuario, tipo, mensaje, referencia_id, referencia_tipo)
+       VALUES (?, 'AUSENCIA_ASIGNADA', ?, ?, 'guardia_asignada')`,
+      [id_profesor_sustituto, mensaje, idGuardiaAsignada]
+    );
+
+    await conn.commit();
+
+    try {
+      const [[sustituto]] = await pool.query(
+        `SELECT correo FROM usuario WHERE id_usuario = ?`,
+        [id_profesor_sustituto]
+      );
+
+      let cuerpo = `Has sido asignado/a para cubrir la ausencia de ${ausencia.ausente_nombre} ${ausencia.ausente_apellidos} el ${fecha} en el tramo ${tramo_horario}.`;
+      if (ausencia.hay_tarea && ausencia.descripcion_tarea) {
+        cuerpo += ` Tarea para los alumnos: ${ausencia.descripcion_tarea}`;
+      }
+
+      const html = plantillaNotificacion({
+        titulo: `Guardia asignada - ${fecha}`,
+        cuerpo,
+        enlace: null
+      });
+
+      await enviarEmail({
+        para: sustituto.correo,
+        asunto: `Guardia asignada - ${fecha}`,
+        html
+      });
+    } catch (_emailErr) {
+      // Best-effort: si el email falla, la guardia ya está asignada
+    }
+
+    res.registroId = idGuardiaAsignada;
+    return success(res, { id: idGuardiaAsignada }, 201);
   } catch (err) {
+    await conn.rollback();
     next(err);
+  } finally {
+    conn.release();
   }
 }
 
@@ -230,31 +311,109 @@ async function eliminarAsignada(req, res, next) {
 
 async function guardiasHoy(req, res, next) {
   try {
-    const [ausencias] = await pool.query(
-      `SELECT a.*, u.nombre AS profesor_nombre, u.apellidos AS profesor_apellidos,
-              p.departamento
-       FROM ausencia a
-       JOIN usuario u ON a.id_profesor = u.id_usuario
-       JOIN profesor p ON a.id_profesor = p.id_usuario
-       WHERE a.fecha = CURDATE()
-       AND a.estado IN ('PENDIENTE', 'SIN_CUBRIR')`
-    );
+    const filtroEdificio = req.query.id_edificio ? parseInt(req.query.id_edificio) : null;
+
+    let ausenciaSql = `
+      SELECT a.*, u.nombre AS profesor_nombre, u.apellidos AS profesor_apellidos,
+             p.departamento
+      FROM ausencia a
+      JOIN usuario u ON a.id_profesor = u.id_usuario
+      JOIN profesor p ON a.id_profesor = p.id_usuario
+      WHERE a.fecha = CURDATE()
+      AND a.estado IN ('PENDIENTE', 'SIN_CUBRIR')`;
+    const ausenciaParams = [];
+
+    if (filtroEdificio) {
+      ausenciaSql += ` AND EXISTS (
+        SELECT 1 FROM ausencia_espacio ae
+        JOIN espacio es ON ae.id_espacio = es.id_espacio
+        WHERE ae.id_ausencia = a.id_ausencia AND es.id_edificio = ?
+      )`;
+      ausenciaParams.push(filtroEdificio);
+    }
+
+    const [ausencias] = await pool.query(ausenciaSql, ausenciaParams);
+
+    const idsAusencias = ausencias.map(a => a.id_ausencia);
+    const espaciosPorAusencia = new Map();
+    if (idsAusencias.length > 0) {
+      const [todosEspacios] = await pool.query(
+        `SELECT ae.id_ausencia, es.id_espacio, es.nombre, e.id_edificio, e.nombre AS edificio_nombre
+         FROM ausencia_espacio ae
+         JOIN espacio es ON ae.id_espacio = es.id_espacio
+         JOIN edificio e ON es.id_edificio = e.id_edificio
+         WHERE ae.id_ausencia IN (?)`,
+        [idsAusencias]
+      );
+      for (const row of todosEspacios) {
+        if (!espaciosPorAusencia.has(row.id_ausencia)) {
+          espaciosPorAusencia.set(row.id_ausencia, []);
+        }
+        espaciosPorAusencia.get(row.id_ausencia).push(row);
+      }
+    }
+    for (const aus of ausencias) {
+      const espacios = espaciosPorAusencia.get(aus.id_ausencia) || [];
+      aus.espacios = espacios;
+      aus.edificios = [...new Set(espacios.map(e => e.id_edificio))];
+    }
 
     // WEEKDAY: 0=Lun...4=Vie → +1 para nuestro 1=Lun...5=Vie
-    const [disponibles] = await pool.query(
-      `SELECT gc.*, u.nombre AS profesor_nombre, u.apellidos AS profesor_apellidos,
-              es.nombre AS espacio_nombre
-       FROM guardia_creada gc
-       JOIN usuario u ON gc.id_usuario = u.id_usuario
-       LEFT JOIN espacio es ON gc.id_espacio = es.id_espacio
-       WHERE (gc.dia_semana = WEEKDAY(CURDATE()) + 1 OR gc.fecha = CURDATE())
-       AND NOT EXISTS (
-         SELECT 1 FROM guardia_asignada ga
-         WHERE ga.id_profesor_sustituto = gc.id_usuario
-         AND ga.fecha = CURDATE()
-         AND ga.tramo_horario = gc.tramo_horario
-       )`
-    );
+    let disponibleSql = `
+      SELECT gc.*, u.nombre AS profesor_nombre, u.apellidos AS profesor_apellidos,
+             es.nombre AS espacio_nombre,
+             GROUP_CONCAT(DISTINCT e.id_edificio) AS edificio_ids,
+             GROUP_CONCAT(DISTINCT e.nombre) AS edificio_nombres
+      FROM guardia_creada gc
+      JOIN usuario u ON gc.id_usuario = u.id_usuario
+      LEFT JOIN espacio es ON gc.id_espacio = es.id_espacio
+      LEFT JOIN profesor_edificio pe ON gc.id_usuario = pe.id_usuario
+      LEFT JOIN edificio e ON pe.id_edificio = e.id_edificio
+      WHERE (gc.dia_semana = WEEKDAY(CURDATE()) + 1 OR gc.fecha = CURDATE())
+      AND NOT EXISTS (
+        SELECT 1 FROM guardia_asignada ga
+        WHERE ga.id_profesor_sustituto = gc.id_usuario
+        AND ga.fecha = CURDATE()
+        AND ga.tramo_horario = gc.tramo_horario
+      )`;
+    const disponibleParams = [];
+
+    if (filtroEdificio) {
+      disponibleSql += ` AND EXISTS (
+        SELECT 1 FROM profesor_edificio pe2
+        WHERE pe2.id_usuario = gc.id_usuario AND pe2.id_edificio = ?
+      )`;
+      disponibleParams.push(filtroEdificio);
+    }
+
+    disponibleSql += ` GROUP BY gc.id_guardia_creada`;
+
+    const [disponibles] = await pool.query(disponibleSql, disponibleParams);
+
+    for (const d of disponibles) {
+      d.edificios = d.edificio_ids ? d.edificio_ids.split(',').map(Number) : [];
+      d.edificio_nombres = d.edificio_nombres ? d.edificio_nombres.split(',') : [];
+      delete d.edificio_ids;
+    }
+
+    const idsDisponibles = [...new Set(disponibles.map(d => d.id_usuario))];
+    const conteoMap = {};
+    if (idsDisponibles.length > 0) {
+      const [conteos] = await pool.query(
+        `SELECT id_profesor_sustituto, COUNT(*) AS total
+         FROM guardia_asignada
+         WHERE fecha >= '2025-09-01' AND id_profesor_sustituto IN (?)
+         GROUP BY id_profesor_sustituto`,
+        [idsDisponibles]
+      );
+      for (const row of conteos) {
+        conteoMap[row.id_profesor_sustituto] = row.total;
+      }
+    }
+    for (const d of disponibles) {
+      d.guardias_realizadas = conteoMap[d.id_usuario] || 0;
+    }
+    disponibles.sort((a, b) => a.guardias_realizadas - b.guardias_realizadas);
 
     const [asignadas] = await pool.query(
       `SELECT ga.*,

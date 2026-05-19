@@ -79,7 +79,17 @@ async function obtenerPorId(req, res, next) {
       'SELECT departamento FROM profesor WHERE id_usuario = ?',
       [req.params.id]
     );
-    if (prof.length > 0) user.profesor = prof[0];
+    if (prof.length > 0) {
+      user.profesor = prof[0];
+      const [edificios] = await pool.query(
+        `SELECT e.id_edificio, e.nombre
+         FROM profesor_edificio pe
+         JOIN edificio e ON pe.id_edificio = e.id_edificio
+         WHERE pe.id_usuario = ?`,
+        [req.params.id]
+      );
+      user.profesor.edificios = edificios;
+    }
 
     const [dir] = await pool.query(
       'SELECT cargo FROM equipo_directivo WHERE id_usuario = ?',
@@ -180,6 +190,13 @@ async function listarProfesores(req, res, next) {
       where.push('(u.nombre LIKE ? OR u.apellidos LIKE ?)');
       params.push(`%${req.query.busqueda}%`, `%${req.query.busqueda}%`);
     }
+    if (req.query.id_edificio) {
+      where.push(`EXISTS (
+        SELECT 1 FROM profesor_edificio pe
+        WHERE pe.id_usuario = p.id_usuario AND pe.id_edificio = ?
+      )`);
+      params.push(req.query.id_edificio);
+    }
 
     const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
 
@@ -198,6 +215,17 @@ async function listarProfesores(req, res, next) {
       [...params, limit, offset]
     );
 
+    for (const prof of rows) {
+      const [edificios] = await pool.query(
+        `SELECT e.id_edificio, e.nombre
+         FROM profesor_edificio pe
+         JOIN edificio e ON pe.id_edificio = e.id_edificio
+         WHERE pe.id_usuario = ?`,
+        [prof.id_usuario]
+      );
+      prof.edificios = edificios;
+    }
+
     return success(res, respuestaPaginada(rows, total, { page, limit }));
   } catch (err) {
     next(err);
@@ -205,35 +233,79 @@ async function listarProfesores(req, res, next) {
 }
 
 async function crearProfesor(req, res, next) {
+  const conn = await pool.getConnection();
   try {
-    const { id_usuario, departamento } = req.body;
-    await pool.query(
+    await conn.beginTransaction();
+    const { id_usuario, departamento, edificios } = req.body;
+
+    await conn.query(
       'INSERT INTO profesor (id_usuario, departamento) VALUES (?, ?)',
       [id_usuario, departamento || null]
     );
+
+    if (edificios && edificios.length > 0) {
+      const valores = edificios.map(idEd => [id_usuario, idEd]);
+      await conn.query(
+        'INSERT INTO profesor_edificio (id_usuario, id_edificio) VALUES ?',
+        [valores]
+      );
+    }
+
+    await conn.commit();
     res.registroId = id_usuario;
     return success(res, { id: id_usuario }, 201);
   } catch (err) {
+    await conn.rollback();
     if (err.code === 'ER_DUP_ENTRY') {
       return error(res, 'El usuario ya es profesor', 409);
     }
     if (err.code === 'ER_NO_REFERENCED_ROW_2') {
-      return error(res, 'El usuario no existe', 400);
+      return error(res, 'El usuario o edificio no existe', 400);
     }
     next(err);
+  } finally {
+    conn.release();
   }
 }
 
 async function actualizarProfesor(req, res, next) {
+  const conn = await pool.getConnection();
   try {
-    const [result] = await pool.query(
-      'UPDATE profesor SET departamento = ? WHERE id_usuario = ?',
-      [req.body.departamento, req.params.id]
-    );
-    if (result.affectedRows === 0) return error(res, 'Profesor no encontrado', 404);
+    await conn.beginTransaction();
+    const { departamento, edificios } = req.body;
+
+    if (departamento !== undefined) {
+      const [result] = await conn.query(
+        'UPDATE profesor SET departamento = ? WHERE id_usuario = ?',
+        [departamento, req.params.id]
+      );
+      if (result.affectedRows === 0) {
+        await conn.rollback();
+        return error(res, 'Profesor no encontrado', 404);
+      }
+    }
+
+    if (edificios !== undefined) {
+      await conn.query(
+        'DELETE FROM profesor_edificio WHERE id_usuario = ?',
+        [req.params.id]
+      );
+      if (edificios.length > 0) {
+        const valores = edificios.map(idEd => [parseInt(req.params.id), idEd]);
+        await conn.query(
+          'INSERT INTO profesor_edificio (id_usuario, id_edificio) VALUES ?',
+          [valores]
+        );
+      }
+    }
+
+    await conn.commit();
     return success(res, { mensaje: 'Profesor actualizado correctamente' });
   } catch (err) {
+    await conn.rollback();
     next(err);
+  } finally {
+    conn.release();
   }
 }
 

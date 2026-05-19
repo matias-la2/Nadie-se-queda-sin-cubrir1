@@ -76,6 +76,19 @@ CREATE TABLE IF NOT EXISTS edificio (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ───────────────────────────────────────
+-- 6b. PROFESOR_EDIFICIO (N:M — un profesor puede estar en varios edificios)
+-- ───────────────────────────────────────
+CREATE TABLE IF NOT EXISTS profesor_edificio (
+    id_usuario      INT UNSIGNED    NOT NULL,
+    id_edificio     INT UNSIGNED    NOT NULL,
+    PRIMARY KEY (id_usuario, id_edificio),
+    CONSTRAINT fk_pe_profesor FOREIGN KEY (id_usuario) REFERENCES profesor(id_usuario)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_pe_edificio FOREIGN KEY (id_edificio) REFERENCES edificio(id_edificio)
+        ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ───────────────────────────────────────
 -- 7. ESPACIO
 -- ───────────────────────────────────────
 CREATE TABLE IF NOT EXISTS espacio (
