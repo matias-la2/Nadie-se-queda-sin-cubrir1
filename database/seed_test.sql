@@ -352,7 +352,7 @@ INSERT INTO guardia_asignada (fecha, tramo_horario, tipo_asignacion, comentario,
 INSERT INTO incidencia (titulo, descripcion, tipo, fecha, estado, id_espacio, id_usuario_creador, id_equipo_directivo) VALUES
   ('Proyector no enciende en Aula 1A ESO',
    'El proyector del techo no responde al mando ni al botón. La bombilla podría estar fundida.',
-   'EQUIPAMIENTO', '2026-05-18', 'ABIERTA', 1, 1, NULL),
+   'MATERIAL', '2026-05-18', 'ABIERTA', 1, 1, NULL),
 
   ('Gotera en el techo del Laboratorio',
    'Hay una gotera en la esquina junto a la ventana. Se ha colocado un cubo provisionalmente.',
@@ -368,11 +368,11 @@ INSERT INTO incidencia (titulo, descripcion, tipo, fecha, estado, id_espacio, id
 
   ('Silla rota en Aula 1A Bach',
    'Una silla tiene la pata delantera rota. Puede ser peligrosa. Se ha apartado.',
-   'EQUIPAMIENTO', '2026-05-01', 'CERRADA', 6, 3, 17),
+   'MATERIAL', '2026-05-01', 'CERRADA', 6, 3, 17),
 
   ('Pizarra digital no responde al táctil',
    'La pizarra digital del Aula 1B ESO no detecta el lápiz ni el dedo. Proyecta bien pero no es interactiva.',
-   'EQUIPAMIENTO', '2026-05-16', 'EN_PROCESO', 2, 4, 16),
+   'MATERIAL', '2026-05-16', 'EN_PROCESO', 2, 4, 16),
 
   ('Puerta del baño de profesores no cierra',
    'La cerradura del baño de profesores del edificio ESO está rota. No cierra con llave.',

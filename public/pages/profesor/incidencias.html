@@ -43,7 +43,7 @@
         </select>
         <select class="select-filtro" id="filtro-tipo">
           <option value="">Todos los tipos</option>
-          <option value="EQUIPAMIENTO">Equipamiento</option>
+          <option value="MATERIAL">Material</option>
           <option value="INFRAESTRUCTURA">Infraestructura</option>
           <option value="SOFTWARE">Software</option>
         </select>
@@ -129,7 +129,7 @@
           else { claseBadge = "badge-cerrada"; textoEstado = "Cerrada"; }
 
           var textoTipo;
-          if (inc.tipo === "EQUIPAMIENTO") textoTipo = "Equipamiento";
+          if (inc.tipo === "MATERIAL") textoTipo = "Material";
           else if (inc.tipo === "INFRAESTRUCTURA") textoTipo = "Infraestructura";
           else if (inc.tipo === "SOFTWARE") textoTipo = "Software";
           else textoTipo = inc.tipo;
