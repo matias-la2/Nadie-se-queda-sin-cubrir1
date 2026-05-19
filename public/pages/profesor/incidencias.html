@@ -24,7 +24,7 @@
         <h1>Incidencias Registradas</h1>
         <p>Gestiona y visualiza el estado de tus reportes.</p>
       </div>
-      <a href="../../pages/compartido/nueva-incidencia.html" class="btn-primario">
+      <a href="../../pages/compartido/nueva-incidencia.html" class="btn-primario" id="btn-crear-incidencia">
         <i class="bi bi-plus-lg"></i>
         Crear Incidencia
       </a>
@@ -82,6 +82,15 @@
       if (!usuario) return;
 
       crearSidebar("incidencias", "../../");
+
+      var esConserje = usuario.roles.includes("CONSERJE") &&
+                       !usuario.roles.includes("ADMINISTRADOR") &&
+                       !usuario.roles.includes("EQUIPO_DIRECTIVO") &&
+                       !usuario.roles.includes("PROFESOR");
+      if (esConserje) {
+        document.getElementById("btn-crear-incidencia").style.display = "none";
+      }
+
       cargarMisIncidencias();
 
       document.getElementById("filtro-estado").addEventListener("change", cargarMisIncidencias);

@@ -27,7 +27,7 @@
     <!-- Tarjetas de resumen -->
     <div class="row g-3 mb-4">
 
-      <div class="col-6 col-md-3">
+      <div class="col-6 col-md-3" id="tarjeta-guardias-hoy">
         <div class="tarjeta-resumen">
           <div class="icono-circulo icono-sig-guardia">
             <i class="bi bi-shield-check"></i>
@@ -51,7 +51,7 @@
         </div>
       </div>
 
-      <div class="col-6 col-md-3">
+      <div class="col-6 col-md-3" id="tarjeta-reservas">
         <div class="tarjeta-resumen">
           <div class="icono-circulo icono-guard-pend">
             <i class="bi bi-calendar-check"></i>
@@ -63,7 +63,7 @@
         </div>
       </div>
 
-      <div class="col-6 col-md-3">
+      <div class="col-6 col-md-3" id="tarjeta-ausencias">
         <div class="tarjeta-resumen">
           <div class="icono-circulo icono-guard-pend">
             <i class="bi bi-calendar-x"></i>
@@ -81,7 +81,7 @@
     <div class="row g-3">
 
       <!-- Mis guardias de hoy -->
-      <div class="col-12 col-md-5">
+      <div class="col-12 col-md-5" id="seccion-guardias-hoy">
         <div class="tarjeta tarjeta-altura-completa">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="tarjeta-titulo mb-0">Mis guardias de hoy</h2>
@@ -94,7 +94,7 @@
       </div>
 
       <!-- Incidencias recientes -->
-      <div class="col-12 col-md-7">
+      <div class="col-12 col-md-7" id="seccion-incidencias-recientes">
         <div class="tarjeta tarjeta-altura-completa">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="tarjeta-titulo mb-0">Incidencias recientes</h2>
@@ -133,12 +133,25 @@
       crearSidebar("dashboard", "../../");
       document.getElementById("saludo").textContent = "Bienvenido/a, " + usuario.nombre;
 
+      var esConserje = usuario.roles.includes("CONSERJE") &&
+                       !usuario.roles.includes("ADMINISTRADOR") &&
+                       !usuario.roles.includes("EQUIPO_DIRECTIVO");
+
+      if (esConserje) {
+        document.getElementById("tarjeta-guardias-hoy").style.display = "none";
+        document.getElementById("tarjeta-reservas").style.display = "none";
+        document.getElementById("tarjeta-ausencias").style.display = "none";
+        document.getElementById("seccion-guardias-hoy").style.display = "none";
+        document.getElementById("seccion-incidencias-recientes").className = "col-12";
+      }
+
       // Tarjeta incidencias
       apiFetch('/api/v1/incidencias?limit=1').then(function (data) {
         document.getElementById("num-incidencias").textContent =
           (data && data.datos && data.datos.paginacion) ? data.datos.paginacion.total : 0;
       }).catch(function () { document.getElementById("num-incidencias").textContent = "0"; });
 
+      if (!esConserje) {
       // Tarjeta reservas
       apiFetch('/api/v1/reservas?limit=1').then(function (data) {
         document.getElementById("num-reservas").textContent =
@@ -150,9 +163,10 @@
         document.getElementById("num-ausencias").textContent =
           (data && data.datos && data.datos.paginacion) ? data.datos.paginacion.total : 0;
       }).catch(function () { document.getElementById("num-ausencias").textContent = "0"; });
+      }
 
       // Guardias de hoy
-      apiFetch('/api/v1/guardias/hoy').then(function (data) {
+      if (!esConserje) apiFetch('/api/v1/guardias/hoy').then(function (data) {
         var info = (data && data.datos) ? data.datos : {};
         var asignadas = info.asignadas || [];
 
