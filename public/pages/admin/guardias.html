@@ -315,9 +315,20 @@
           opcionesSust += '<option value="' + idDisp + '">' + nombreDisp.trim() + '</option>';
         }
 
+        var infoTarea = "";
+        if (a.hay_tarea) {
+          infoTarea = '<div style="font-size:12px;margin-top:4px;color:#1e40af;">' +
+            '<i class="bi bi-journal-text me-1"></i>' + (a.descripcion_tarea || "Tarea sin descripción");
+          if (a.archivo_tarea) {
+            infoTarea += ' <a href="/' + a.archivo_tarea + '" target="_blank" style="color:#1152d4;"><i class="bi bi-paperclip"></i> Archivo</a>';
+          }
+          infoTarea += '</div>';
+        }
+
         html += '<div class="tarjeta-cobertura d-flex justify-content-between align-items-center mb-2" style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;">' +
                   '<div>' +
                     '<strong>' + profesor + '</strong> — ' + tramo +
+                    infoTarea +
                   '</div>' +
                   '<div class="d-flex gap-2 align-items-center">' +
                     '<select class="select-filtro" id="sust-' + idAusencia + '" style="min-width:200px;">' + opcionesSust + '</select>' +

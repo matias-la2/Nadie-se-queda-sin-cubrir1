@@ -29,6 +29,7 @@ app.use(passport.initialize());
 
 // ─── Archivos estáticos (frontend) ────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ─── Rate limiting ────────────────────────────────────────
 app.use('/api/v1/', limiteGeneral);

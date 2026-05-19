@@ -98,11 +98,12 @@ async function crear(req, res, next) {
 
     const { tramo_horario, fecha, comentario, hay_tarea, descripcion_tarea, id_profesor, espacios } = req.body;
     const profesorId = id_profesor || req.usuario.id;
+    const archivoTarea = req.file ? 'uploads/tareas/' + req.file.filename : null;
 
     const [result] = await conn.query(
-      `INSERT INTO ausencia (tramo_horario, fecha, comentario, hay_tarea, descripcion_tarea, id_profesor, id_usuario_creador)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [tramo_horario, fecha, comentario || null, hay_tarea ? 1 : 0, descripcion_tarea || null, profesorId, req.usuario.id]
+      `INSERT INTO ausencia (tramo_horario, fecha, comentario, hay_tarea, descripcion_tarea, archivo_tarea, id_profesor, id_usuario_creador)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [tramo_horario, fecha, comentario || null, hay_tarea ? 1 : 0, descripcion_tarea || null, archivoTarea, profesorId, req.usuario.id]
     );
 
     const idAusencia = result.insertId;
@@ -135,6 +136,7 @@ async function actualizar(req, res, next) {
     if (req.body.comentario !== undefined) { campos.push('comentario = ?'); valores.push(req.body.comentario); }
     if (req.body.hay_tarea !== undefined) { campos.push('hay_tarea = ?'); valores.push(req.body.hay_tarea ? 1 : 0); }
     if (req.body.descripcion_tarea !== undefined) { campos.push('descripcion_tarea = ?'); valores.push(req.body.descripcion_tarea); }
+    if (req.file) { campos.push('archivo_tarea = ?'); valores.push('uploads/tareas/' + req.file.filename); }
     if (campos.length === 0) return error(res, 'No se enviaron campos para actualizar', 400);
 
     valores.push(req.params.id);

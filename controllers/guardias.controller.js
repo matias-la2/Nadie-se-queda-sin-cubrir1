@@ -419,7 +419,8 @@ async function guardiasHoy(req, res, next) {
       `SELECT ga.*,
               us.nombre AS sustituto_nombre, us.apellidos AS sustituto_apellidos,
               ua.nombre AS ausente_nombre, ua.apellidos AS ausente_apellidos,
-              c.curso AS clase_curso
+              c.curso AS clase_curso,
+              a.hay_tarea, a.descripcion_tarea, a.archivo_tarea
        FROM guardia_asignada ga
        JOIN usuario us ON ga.id_profesor_sustituto = us.id_usuario
        JOIN ausencia a ON ga.id_ausencia = a.id_ausencia

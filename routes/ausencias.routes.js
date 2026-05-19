@@ -2,6 +2,7 @@ const { Router } = require('express');
 const { verificarToken } = require('../middleware/auth.middleware');
 const { requiereRol } = require('../middleware/rol.middleware');
 const { registrarAccion } = require('../middleware/log.middleware');
+const { upload, parsearMultipart } = require('../middleware/upload.middleware');
 const { validar, crearSchema, actualizarSchema, cambiarEstadoSchema } = require('../validators/ausencias.validator');
 const controller = require('../controllers/ausencias.controller');
 
@@ -13,6 +14,8 @@ router.get('/:id', controller.obtenerPorId);
 
 router.post('/',
   requiereRol('PROFESOR', 'EQUIPO_DIRECTIVO', 'ADMINISTRADOR'),
+  upload.single('archivo_tarea'),
+  parsearMultipart,
   validar(crearSchema),
   registrarAccion('CREAR_AUSENCIA', 'ausencia'),
   controller.crear
@@ -20,6 +23,8 @@ router.post('/',
 
 router.put('/:id',
   requiereRol('PROFESOR', 'EQUIPO_DIRECTIVO', 'ADMINISTRADOR'),
+  upload.single('archivo_tarea'),
+  parsearMultipart,
   validar(actualizarSchema),
   registrarAccion('ACTUALIZAR_AUSENCIA', 'ausencia'),
   controller.actualizar

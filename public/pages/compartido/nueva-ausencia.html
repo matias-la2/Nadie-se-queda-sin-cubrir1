@@ -109,6 +109,20 @@
                   class="tarea-textarea"
                   placeholder="Ej: Ejercicios del tema 7, páginas 112-113. Entregar al sustituto al terminar la clase."
                 ></textarea>
+
+                <label class="tarea-label" style="margin-top:14px;">
+                  Archivo adjunto <span class="label-opcional">(opcional)</span>
+                </label>
+                <input type="file" id="campo-archivo" class="campo-adjunto"
+                       accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.webp">
+                <p class="adjunto-info">PDF, Word, Excel, PowerPoint o imagen. Máximo 10 MB.</p>
+                <div id="archivo-seleccionado" class="adjunto-seleccionado" style="display:none;">
+                  <i class="bi bi-paperclip"></i>
+                  <span id="archivo-nombre"></span>
+                  <button type="button" class="btn-quitar-adjunto" onclick="quitarArchivo()">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -201,7 +215,25 @@
       } else {
         seccion.classList.remove("visible");
         document.getElementById("campo-tarea").value = "";
+        quitarArchivo();
       }
+    }
+
+    document.getElementById("campo-archivo").addEventListener("change", function () {
+      var file = this.files[0];
+      if (!file) return;
+      if (file.size > 10 * 1024 * 1024) {
+        mostrarError("El archivo supera los 10 MB.");
+        this.value = "";
+        return;
+      }
+      document.getElementById("archivo-nombre").textContent = file.name;
+      document.getElementById("archivo-seleccionado").style.display = "flex";
+    });
+
+    function quitarArchivo() {
+      document.getElementById("campo-archivo").value = "";
+      document.getElementById("archivo-seleccionado").style.display = "none";
     }
 
     function mostrarError(mensaje) {
@@ -231,14 +263,18 @@
         espaciosIds.push(parseInt(espaciosChecked[i].value));
       }
 
-      var cuerpo = {
-        fecha: fecha,
-        tramo_horario: tramo,
-        hay_tarea: hayTarea
-      };
-      if (comentario) cuerpo.comentario = comentario;
-      if (hayTarea && tarea) cuerpo.descripcion_tarea = tarea;
-      if (espaciosIds.length > 0) cuerpo.espacios = espaciosIds;
+      var formData = new FormData();
+      formData.append('fecha', fecha);
+      formData.append('tramo_horario', tramo);
+      formData.append('hay_tarea', hayTarea ? 'true' : 'false');
+      if (comentario) formData.append('comentario', comentario);
+      if (hayTarea && tarea) formData.append('descripcion_tarea', tarea);
+      if (espaciosIds.length > 0) formData.append('espacios', JSON.stringify(espaciosIds));
+
+      var archivoInput = document.getElementById("campo-archivo");
+      if (archivoInput && archivoInput.files[0]) {
+        formData.append('archivo_tarea', archivoInput.files[0]);
+      }
 
       var btn = document.getElementById("btn-enviar");
       btn.disabled = true;
@@ -246,7 +282,8 @@
 
       apiFetch('/api/v1/ausencias', {
         method: 'POST',
-        body: JSON.stringify(cuerpo)
+        body: formData,
+        esFormData: true
       }).then(function (data) {
         if (data && data.ok) {
           if (tieneRol("ADMINISTRADOR")) {

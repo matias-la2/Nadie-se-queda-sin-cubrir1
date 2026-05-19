@@ -51,9 +51,10 @@ function apiFetch(url, opciones) {
   opciones.credentials = 'include';
   opciones.headers = opciones.headers || {};
 
-  if (opciones.body) {
+  if (opciones.body && !opciones.esFormData) {
     opciones.headers['Content-Type'] = 'application/json';
   }
+  delete opciones.esFormData;
 
   return fetch(url, opciones).then(function (res) {
     if (res.status === 401) {

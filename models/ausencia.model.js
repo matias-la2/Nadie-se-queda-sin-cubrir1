@@ -50,13 +50,13 @@ const Ausencia = {
     return rows;
   },
 
-  async create({ tramo_horario, fecha, comentario, hay_tarea, descripcion_tarea, id_profesor, id_usuario_creador, espacios }) {
+  async create({ tramo_horario, fecha, comentario, hay_tarea, descripcion_tarea, archivo_tarea, id_profesor, id_usuario_creador, espacios }) {
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
       const [result] = await conn.query(
-        'INSERT INTO ausencia (tramo_horario, fecha, comentario, hay_tarea, descripcion_tarea, id_profesor, id_usuario_creador) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [tramo_horario, fecha, comentario || null, hay_tarea ? 1 : 0, descripcion_tarea || null, id_profesor, id_usuario_creador]
+        'INSERT INTO ausencia (tramo_horario, fecha, comentario, hay_tarea, descripcion_tarea, archivo_tarea, id_profesor, id_usuario_creador) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [tramo_horario, fecha, comentario || null, hay_tarea ? 1 : 0, descripcion_tarea || null, archivo_tarea || null, id_profesor, id_usuario_creador]
       );
       const idAusencia = result.insertId;
       if (espacios && espacios.length) {

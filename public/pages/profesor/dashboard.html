@@ -202,6 +202,17 @@
           var tramo = g.tramo_horario || g.tramo || "—";
           var ausente = g.ausente_nombre || g.profesor_ausente || "—";
 
+          var tareaHtml = "";
+          if (g.hay_tarea) {
+            tareaHtml += '<div style="margin-top:6px;padding:8px 10px;background:#eff6ff;border-radius:6px;font-size:13px;color:#1e40af;">' +
+              '<i class="bi bi-journal-text me-1"></i><strong>Tarea:</strong> ' + (g.descripcion_tarea || "Sin descripción");
+            if (g.archivo_tarea) {
+              tareaHtml += ' <a href="/' + g.archivo_tarea + '" target="_blank" style="margin-left:6px;color:#1152d4;text-decoration:underline;">' +
+                '<i class="bi bi-paperclip"></i> Descargar archivo</a>';
+            }
+            tareaHtml += '</div>';
+          }
+
           html += '<div style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;">' +
                     '<div style="font-weight:600;font-size:14px;">' + clase + '</div>' +
                     '<div style="font-size:13px;color:#64748b;margin-top:2px;">' +
@@ -210,6 +221,7 @@
                     '<div style="font-size:13px;color:#64748b;margin-top:2px;">' +
                       '<i class="bi bi-person-x me-1"></i>Ausente: ' + ausente +
                     '</div>' +
+                    tareaHtml +
                   '</div>';
         }
         contenedor.innerHTML = html;

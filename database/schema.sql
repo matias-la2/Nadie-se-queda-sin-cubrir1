@@ -147,6 +147,8 @@ CREATE TABLE IF NOT EXISTS ausencia (
                         NOT NULL DEFAULT 'PENDIENTE',
     hay_tarea           TINYINT(1)      NOT NULL DEFAULT 0,
     descripcion_tarea   TEXT            NULL,
+    archivo_tarea       VARCHAR(500)    NULL
+        COMMENT 'Ruta al archivo adjunto con la tarea (opcional)',
     id_profesor         INT UNSIGNED    NOT NULL,
     id_usuario_creador  INT UNSIGNED    NOT NULL,
     created_at          TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
