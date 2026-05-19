@@ -37,7 +37,7 @@ La base de datos se crea automáticamente en el primer arranque.
 
 ## Equipo
 
-- Matías La Rosa
+- Matías
 - Antonio
 - Saray
 
