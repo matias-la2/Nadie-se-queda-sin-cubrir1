@@ -33,6 +33,10 @@ async function esMiembroDelGrupo(correo) {
       return false;
     }
     console.error('[google-group] Error al verificar membresía:', err.message);
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[google-group] Se omite verificación en desarrollo por error de API');
+      return true;
+    }
     return false;
   }
 }

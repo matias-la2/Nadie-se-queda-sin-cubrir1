@@ -10,7 +10,7 @@ const limiteGeneral = rateLimit({
 
 const limiteAuth = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: process.env.NODE_ENV !== 'production' ? 100 : 10,
   message: { ok: false, mensaje: 'Demasiados intentos de login, intenta de nuevo en 15 minutos' },
   standardHeaders: true,
   legacyHeaders: false,

@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(git pull *)",
+      "PowerShell(try { $conn = New-Object System.Net.Sockets.TcpClient\\(\"localhost\", 3306\\); $conn.Close\\(\\); \"MySQL accesible en puerto 3306\" } catch { \"MySQL NO accesible en puerto 3306: $\\($_.Exception.Message\\)\" })",
+      "PowerShell(docker info *)",
+      "PowerShell(docker compose up *)",
+      "PowerShell($i = 0; while \\($i -lt 30\\) { $status = docker inspect --format \"{{.State.Health.Status}}\" portal_ies_db 2>$null; if \\($status -eq \"healthy\"\\) { \"MySQL healthy after $i seconds\"; break }; Start-Sleep -Seconds 2; $i += 2 }; if \\($i -ge 30\\) { \"Timeout esperando MySQL\" })",
+      "PowerShell(docker exec portal_ies_db *)",
+      "PowerShell(try { $conn = New-Object System.Net.Sockets.TcpClient\\(\"localhost\", 3306\\); $conn.Close\\(\\); \"MySQL accesible desde host en puerto 3306\" } catch { \"MySQL NO accesible desde host: $\\($_.Exception.Message\\)\" })",
+      "PowerShell(npm run *)",
+      "PowerShell(Start-Sleep -Seconds 3; try { $r = Invoke-RestMethod -Uri \"http://localhost:3000/api/v1/health\" -Method Get; $r | ConvertTo-Json } catch { \"Error: $\\($_.Exception.Message\\)\" })",
+      "PowerShell(npm install *)",
+      "PowerShell(Start-Sleep -Seconds 5; try { $r = Invoke-RestMethod -Uri \"http://localhost:3000/api/v1/health\" -Method Get; $r | ConvertTo-Json } catch { \"Error: $\\($_.Exception.Message\\)\" })",
+      "PowerShell(Get-NetTCPConnection *)"
+    ]
+  }
+}
