@@ -43,7 +43,16 @@ async function listar(req, res, next) {
       `SELECT a.*,
               u.nombre AS profesor_nombre, u.apellidos AS profesor_apellidos,
               p.departamento,
-              uc.nombre AS creador_nombre, uc.apellidos AS creador_apellidos
+              uc.nombre AS creador_nombre, uc.apellidos AS creador_apellidos,
+              (SELECT GROUP_CONCAT(
+                CONCAT(es2.nombre, COALESCE(CONCAT(' (', ed2.nombre, ')'), ''))
+                SEPARATOR ', '
+              )
+              FROM ausencia_espacio ae2
+              JOIN espacio es2 ON ae2.id_espacio = es2.id_espacio
+              LEFT JOIN edificio ed2 ON es2.id_edificio = ed2.id_edificio
+              WHERE ae2.id_ausencia = a.id_ausencia
+              ) AS espacios_texto
        FROM ausencia a
        JOIN usuario u ON a.id_profesor = u.id_usuario
        JOIN profesor p ON a.id_profesor = p.id_usuario

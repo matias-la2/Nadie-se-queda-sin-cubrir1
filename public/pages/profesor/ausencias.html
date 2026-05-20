@@ -48,6 +48,7 @@
             <tr>
               <th>Fecha</th>
               <th>Tramo horario</th>
+              <th>Espacio</th>
               <th>Estado</th>
               <th>Hay tarea</th>
               <th>Comentario</th>
@@ -95,7 +96,7 @@
           "Mostrando " + filas.length + " de " + pag.total + " ausencias";
 
         if (filas.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" class="sin-resultados"><i class="bi bi-calendar-x sin-resultados-icono"></i>No hay ausencias en esta categoría</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-calendar-x sin-resultados-icono"></i>No hay ausencias en esta categoría</td></tr>';
           return;
         }
 
@@ -124,6 +125,7 @@
           html += '<tr>' +
                     '<td class="fecha-peso">' + fecha + '</td>' +
                     '<td>' + (a.tramo_horario || "—") + '</td>' +
+                    '<td class="celda-sm">' + (a.espacios_texto || "—") + '</td>' +
                     '<td><span class="badge-estado ' + claseBadge + '">' + textoEstado + '</span></td>' +
                     '<td>' + hayTareaCelda + '</td>' +
                     '<td class="celda-comentario">' + comentario + '</td>' +
@@ -132,7 +134,7 @@
         tbody.innerHTML = html;
       }).catch(function () {
         document.getElementById("tabla-body").innerHTML =
-          '<tr><td colspan="5" class="sin-resultados"><i class="bi bi-calendar-x sin-resultados-icono"></i>No hay ausencias</td></tr>';
+          '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-calendar-x sin-resultados-icono"></i>No hay ausencias</td></tr>';
         document.getElementById("contador-texto").textContent = "Mostrando 0 ausencias";
       });
     }

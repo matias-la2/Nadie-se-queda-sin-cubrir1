@@ -101,6 +101,7 @@
               <th>Profesor</th>
               <th>Fecha</th>
               <th>Tramo</th>
+              <th>Espacio</th>
               <th>Tarea</th>
               <th>Estado</th>
               <th>Acciones</th>
@@ -174,7 +175,7 @@
           "Mostrando " + filas.length + " de " + pag.total + " ausencias";
 
         if (filas.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron ausencias</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron ausencias</td></tr>';
           return;
         }
 
@@ -218,6 +219,7 @@
                     '</div></td>' +
                     '<td class="celda-sm">' + fecha + '</td>' +
                     '<td class="celda-sm">' + (a.tramo_horario || "—") + '</td>' +
+                    '<td class="celda-sm">' + (a.espacios_texto || "—") + '</td>' +
                     '<td>' + hayTareaCelda + '</td>' +
                     '<td><select class="select-filtro select-estado-inline" onchange="cambiarEstado(' + a.id_ausencia + ', this.value)">' + opcionesEstado + '</select></td>' +
                     '<td><div class="d-flex gap-1">' +
@@ -228,7 +230,7 @@
         tbody.innerHTML = html;
       }).catch(function () {
         document.getElementById("tabla-body").innerHTML =
-          '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron ausencias</td></tr>';
+          '<tr><td colspan="7" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron ausencias</td></tr>';
         document.getElementById("contador-texto").textContent = "Mostrando 0 ausencias";
       });
     }

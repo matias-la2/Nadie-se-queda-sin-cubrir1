@@ -75,11 +75,21 @@ async function obtenerCreada(req, res, next) {
 
 async function crearCreada(req, res, next) {
   try {
-    const { fecha, dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio } = req.body;
+    const { fecha, dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio, id_edificio } = req.body;
+
+    let espacioFinal = id_espacio || null;
+    if (!espacioFinal && id_edificio) {
+      const [espRows] = await pool.query(
+        'SELECT id_espacio FROM espacio WHERE id_edificio = ? LIMIT 1',
+        [id_edificio]
+      );
+      if (espRows.length > 0) espacioFinal = espRows[0].id_espacio;
+    }
+
     const [result] = await pool.query(
       `INSERT INTO guardia_creada (fecha, dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [fecha || null, dia_semana || null, tramo_horario, curso_escolar, id_usuario, id_espacio || null]
+      [fecha || null, dia_semana || null, tramo_horario, curso_escolar, id_usuario, espacioFinal]
     );
     res.registroId = result.insertId;
     return success(res, { id: result.insertId }, 201);
@@ -936,12 +946,22 @@ async function importarExcel(req, res, next) {
 
     await conn.beginTransaction();
 
+    const { id_edificio } = req.body;
+    let espacioDefault = null;
+    if (id_edificio) {
+      const [espRows] = await conn.query(
+        'SELECT id_espacio FROM espacio WHERE id_edificio = ? LIMIT 1',
+        [id_edificio]
+      );
+      if (espRows.length > 0) espacioDefault = espRows[0].id_espacio;
+    }
+
     const ids = [];
     for (const g of validos) {
       const [result] = await conn.query(
         `INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio)
          VALUES (?, ?, ?, ?, ?)`,
-        [g.dia_semana, g.tramo_horario, curso_escolar, g.id_usuario, null]
+        [g.dia_semana, g.tramo_horario, curso_escolar, g.id_usuario, espacioDefault]
       );
       ids.push(result.insertId);
     }
@@ -1001,14 +1021,25 @@ async function importarCSV(req, res, next) {
       validos.push({ ...g, id_usuario: idUsuario });
     }
 
+    const { id_edificio } = req.body;
+    let espacioDefaultCSV = null;
+    if (id_edificio) {
+      const [espRows] = await conn.query(
+        'SELECT id_espacio FROM espacio WHERE id_edificio = ? LIMIT 1',
+        [id_edificio]
+      );
+      if (espRows.length > 0) espacioDefaultCSV = espRows[0].id_espacio;
+    }
+
     await conn.beginTransaction();
 
     const ids = [];
     for (const g of validos) {
+      const espacioFinal = g.id_espacio || espacioDefaultCSV;
       const [result] = await conn.query(
         `INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio)
          VALUES (?, ?, ?, ?, ?)`,
-        [g.dia_semana, g.tramo_horario, curso_escolar, g.id_usuario, g.id_espacio || null]
+        [g.dia_semana, g.tramo_horario, curso_escolar, g.id_usuario, espacioFinal]
       );
       ids.push(result.insertId);
     }
