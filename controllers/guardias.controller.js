@@ -36,10 +36,12 @@ async function listarCreadas(req, res, next) {
     const [rows] = await pool.query(
       `SELECT gc.*,
               u.nombre AS profesor_nombre, u.apellidos AS profesor_apellidos,
-              es.nombre AS espacio_nombre
+              es.nombre AS espacio_nombre,
+              ed.nombre AS edificio_nombre
        FROM guardia_creada gc
        JOIN usuario u ON gc.id_usuario = u.id_usuario
        LEFT JOIN espacio es ON gc.id_espacio = es.id_espacio
+       LEFT JOIN edificio ed ON es.id_edificio = ed.id_edificio
        ${whereSql}
        ORDER BY gc.dia_semana, gc.tramo_horario
        LIMIT ? OFFSET ?`,
@@ -126,7 +128,16 @@ async function eliminarCreada(req, res, next) {
 async function crearGrupo(req, res, next) {
   const conn = await pool.getConnection();
   try {
-    const { dia_semana, tramo_horario, curso_escolar, id_espacio, id_usuarios } = req.body;
+    const { dia_semana, tramo_horario, curso_escolar, id_espacio, id_edificio, id_usuarios } = req.body;
+
+    let espacioFinal = id_espacio || null;
+    if (!espacioFinal && id_edificio) {
+      const [espRows] = await conn.query(
+        'SELECT id_espacio FROM espacio WHERE id_edificio = ? LIMIT 1',
+        [id_edificio]
+      );
+      if (espRows.length > 0) espacioFinal = espRows[0].id_espacio;
+    }
 
     await conn.beginTransaction();
 
@@ -135,7 +146,7 @@ async function crearGrupo(req, res, next) {
       const [result] = await conn.query(
         `INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio)
          VALUES (?, ?, ?, ?, ?)`,
-        [dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio || null]
+        [dia_semana, tramo_horario, curso_escolar, id_usuario, espacioFinal]
       );
       ids.push(result.insertId);
     }
@@ -485,7 +496,9 @@ async function responderGuardia(req, res, next) {
 // ─── ASIGNACION AUTOMATICA ─────────────────────────────
 
 async function asignarAutomaticamente(conn, idAusencia, fecha, tramoHorario, idProfesorAusente, hayTarea, idsExcluir) {
-  const diaSemana = new Date(fecha).getDay();
+  const partesFecha = String(fecha).substring(0, 10).split('-');
+  const fechaLocal = new Date(parseInt(partesFecha[0]), parseInt(partesFecha[1]) - 1, parseInt(partesFecha[2]));
+  const diaSemana = fechaLocal.getDay();
   const diaSemanaDB = diaSemana === 0 ? 7 : diaSemana;
 
   const excluidos = Array.isArray(idsExcluir) && idsExcluir.length > 0
@@ -751,7 +764,16 @@ async function guardiasHoy(req, res, next) {
 async function guardarHorario(req, res, next) {
   const conn = await pool.getConnection();
   try {
-    const { id_usuario, curso_escolar, guardias } = req.body;
+    const { id_usuario, curso_escolar, guardias, id_edificio } = req.body;
+
+    let espacioDefecto = null;
+    if (id_edificio) {
+      const [espRows] = await conn.query(
+        'SELECT id_espacio FROM espacio WHERE id_edificio = ? LIMIT 1',
+        [id_edificio]
+      );
+      if (espRows.length > 0) espacioDefecto = espRows[0].id_espacio;
+    }
 
     await conn.beginTransaction();
 
@@ -762,10 +784,11 @@ async function guardarHorario(req, res, next) {
 
     const ids = [];
     for (const g of guardias) {
+      const idEspacio = g.id_espacio || espacioDefecto || null;
       const [result] = await conn.query(
         `INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio)
          VALUES (?, ?, ?, ?, ?)`,
-        [g.dia_semana, g.tramo_horario, curso_escolar, id_usuario, g.id_espacio || null]
+        [g.dia_semana, g.tramo_horario, curso_escolar, id_usuario, idEspacio]
       );
       ids.push(result.insertId);
     }

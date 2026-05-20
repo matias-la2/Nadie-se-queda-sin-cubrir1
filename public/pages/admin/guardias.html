@@ -138,7 +138,7 @@
               </button>
             </div>
           </div>
-          <div id="contenedor-grupos"></div>
+          <div id="contenedor-grupos" style="max-height:600px;overflow-y:auto;"></div>
           <div class="contador-guardias" id="contador-planificadas">Mostrando 0 guardias</div>
         </div>
       </div>
@@ -149,6 +149,9 @@
           <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <h2 class="tarjeta-titulo mb-0">Mapa de guardias por tramo</h2>
             <div class="d-flex gap-2 flex-wrap">
+              <select class="select-filtro" id="filtro-edificio-tramo" style="min-width:130px;">
+                <option value="">Todos los edificios</option>
+              </select>
               <select class="select-filtro" id="filtro-curso-tramo" style="min-width:130px;"></select>
             </div>
           </div>
@@ -166,6 +169,13 @@
               </thead>
               <tbody id="tbody-vista-tramos"></tbody>
             </table>
+          </div>
+          <div class="leyenda-edificios">
+            <span class="leyenda-titulo">Edificio:</span>
+            <span class="leyenda-item"><span class="leyenda-color leyenda-eso"></span> ESO</span>
+            <span class="leyenda-item"><span class="leyenda-color leyenda-bach"></span> Bachillerato</span>
+            <span class="leyenda-item"><span class="leyenda-color leyenda-ciclos"></span> Ciclos</span>
+            <span class="leyenda-item"><span class="leyenda-color leyenda-sin"></span> Sin edificio</span>
           </div>
         </div>
       </div>
@@ -209,6 +219,14 @@
                 <input type="text" id="modal-curso" class="select-filtro campo-completo" placeholder="Ej: 2025-2026" required>
               </div>
               <div class="col-12 col-sm-6">
+                <label class="modal-label">Edificio <span class="campo-obligatorio">*</span></label>
+                <select id="modal-edificio" class="select-filtro campo-completo" required>
+                  <option value="">Seleccionar edificio...</option>
+                </select>
+              </div>
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-sm-6">
                 <label class="modal-label">Espacio <span class="label-opcional">(opcional)</span></label>
                 <select id="modal-espacio" class="select-filtro campo-completo">
                   <option value="">Sin asignar</option>
@@ -245,13 +263,19 @@
         <div class="modal-body modal-cuerpo">
           <div id="horario-error" class="modal-error"></div>
           <div class="row g-3 mb-3">
-            <div class="col-12 col-sm-6">
+            <div class="col-12 col-sm-4">
               <label class="modal-label">Profesor <span class="campo-obligatorio">*</span></label>
               <select id="horario-profesor" class="select-filtro campo-completo">
                 <option value="">Seleccionar profesor...</option>
               </select>
             </div>
-            <div class="col-12 col-sm-6">
+            <div class="col-12 col-sm-4">
+              <label class="modal-label">Edificio <span class="campo-obligatorio">*</span></label>
+              <select id="horario-edificio" class="select-filtro campo-completo">
+                <option value="">Seleccionar edificio...</option>
+              </select>
+            </div>
+            <div class="col-12 col-sm-4">
               <label class="modal-label">Curso escolar <span class="campo-obligatorio">*</span></label>
               <input type="text" id="horario-curso" class="select-filtro campo-completo" placeholder="Ej: 2025-2026" value="2025-2026">
             </div>
@@ -434,6 +458,8 @@
       document.getElementById("csv-archivo").addEventListener("change", parsearCSV);
       document.getElementById("excel-archivo").addEventListener("change", parsearExcel);
       document.getElementById("filtro-curso-tramo").addEventListener("change", renderVistaTramos);
+      document.getElementById("filtro-edificio-tramo").addEventListener("change", renderVistaTramos);
+      document.getElementById("modal-edificio").addEventListener("change", filtrarEspaciosPorEdificio);
 
       document.getElementById("tab-tramos").addEventListener("shown.bs.tab", renderVistaTramos);
 
@@ -454,6 +480,8 @@
       cargarPlanificadas();
     }
 
+    var _todosLosEdificios = [];
+
     function cargarDatosIniciales() {
       apiFetch('/api/v1/usuarios?rol=PROFESOR&activo=true&limit=200').then(function (data) {
         _todosLosProfesores = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
@@ -463,13 +491,19 @@
 
       apiFetch('/api/v1/espacios?limit=200').then(function (data) {
         _todosLosEspacios = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
-        var select = document.getElementById("modal-espacio");
-        for (var i = 0; i < _todosLosEspacios.length; i++) {
-          var e = _todosLosEspacios[i];
-          var opt = document.createElement("option");
-          opt.value = e.id_espacio;
-          opt.textContent = e.nombre;
-          select.appendChild(opt);
+        filtrarEspaciosPorEdificio();
+      });
+
+      apiFetch('/api/v1/espacios/edificios').then(function (data) {
+        _todosLosEdificios = (data && data.datos) ? (Array.isArray(data.datos) ? data.datos : []) : [];
+        var selModal = document.getElementById("modal-edificio");
+        var selFiltro = document.getElementById("filtro-edificio-tramo");
+        var selHorario = document.getElementById("horario-edificio");
+        for (var i = 0; i < _todosLosEdificios.length; i++) {
+          var ed = _todosLosEdificios[i];
+          selModal.innerHTML += '<option value="' + ed.id_edificio + '">' + ed.nombre + '</option>';
+          selFiltro.innerHTML += '<option value="' + ed.nombre + '">' + ed.nombre + '</option>';
+          selHorario.innerHTML += '<option value="' + ed.id_edificio + '">' + ed.nombre + '</option>';
         }
       });
 
@@ -477,7 +511,23 @@
         _profesoresSeleccionados = [];
         renderListaProfesores("");
         renderProfesoresSeleccionados();
+        document.getElementById("modal-edificio").value = "";
+        filtrarEspaciosPorEdificio();
       });
+    }
+
+    function filtrarEspaciosPorEdificio() {
+      var idEdificio = document.getElementById("modal-edificio").value;
+      var select = document.getElementById("modal-espacio");
+      select.innerHTML = '<option value="">Sin asignar</option>';
+      for (var i = 0; i < _todosLosEspacios.length; i++) {
+        var e = _todosLosEspacios[i];
+        if (idEdificio && String(e.id_edificio) !== String(idEdificio)) continue;
+        var opt = document.createElement("option");
+        opt.value = e.id_espacio;
+        opt.textContent = e.nombre + (e.edificio_nombre ? " (" + e.edificio_nombre + ")" : "");
+        select.appendChild(opt);
+      }
     }
 
     function poblarSelectProfesorHorario() {
@@ -669,7 +719,7 @@
         var g = filas[i];
         var clave = (g.dia_semana || 0) + "_" + (g.tramo_horario || "");
         if (!grupos[clave]) {
-          grupos[clave] = { dia_semana: g.dia_semana, tramo_horario: g.tramo_horario, espacio: g.espacio_nombre || "—", curso_escolar: g.curso_escolar || "—", profesores: [] };
+          grupos[clave] = { dia_semana: g.dia_semana, tramo_horario: g.tramo_horario, espacio: g.espacio_nombre || "—", edificio: g.edificio_nombre || "—", curso_escolar: g.curso_escolar || "—", profesores: [] };
         }
         grupos[clave].profesores.push({ id: g.id_guardia_creada, nombre: (g.profesor_nombre || "") + " " + (g.profesor_apellidos || "") });
       }
@@ -688,7 +738,7 @@
         html += '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:12px;">' +
                   '<div class="d-flex justify-content-between align-items-center mb-2">' +
                     '<div><strong style="font-size:15px;"><i class="bi bi-calendar-event me-1"></i>' + diaNombre + ' — ' + (grupo.tramo_horario || "—") + '</strong>' +
-                      '<span style="margin-left:12px;font-size:13px;color:#64748b;">' + grupo.espacio + ' · ' + grupo.curso_escolar + '</span></div>' +
+                      '<span style="margin-left:12px;font-size:13px;color:#64748b;">' + grupo.edificio + ' · ' + grupo.espacio + ' · ' + grupo.curso_escolar + '</span></div>' +
                     '<span class="badge-estado badge-cubierta" style="padding:4px 10px;font-size:12px;">' + grupo.profesores.length + ' prof.</span>' +
                   '</div><div class="d-flex flex-wrap gap-2">';
 
@@ -759,13 +809,15 @@
       event.preventDefault();
       var errorDiv = document.getElementById("modal-error");
       errorDiv.style.display = "none";
+      if (!document.getElementById("modal-edificio").value) { errorDiv.textContent = "Selecciona un edificio."; errorDiv.style.display = "block"; return; }
       if (_profesoresSeleccionados.length === 0) { errorDiv.textContent = "Selecciona al menos un profesor para el grupo."; errorDiv.style.display = "block"; return; }
 
       var body = {
         dia_semana: parseInt(document.getElementById("modal-dia").value),
         tramo_horario: document.getElementById("modal-tramo").value,
         curso_escolar: document.getElementById("modal-curso").value.trim(),
-        id_usuarios: _profesoresSeleccionados
+        id_usuarios: _profesoresSeleccionados,
+        id_edificio: parseInt(document.getElementById("modal-edificio").value)
       };
       var espacio = document.getElementById("modal-espacio").value;
       if (espacio) body.id_espacio = parseInt(espacio);
@@ -851,9 +903,11 @@
       var errorDiv = document.getElementById("horario-error");
       errorDiv.style.display = "none";
       var idProfesor = document.getElementById("horario-profesor").value;
+      var idEdificio = document.getElementById("horario-edificio").value;
       var curso = document.getElementById("horario-curso").value.trim();
 
       if (!idProfesor) { errorDiv.textContent = "Selecciona un profesor."; errorDiv.style.display = "block"; return; }
+      if (!idEdificio) { errorDiv.textContent = "Selecciona un edificio."; errorDiv.style.display = "block"; return; }
       if (!curso) { errorDiv.textContent = "Introduce el curso escolar."; errorDiv.style.display = "block"; return; }
 
       var guardias = [];
@@ -871,7 +925,7 @@
 
       apiFetch('/api/v1/guardias/creadas/horario', {
         method: 'POST',
-        body: JSON.stringify({ id_usuario: parseInt(idProfesor), curso_escolar: curso, guardias: guardias })
+        body: JSON.stringify({ id_usuario: parseInt(idProfesor), curso_escolar: curso, guardias: guardias, id_edificio: parseInt(idEdificio) })
       }).then(function (data) {
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-check-lg"></i> Guardar Horario';
@@ -1199,12 +1253,25 @@
     // VISTA POR TRAMO
     // ============================================================
 
+    function claseEdificio(nombre) {
+      if (!nombre) return "badge-prof-sin";
+      var n = nombre.toLowerCase();
+      if (n === "eso") return "badge-prof-eso";
+      if (n === "bachillerato") return "badge-prof-bach";
+      if (n === "ciclos") return "badge-prof-ciclos";
+      return "badge-prof-sin";
+    }
+
     function renderVistaTramos() {
       var filtCurso = document.getElementById("filtro-curso-tramo").value;
+      var filtEdificio = document.getElementById("filtro-edificio-tramo").value;
       var filas = _todasLasGuardias;
 
       if (filtCurso) {
         filas = filas.filter(function (g) { return g.curso_escolar === filtCurso; });
+      }
+      if (filtEdificio) {
+        filas = filas.filter(function (g) { return (g.edificio_nombre || "") === filtEdificio; });
       }
 
       var mapa = {};
@@ -1212,7 +1279,10 @@
         var g = filas[i];
         var clave = (g.tramo_horario || "") + "_" + (g.dia_semana || 0);
         if (!mapa[clave]) mapa[clave] = [];
-        mapa[clave].push((g.profesor_nombre || "") + " " + (g.profesor_apellidos || ""));
+        mapa[clave].push({
+          nombre: ((g.profesor_nombre || "") + " " + (g.profesor_apellidos || "")).trim(),
+          edificio: g.edificio_nombre || null
+        });
       }
 
       var tbody = document.getElementById("tbody-vista-tramos");
@@ -1230,8 +1300,19 @@
             html += '<td class="celda-tramo-vacia">—</td>';
           } else {
             html += '<td class="celda-tramo-llena">';
-            for (var p = 0; p < profs.length; p++) {
-              html += '<span class="badge-prof-tramo">' + profs[p].trim() + '</span>';
+            var limite = 3;
+            var visibles = profs.length <= limite ? profs.length : limite;
+            for (var p = 0; p < visibles; p++) {
+              html += '<span class="badge-prof-tramo ' + claseEdificio(profs[p].edificio) + '">' + profs[p].nombre + '</span>';
+            }
+            if (profs.length > limite) {
+              var cellId = "expand-" + t + "-" + d;
+              html += '<span class="badge-prof-mas" onclick="expandirCelda(\'' + cellId + '\', this)">+' + (profs.length - limite) + ' mas</span>';
+              html += '<span id="' + cellId + '" class="celda-expandida" style="display:none;">';
+              for (var p2 = limite; p2 < profs.length; p2++) {
+                html += '<span class="badge-prof-tramo ' + claseEdificio(profs[p2].edificio) + '">' + profs[p2].nombre + '</span>';
+              }
+              html += '</span>';
             }
             html += '</td>';
           }
@@ -1239,6 +1320,14 @@
         html += '</tr>';
       }
       tbody.innerHTML = html;
+    }
+
+    function expandirCelda(id, boton) {
+      var el = document.getElementById(id);
+      if (el.style.display === "none") {
+        el.style.display = "inline";
+        boton.style.display = "none";
+      }
     }
   </script>
 

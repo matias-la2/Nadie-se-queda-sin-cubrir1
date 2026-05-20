@@ -251,8 +251,6 @@
 
 .badge-prof-tramo {
   display: inline-block;
-  background: #e8effe;
-  color: #1152d4;
   font-size: 12px;
   font-weight: 500;
   padding: 3px 8px;
@@ -260,3 +258,77 @@
   margin: 2px;
   white-space: nowrap;
 }
+
+/* Colores por edificio */
+.badge-prof-eso {
+  background: #e8effe;
+  color: #1152d4;
+}
+
+.badge-prof-bach {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badge-prof-ciclos {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.badge-prof-sin {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* Badge expandir */
+.badge-prof-mas {
+  display: inline-block;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin: 2px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.badge-prof-mas:hover {
+  background: #e2e8f0;
+}
+
+/* Leyenda de colores por edificio */
+.leyenda-edificios {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.leyenda-titulo {
+  font-weight: 600;
+  color: #475569;
+}
+
+.leyenda-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.leyenda-color {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.leyenda-eso { background: #e8effe; border: 1px solid #1152d4; }
+.leyenda-bach { background: #dcfce7; border: 1px solid #15803d; }
+.leyenda-ciclos { background: #fff7ed; border: 1px solid #c2410c; }
+.leyenda-sin { background: #f1f5f9; border: 1px solid #94a3b8; }

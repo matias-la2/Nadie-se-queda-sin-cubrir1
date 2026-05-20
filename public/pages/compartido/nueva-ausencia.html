@@ -58,12 +58,13 @@
                   </label>
                   <select id="campo-tramo" required>
                     <option value="">Selecciona un tramo...</option>
-                    <option value="08:00-09:00">08:00 - 09:00</option>
-                    <option value="09:00-10:00">09:00 - 10:00</option>
-                    <option value="10:00-11:00">10:00 - 11:00</option>
-                    <option value="11:00-12:00">11:00 - 12:00</option>
-                    <option value="12:00-13:00">12:00 - 13:00</option>
-                    <option value="13:00-14:00">13:00 - 14:00</option>
+                    <option value="1a hora (08:15-09:10)">1a hora (08:15 - 09:10)</option>
+                    <option value="2a hora (09:10-10:10)">2a hora (09:10 - 10:10)</option>
+                    <option value="3a hora (10:10-11:05)">3a hora (10:10 - 11:05)</option>
+                    <option value="Recreo (11:05-11:30)">Recreo (11:05 - 11:30)</option>
+                    <option value="4a hora (11:30-12:25)">4a hora (11:30 - 12:25)</option>
+                    <option value="5a hora (12:25-13:20)">5a hora (12:25 - 13:20)</option>
+                    <option value="6a hora (13:20-14:15)">6a hora (13:20 - 14:15)</option>
                   </select>
                 </div>
               </div>
@@ -128,9 +129,13 @@
 
             <!-- Espacios afectados -->
             <div class="campo-grupo">
-              <label>Espacios afectados <span class="label-opcional">(opcional)</span></label>
-              <p class="adjunto-info">Selecciona los espacios donde impartes clase en ese tramo.</p>
-              <div id="contenedor-espacios" class="grid-checkboxes"></div>
+              <label>Espacios afectados <span class="obligatorio">*</span></label>
+              <p class="adjunto-info">Selecciona al menos un espacio donde impartes clase en ese tramo.</p>
+              <div class="espacios-selector">
+                <input type="text" id="buscar-espacio" class="espacios-buscador" placeholder="Buscar aula o espacio...">
+                <div id="espacios-seleccionados" class="espacios-badges"></div>
+                <div id="contenedor-espacios" class="espacios-lista"></div>
+              </div>
             </div>
 
             <!-- Botón enviar -->
@@ -182,30 +187,97 @@
       cargarEspacios();
     });
 
+    var _espaciosData = [];
+    var _espaciosSeleccionados = [];
+
     function cargarEspacios() {
-      apiFetch('/api/v1/espacios?limit=100').then(function (data) {
+      apiFetch('/api/v1/espacios?limit=200&curso_escolar=2025-2026').then(function (data) {
         var espacios = [];
         if (data && data.datos) {
           espacios = Array.isArray(data.datos) ? data.datos : (data.datos.registros || []);
         }
-
-        var contenedor = document.getElementById("contenedor-espacios");
-        if (espacios.length === 0) {
-          contenedor.innerHTML = '<span class="comentario-vacio">No hay espacios disponibles</span>';
-          return;
-        }
-
-        var html = "";
-        for (var i = 0; i < espacios.length; i++) {
-          var e = espacios[i];
-          var edificio = e.edificio_nombre ? " (" + e.edificio_nombre + ")" : "";
-          html += '<label class="checkbox-espacio">' +
-                    '<input type="checkbox" name="espacios" value="' + e.id_espacio + '">' +
-                    '<span>' + e.nombre + edificio + '</span>' +
-                  '</label>';
-        }
-        contenedor.innerHTML = html;
+        _espaciosData = espacios;
+        renderEspacios("");
       }).catch(function () {});
+
+      document.getElementById("buscar-espacio").addEventListener("input", function () {
+        renderEspacios(this.value.toLowerCase());
+      });
+    }
+
+    function renderEspacios(filtro) {
+      var contenedor = document.getElementById("contenedor-espacios");
+      if (_espaciosData.length === 0) {
+        contenedor.innerHTML = '<span class="comentario-vacio">No hay espacios disponibles</span>';
+        return;
+      }
+
+      var porEdificio = {};
+      for (var i = 0; i < _espaciosData.length; i++) {
+        var e = _espaciosData[i];
+        var nombre = e.nombre;
+        if (e.nombre_curso) nombre += " - " + e.nombre_curso;
+        var edificio = e.edificio_nombre || "Sin edificio";
+        var textoCompleto = (nombre + " " + edificio).toLowerCase();
+        if (filtro && textoCompleto.indexOf(filtro) === -1) continue;
+        if (!porEdificio[edificio]) porEdificio[edificio] = [];
+        porEdificio[edificio].push({ id: e.id_espacio, nombre: nombre, edificio: edificio });
+      }
+
+      var orden = ["ESO", "Bachillerato", "Ciclos", "Sin edificio"];
+      var claves = Object.keys(porEdificio).sort(function (a, b) {
+        var ia = orden.indexOf(a), ib = orden.indexOf(b);
+        if (ia === -1) ia = 99;
+        if (ib === -1) ib = 99;
+        return ia - ib;
+      });
+
+      var html = "";
+      for (var k = 0; k < claves.length; k++) {
+        var grupo = porEdificio[claves[k]];
+        html += '<div class="espacios-grupo-header">' + claves[k] + '</div>';
+        for (var j = 0; j < grupo.length; j++) {
+          var esp = grupo[j];
+          var seleccionado = _espaciosSeleccionados.indexOf(esp.id) !== -1;
+          html += '<div class="espacios-item' + (seleccionado ? ' seleccionado' : '') + '" onclick="toggleEspacio(' + esp.id + ')">' +
+                    '<input type="checkbox" ' + (seleccionado ? 'checked' : '') + ' style="pointer-events:none;accent-color:#1152d4;">' +
+                    '<span>' + esp.nombre + ' <span class="espacios-edificio-tag">(' + esp.edificio + ')</span></span>' +
+                  '</div>';
+        }
+      }
+      if (!html) html = '<div style="padding:12px;color:#94a3b8;font-size:13px;text-align:center;">No se encontraron espacios</div>';
+      contenedor.innerHTML = html;
+    }
+
+    function toggleEspacio(id) {
+      var idx = _espaciosSeleccionados.indexOf(id);
+      if (idx === -1) _espaciosSeleccionados.push(id);
+      else _espaciosSeleccionados.splice(idx, 1);
+      renderEspacios(document.getElementById("buscar-espacio").value.toLowerCase());
+      renderBadgesEspacios();
+    }
+
+    function renderBadgesEspacios() {
+      var contenedor = document.getElementById("espacios-seleccionados");
+      if (_espaciosSeleccionados.length === 0) {
+        contenedor.innerHTML = "";
+        return;
+      }
+      var html = "";
+      for (var i = 0; i < _espaciosSeleccionados.length; i++) {
+        var id = _espaciosSeleccionados[i];
+        var nombre = "";
+        for (var j = 0; j < _espaciosData.length; j++) {
+          if (_espaciosData[j].id_espacio === id) {
+            nombre = _espaciosData[j].nombre;
+            if (_espaciosData[j].nombre_curso) nombre += " - " + _espaciosData[j].nombre_curso;
+            break;
+          }
+        }
+        html += '<span class="espacios-badge">' + nombre +
+                ' <button type="button" onclick="toggleEspacio(' + id + ')" class="espacios-badge-x"><i class="bi bi-x-lg"></i></button></span>';
+      }
+      contenedor.innerHTML = html;
     }
 
     function toggleTarea(checkbox) {
@@ -256,12 +328,9 @@
       if (!fecha) { mostrarError("La fecha es obligatoria."); return; }
       if (!tramo) { mostrarError("Debes seleccionar un tramo horario."); return; }
       if (hayTarea && !tarea) { mostrarError("Has marcado que hay tarea. Por favor, descríbela."); return; }
+      if (_espaciosSeleccionados.length === 0) { mostrarError("Debes seleccionar al menos un espacio afectado."); return; }
 
-      var espaciosChecked = document.querySelectorAll('input[name="espacios"]:checked');
-      var espaciosIds = [];
-      for (var i = 0; i < espaciosChecked.length; i++) {
-        espaciosIds.push(parseInt(espaciosChecked[i].value));
-      }
+      var espaciosIds = _espaciosSeleccionados.slice();
 
       var formData = new FormData();
       formData.append('fecha', fecha);
