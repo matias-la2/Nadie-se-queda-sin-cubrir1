@@ -283,31 +283,45 @@ async function crearAsignada(req, res, next) {
 
     await conn.commit();
 
+    const fechaF = formatearFechaSQL(fecha);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     try {
-      const [[sustituto]] = await pool.query(
-        `SELECT correo FROM usuario WHERE id_usuario = ?`,
+      const [[sustitutoRow]] = await pool.query(
+        'SELECT correo FROM usuario WHERE id_usuario = ?',
         [id_profesor_sustituto]
       );
 
-      let cuerpo = `Has sido asignado/a para cubrir la ausencia de ${ausencia.ausente_nombre} ${ausencia.ausente_apellidos} el ${fecha} en el tramo ${tramo_horario}.`;
+      const [espaciosAus] = await pool.query(
+        `SELECT es.nombre AS espacio_nombre, ed.nombre AS edificio_nombre
+         FROM ausencia_espacio ae
+         JOIN espacio es ON ae.id_espacio = es.id_espacio
+         JOIN edificio ed ON es.id_edificio = ed.id_edificio
+         WHERE ae.id_ausencia = ?`,
+        [id_ausencia]
+      );
+      const aulaInfo = espaciosAus.length > 0
+        ? `${espaciosAus[0].espacio_nombre} (${espaciosAus[0].edificio_nombre})`
+        : null;
+
+      let cuerpo = `Has sido asignado/a para cubrir la ausencia de ${ausencia.ausente_nombre} ${ausencia.ausente_apellidos} el ${fechaF} en el tramo ${tramo_horario}.`;
+      if (aulaInfo) cuerpo += ` Aula: ${aulaInfo}.`;
       if (ausencia.hay_tarea && ausencia.descripcion_tarea) {
         cuerpo += ` Tarea para los alumnos: ${ausencia.descripcion_tarea}`;
       }
+      cuerpo += ' Accede al portal para aceptar o rechazar la asignación.';
 
       const html = plantillaNotificacion({
-        titulo: `Guardia asignada - ${fecha}`,
+        titulo: `Guardia asignada - ${fechaF}`,
         cuerpo,
-        enlace: null
+        enlace: `${frontendUrl}/pages/profesor/dashboard.html`
       });
 
       await enviarEmail({
-        para: sustituto.correo,
-        asunto: `Guardia asignada - ${fecha}`,
+        para: sustitutoRow.correo,
+        asunto: `Guardia asignada - ${fechaF}`,
         html
       });
-    } catch (_emailErr) {
-      // Best-effort: si el email falla, la guardia ya está asignada
-    }
+    } catch (_emailErr) { /* best-effort */ }
 
     res.registroId = idGuardiaAsignada;
     return success(res, { id: idGuardiaAsignada }, 201);
@@ -362,19 +376,19 @@ async function responderGuardia(req, res, next) {
     await conn.beginTransaction();
 
     await conn.query(
-      `UPDATE guardia_asignada SET estado = ? WHERE id_guardia_asignada = ?`,
+      'UPDATE guardia_asignada SET estado = ? WHERE id_guardia_asignada = ?',
       [accion, id]
     );
 
     const [[sustituto]] = await conn.query(
-      `SELECT nombre, apellidos FROM usuario WHERE id_usuario = ?`,
+      'SELECT nombre, apellidos FROM usuario WHERE id_usuario = ?',
       [idUsuario]
     );
 
     if (accion === 'ACEPTADA') {
       await conn.query(
-        `UPDATE ausencia SET estado = 'CUBIERTA' WHERE id_ausencia = ?`,
-        [guardia.id_ausencia]
+        'UPDATE ausencia SET estado = ? WHERE id_ausencia = ?',
+        ['CUBIERTA', guardia.id_ausencia]
       );
 
       const [directivos] = await conn.query(
@@ -383,7 +397,8 @@ async function responderGuardia(req, res, next) {
          WHERE r.nombre_rol IN ('EQUIPO_DIRECTIVO', 'ADMINISTRADOR')`
       );
 
-      const msgDirectivo = `${sustituto.nombre} ${sustituto.apellidos} ha aceptado la guardia del ${guardia.fecha} (${guardia.tramo_horario}).`;
+      const fechaGuardiaF = formatearFechaSQL(guardia.fecha);
+      const msgDirectivo = `${sustituto.nombre} ${sustituto.apellidos} ha aceptado la guardia del ${fechaGuardiaF} (${guardia.tramo_horario}).`;
       for (const d of directivos) {
         await conn.query(
           `INSERT INTO notificacion (id_usuario, tipo, mensaje, referencia_id, referencia_tipo)
@@ -394,6 +409,7 @@ async function responderGuardia(req, res, next) {
     }
 
     let reasignado = null;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
     if (accion === 'RECHAZADA') {
       const [profesoresRechazaron] = await conn.query(
@@ -413,17 +429,19 @@ async function responderGuardia(req, res, next) {
         reasignado = { id_usuario: resultado.id_usuario, nombre: resultado.nombre };
       } else {
         await conn.query(
-          `UPDATE ausencia SET estado = 'SIN_CUBRIR' WHERE id_ausencia = ?`,
-          [guardia.id_ausencia]
+          'UPDATE ausencia SET estado = ? WHERE id_ausencia = ?',
+          ['SIN_CUBRIR', guardia.id_ausencia]
         );
 
+        const fechaSinCubrir = formatearFechaSQL(guardia.fecha);
         const [directivos] = await conn.query(
-          `SELECT ur.id_usuario FROM usuario_rol ur
+          `SELECT ur.id_usuario, u.correo FROM usuario_rol ur
            JOIN rol r ON ur.id_rol = r.id_rol
+           JOIN usuario u ON ur.id_usuario = u.id_usuario
            WHERE r.nombre_rol IN ('EQUIPO_DIRECTIVO', 'ADMINISTRADOR')`
         );
 
-        const msgDirectivo = `No quedan profesores disponibles para cubrir la guardia del ${guardia.fecha} (${guardia.tramo_horario}). Todos los candidatos han rechazado.`;
+        const msgDirectivo = `No quedan profesores disponibles para cubrir la guardia del ${fechaSinCubrir} (${guardia.tramo_horario}). Todos los candidatos han rechazado.`;
         for (const d of directivos) {
           await conn.query(
             `INSERT INTO notificacion (id_usuario, tipo, mensaje, referencia_id, referencia_tipo)
@@ -431,6 +449,21 @@ async function responderGuardia(req, res, next) {
             [d.id_usuario, msgDirectivo, id]
           );
         }
+
+        try {
+          const htmlSinCubrir = plantillaNotificacion({
+            titulo: `Guardia SIN CUBRIR - ${fechaSinCubrir}`,
+            cuerpo: msgDirectivo + ' Requiere intervención manual.',
+            enlace: `${frontendUrl}/pages/admin/guardias.html`
+          });
+          for (const d of directivos) {
+            await enviarEmail({
+              para: d.correo,
+              asunto: `URGENTE: Guardia sin cubrir - ${fechaSinCubrir}`,
+              html: htmlSinCubrir
+            });
+          }
+        } catch (_emailErr) { /* best-effort */ }
       }
     }
 
@@ -460,32 +493,23 @@ async function asignarAutomaticamente(conn, idAusencia, fecha, tramoHorario, idP
     : [idProfesorAusente];
   if (!excluidos.includes(idProfesorAusente)) excluidos.push(idProfesorAusente);
 
-  const [candidatos] = await conn.query(
-    `SELECT gc.id_usuario, MIN(gc.id_guardia_creada) AS id_guardia_creada,
-            u.nombre AS profesor_nombre, u.apellidos AS profesor_apellidos,
-            COALESCE(conteo.total, 0) AS guardias_realizadas
-     FROM guardia_creada gc
-     JOIN usuario u ON gc.id_usuario = u.id_usuario
-     LEFT JOIN (
-       SELECT id_profesor_sustituto, COUNT(*) AS total
-       FROM guardia_asignada
-       WHERE estado = 'ACEPTADA' AND fecha >= '2025-09-01'
-       GROUP BY id_profesor_sustituto
-     ) conteo ON gc.id_usuario = conteo.id_profesor_sustituto
-     WHERE (gc.dia_semana = ? OR gc.fecha = ?)
-     AND gc.tramo_horario = ?
-     AND gc.id_usuario NOT IN (?)
-     AND NOT EXISTS (
-       SELECT 1 FROM guardia_asignada ga2
-       WHERE ga2.id_profesor_sustituto = gc.id_usuario
-       AND ga2.fecha = ? AND ga2.tramo_horario = ?
-       AND ga2.estado IN ('PENDIENTE', 'ACEPTADA')
-     )
-     GROUP BY gc.id_usuario, u.nombre, u.apellidos, conteo.total
-     ORDER BY guardias_realizadas ASC, RAND()
-     LIMIT 1`,
-    [diaSemanaDB, fecha, tramoHorario, excluidos, fecha, tramoHorario]
+  const [espaciosAusencia] = await conn.query(
+    `SELECT DISTINCT es.id_edificio, es.nombre AS espacio_nombre, ed.nombre AS edificio_nombre
+     FROM ausencia_espacio ae
+     JOIN espacio es ON ae.id_espacio = es.id_espacio
+     JOIN edificio ed ON es.id_edificio = ed.id_edificio
+     WHERE ae.id_ausencia = ?`,
+    [idAusencia]
   );
+  const idEdificio = espaciosAusencia.length > 0 ? espaciosAusencia[0].id_edificio : null;
+  const espacioNombre = espaciosAusencia.length > 0 ? espaciosAusencia[0].espacio_nombre : null;
+  const edificioNombre = espaciosAusencia.length > 0 ? espaciosAusencia[0].edificio_nombre : null;
+
+  let candidatos = await buscarCandidatos(conn, diaSemanaDB, fecha, tramoHorario, excluidos, idEdificio);
+
+  if (candidatos.length === 0 && idEdificio) {
+    candidatos = await buscarCandidatos(conn, diaSemanaDB, fecha, tramoHorario, excluidos, null);
+  }
 
   if (candidatos.length === 0) {
     return null;
@@ -501,10 +525,17 @@ async function asignarAutomaticamente(conn, idAusencia, fecha, tramoHorario, idP
   );
   const idGuardiaAsignada = result.insertId;
 
-  let mensaje = `Se te ha asignado una guardia el ${fecha} en el tramo ${tramoHorario}. Por favor, acepta o rechaza la asignacion.`;
-  if (hayTarea) {
-    mensaje += ' Hay tarea para los alumnos.';
-  }
+  const [[ausente]] = await conn.query(
+    'SELECT nombre, apellidos FROM usuario WHERE id_usuario = ?',
+    [idProfesorAusente]
+  );
+  const nombreAusente = `${ausente.nombre} ${ausente.apellidos}`;
+  const fechaFormateada = formatearFechaSQL(fecha);
+
+  let mensaje = `Se te ha asignado una guardia para cubrir la ausencia de ${nombreAusente} el ${fechaFormateada} en el tramo ${tramoHorario}.`;
+  if (espacioNombre) mensaje += ` Aula: ${espacioNombre}${edificioNombre ? ' (' + edificioNombre + ')' : ''}.`;
+  if (hayTarea) mensaje += ' Hay tarea para los alumnos.';
+  mensaje += ' Por favor, acepta o rechaza la asignación.';
 
   await conn.query(
     `INSERT INTO notificacion (id_usuario, tipo, mensaje, referencia_id, referencia_tipo)
@@ -512,17 +543,18 @@ async function asignarAutomaticamente(conn, idAusencia, fecha, tramoHorario, idP
     [elegido.id_usuario, mensaje, idGuardiaAsignada]
   );
 
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
   try {
-    const [[correo]] = await conn.query(
-      `SELECT correo FROM usuario WHERE id_usuario = ?`, [elegido.id_usuario]
+    const [[correoRow]] = await conn.query(
+      'SELECT correo FROM usuario WHERE id_usuario = ?', [elegido.id_usuario]
     );
     const htmlEmail = plantillaNotificacion({
-      titulo: `Guardia asignada - ${fecha}`,
+      titulo: `Guardia asignada - ${fechaFormateada}`,
       cuerpo: mensaje,
-      enlace: null
+      enlace: `${frontendUrl}/pages/profesor/dashboard.html`
     });
-    await enviarEmail({ para: correo.correo, asunto: `Guardia asignada - ${fecha}`, html: htmlEmail });
-  } catch (_emailErr) {}
+    await enviarEmail({ para: correoRow.correo, asunto: `Guardia asignada - ${fechaFormateada}`, html: htmlEmail });
+  } catch (_emailErr) { /* best-effort */ }
 
   return {
     id_guardia_asignada: idGuardiaAsignada,
@@ -530,6 +562,52 @@ async function asignarAutomaticamente(conn, idAusencia, fecha, tramoHorario, idP
     nombre: `${elegido.profesor_nombre} ${elegido.profesor_apellidos}`,
     guardias_realizadas: elegido.guardias_realizadas
   };
+}
+
+async function buscarCandidatos(conn, diaSemanaDB, fecha, tramoHorario, excluidos, idEdificio) {
+  let sql = `SELECT gc.id_usuario, MIN(gc.id_guardia_creada) AS id_guardia_creada,
+          u.nombre AS profesor_nombre, u.apellidos AS profesor_apellidos,
+          COALESCE(conteo.total, 0) AS guardias_realizadas
+   FROM guardia_creada gc
+   JOIN usuario u ON gc.id_usuario = u.id_usuario
+   LEFT JOIN (
+     SELECT id_profesor_sustituto, COUNT(*) AS total
+     FROM guardia_asignada
+     WHERE estado = 'ACEPTADA' AND fecha >= '2025-09-01'
+     GROUP BY id_profesor_sustituto
+   ) conteo ON gc.id_usuario = conteo.id_profesor_sustituto
+   WHERE (gc.dia_semana = ? OR gc.fecha = ?)
+   AND gc.tramo_horario = ?
+   AND gc.id_usuario NOT IN (?)
+   AND NOT EXISTS (
+     SELECT 1 FROM guardia_asignada ga2
+     WHERE ga2.id_profesor_sustituto = gc.id_usuario
+     AND ga2.fecha = ? AND ga2.tramo_horario = ?
+     AND ga2.estado IN ('PENDIENTE', 'ACEPTADA')
+   )`;
+  const params = [diaSemanaDB, fecha, tramoHorario, excluidos, fecha, tramoHorario];
+
+  if (idEdificio) {
+    sql += ` AND (
+      gc.id_espacio IS NULL
+      OR EXISTS (SELECT 1 FROM espacio es2 WHERE es2.id_espacio = gc.id_espacio AND es2.id_edificio = ?)
+    )`;
+    params.push(idEdificio);
+  }
+
+  sql += ` GROUP BY gc.id_usuario, u.nombre, u.apellidos, conteo.total
+   ORDER BY guardias_realizadas ASC, RAND()
+   LIMIT 1`;
+
+  const [rows] = await conn.query(sql, params);
+  return rows;
+}
+
+function formatearFechaSQL(fecha) {
+  const str = String(fecha).substring(0, 10);
+  const partes = str.split('-');
+  if (partes.length < 3) return str;
+  return partes[2] + '/' + partes[1] + '/' + partes[0];
 }
 
 // ─── GUARDIAS DE HOY ───────────────────────────────────

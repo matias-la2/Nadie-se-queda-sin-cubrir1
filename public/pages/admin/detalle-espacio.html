@@ -242,8 +242,7 @@
         var html = "";
         for (var i = 0; i < reservas.length; i++) {
           var r = reservas[i];
-          var partes = r.fecha ? r.fecha.split("-") : [];
-          var fecha = partes.length === 3 ? partes[2] + "/" + partes[1] + "/" + partes[0] : "—";
+          var fecha = formatearFecha(r.fecha);
           var profesor = (r.profesor_nombre || "") + " " + (r.profesor_apellidos || "");
 
           html += '<tr>' +

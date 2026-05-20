@@ -181,8 +181,7 @@
         var html = "";
         for (var i = 0; i < filas.length; i++) {
           var a = filas[i];
-          var partes = a.fecha.split("-");
-          var fecha = partes[2] + "/" + partes[1] + "/" + partes[0];
+          var fecha = formatearFecha(a.fecha);
 
           var nombreProf = (a.profesor_nombre || "") + " " + (a.profesor_apellidos || "");
           var depto = a.departamento || "—";

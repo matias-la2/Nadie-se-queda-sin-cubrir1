@@ -95,13 +95,8 @@
         for (var i = 0; i < filas.length; i++) {
           var r = filas[i];
 
-          var fecha = "—";
-          var esFutura = false;
-          if (r.fecha) {
-            var partes = r.fecha.split("-");
-            fecha = partes[2] + "/" + partes[1] + "/" + partes[0];
-            esFutura = new Date(r.fecha) >= hoy;
-          }
+          var fecha = formatearFecha(r.fecha);
+          var esFutura = r.fecha ? new Date(String(r.fecha).substring(0, 10)) >= hoy : false;
 
           var acciones = "";
           if (esFutura) {

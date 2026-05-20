@@ -97,6 +97,14 @@ function apiFetch(url, opciones) {
   });
 }
 
+function formatearFecha(fechaISO) {
+  if (!fechaISO) return "—";
+  var str = String(fechaISO).substring(0, 10);
+  var partes = str.split("-");
+  if (partes.length < 3) return str;
+  return partes[2] + "/" + partes[1] + "/" + partes[0];
+}
+
 function mostrarError(mensaje, elementoId) {
   var el = document.getElementById(elementoId || 'mensaje-error');
   if (el) {

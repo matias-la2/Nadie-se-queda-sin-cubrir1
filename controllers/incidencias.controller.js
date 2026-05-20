@@ -35,13 +35,9 @@ async function listar(req, res, next) {
 
     const rolesUsuario = req.usuario.roles;
     const esProfesor = rolesUsuario.length === 1 && rolesUsuario[0] === 'PROFESOR';
-    const esConserje = rolesUsuario.length === 1 && rolesUsuario[0] === 'CONSERJE';
 
     if (esProfesor) {
       where.push('i.id_usuario_creador = ?');
-      params.push(req.usuario.id);
-    } else if (esConserje) {
-      where.push('i.id_equipo_directivo = ?');
       params.push(req.usuario.id);
     }
 
@@ -136,7 +132,9 @@ async function cambiarEstado(req, res, next) {
     const valores = [estado];
     let sql = 'UPDATE incidencia SET estado = ?';
 
-    if (estado === 'EN_PROCESO' || estado === 'RESUELTA') {
+    const roles = req.usuario.roles || [];
+    const esDirectivo = roles.includes('EQUIPO_DIRECTIVO') || roles.includes('ADMINISTRADOR');
+    if ((estado === 'EN_PROCESO' || estado === 'RESUELTA') && esDirectivo) {
       sql += ', id_equipo_directivo = ?';
       valores.push(req.usuario.id);
     }

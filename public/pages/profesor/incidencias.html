@@ -134,8 +134,7 @@
           else if (inc.tipo === "SOFTWARE") textoTipo = "Software";
           else textoTipo = inc.tipo;
 
-          var partes = inc.fecha.split("-");
-          var fecha = partes[2] + "/" + partes[1] + "/" + partes[0];
+          var fecha = formatearFecha(inc.fecha);
           var espacio = inc.espacio_nombre || "—";
 
           html += '<tr>' +

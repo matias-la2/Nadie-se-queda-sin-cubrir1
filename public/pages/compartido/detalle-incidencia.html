@@ -165,12 +165,7 @@
         document.getElementById("inc-titulo").textContent = inc.titulo;
         document.getElementById("inc-referencia").textContent = "INC-" + String(inc.id_incidencia).padStart(4, "0");
 
-        if (inc.fecha) {
-          var partes = inc.fecha.split("-");
-          document.getElementById("inc-fecha").textContent = partes[2] + "/" + partes[1] + "/" + partes[0];
-        } else {
-          document.getElementById("inc-fecha").textContent = "—";
-        }
+        document.getElementById("inc-fecha").textContent = formatearFecha(inc.fecha);
 
         document.getElementById("inc-espacio").textContent = inc.espacio_nombre || "—";
 

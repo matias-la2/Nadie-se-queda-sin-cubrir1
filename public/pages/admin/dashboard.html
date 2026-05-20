@@ -200,8 +200,7 @@
         var html = "";
         for (var i = 0; i < filas.length; i++) {
           var inc = filas[i];
-          var partes = inc.fecha.split("-");
-          var fechaMostrar = partes[2] + "/" + partes[1];
+          var fechaMostrar = formatearFecha(inc.fecha).substring(0, 5);
 
           var claseBadge, textoEstado;
           if (inc.estado === "ABIERTA") {

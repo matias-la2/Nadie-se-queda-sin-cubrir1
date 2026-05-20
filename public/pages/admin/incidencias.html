@@ -199,8 +199,7 @@
         var html = "";
         for (var i = 0; i < filas.length; i++) {
           var inc = filas[i];
-          var partes = inc.fecha.split("-");
-          var fecha = partes[2] + "/" + partes[1] + "/" + partes[0];
+          var fecha = formatearFecha(inc.fecha);
 
           var claseBadge;
           if (inc.estado === "ABIERTA") claseBadge = "badge-pendiente";

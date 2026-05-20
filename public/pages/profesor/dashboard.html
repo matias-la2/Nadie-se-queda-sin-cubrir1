@@ -260,8 +260,7 @@
         var html = "";
         for (var i = 0; i < filas.length; i++) {
           var inc = filas[i];
-          var partes = inc.fecha.split("-");
-          var fecha = partes[2] + "/" + partes[1];
+          var fecha = formatearFecha(inc.fecha).substring(0, 5);
 
           var claseBadge, textoEstado;
           if (inc.estado === "ABIERTA") { claseBadge = "badge-pendiente"; textoEstado = "Pendiente"; }
@@ -308,11 +307,7 @@
 
         for (var i = 0; i < pendientes.length; i++) {
           var g = pendientes[i];
-          var fecha = "—";
-          if (g.fecha) {
-            var partes = g.fecha.split("-");
-            fecha = partes[2] + "/" + partes[1] + "/" + partes[0];
-          }
+          var fecha = formatearFecha(g.fecha);
           var ausente = g.ausente_nombre || "—";
           if (g.ausente_apellidos) ausente += " " + g.ausente_apellidos;
           var tramo = g.tramo_horario || "—";

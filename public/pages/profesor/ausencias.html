@@ -103,11 +103,7 @@
         for (var i = 0; i < filas.length; i++) {
           var a = filas[i];
 
-          var fecha = "—";
-          if (a.fecha) {
-            var partes = a.fecha.split("-");
-            fecha = partes[2] + "/" + partes[1] + "/" + partes[0];
-          }
+          var fecha = formatearFecha(a.fecha);
 
           var claseBadge, textoEstado;
           if (a.estado === "PENDIENTE") { claseBadge = "badge-pendiente"; textoEstado = "Pendiente"; }
