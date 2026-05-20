@@ -34,7 +34,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ─── Rate limiting ────────────────────────────────────────
 app.use('/api/v1/', limiteGeneral);
-app.use('/api/v1/auth', limiteAuth);
+app.use('/api/v1/auth/google', limiteAuth);
 
 // ─── Rutas API ─────────────────────────────────────────────
 app.use('/api/v1/auth',           require('./routes/auth.routes'));

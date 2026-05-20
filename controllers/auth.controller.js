@@ -23,10 +23,15 @@ function googleCallback(req, res) {
     httpOnly: true,
     secure:   process.env.NODE_ENV === 'production',
     sameSite: 'lax',
+    path:     '/',
     maxAge:   7 * 24 * 60 * 60 * 1000
   });
 
-  res.redirect(process.env.FRONTEND_URL || '/');
+  const esAdmin = req.user.roles && (
+    req.user.roles.includes('ADMINISTRADOR') || req.user.roles.includes('EQUIPO_DIRECTIVO')
+  );
+  const destino = esAdmin ? '/pages/admin/dashboard.html' : '/pages/profesor/dashboard.html';
+  res.redirect(destino);
 }
 
 async function obtenerUsuarioActual(req, res) {
@@ -71,7 +76,8 @@ function logout(req, res) {
   res.clearCookie('token', {
     httpOnly: true,
     secure:   process.env.NODE_ENV === 'production',
-    sameSite: 'lax'
+    sameSite: 'lax',
+    path:     '/'
   });
   return success(res, { mensaje: 'Sesión cerrada' });
 }

@@ -85,8 +85,7 @@
           placeholder="Buscar por nombre o correo..."
         >
         <select class="select-filtro" id="filtro-rol">
-          <option value="">Todos los roles</option>
-          <option value="PROFESOR">Profesor</option>
+          <option value="">Solo profesores</option>
           <option value="EQUIPO_DIRECTIVO">Equipo Directivo</option>
           <option value="ADMINISTRADOR">Administrador</option>
           <option value="CONSERJE">Conserje</option>
@@ -200,15 +199,15 @@
     });
 
     function actualizarResumen() {
-      apiFetch('/api/v1/usuarios?activo=true&limit=1').then(function (d) {
+      apiFetch('/api/v1/usuarios?rol=PROFESOR&activo=true&limit=1').then(function (d) {
         document.getElementById("num-activos").textContent = (d && d.datos && d.datos.paginacion) ? d.datos.paginacion.total : 0;
       }).catch(function () { document.getElementById("num-activos").textContent = "0"; });
 
-      apiFetch('/api/v1/usuarios?activo=false&limit=1').then(function (d) {
+      apiFetch('/api/v1/usuarios?rol=PROFESOR&activo=false&limit=1').then(function (d) {
         document.getElementById("num-inactivos").textContent = (d && d.datos && d.datos.paginacion) ? d.datos.paginacion.total : 0;
       }).catch(function () { document.getElementById("num-inactivos").textContent = "0"; });
 
-      apiFetch('/api/v1/usuarios?limit=1').then(function (d) {
+      apiFetch('/api/v1/usuarios?rol=PROFESOR&limit=1').then(function (d) {
         document.getElementById("num-total").textContent = (d && d.datos && d.datos.paginacion) ? d.datos.paginacion.total : 0;
       }).catch(function () { document.getElementById("num-total").textContent = "0"; });
     }
@@ -218,9 +217,9 @@
       var rol = document.getElementById("filtro-rol").value;
       var activo = document.getElementById("filtro-estado").value;
 
-      var url = '/api/v1/usuarios?limit=20';
+      var url = '/api/v1/usuarios?limit=200';
       if (busqueda) url += '&busqueda=' + encodeURIComponent(busqueda);
-      if (rol) url += '&rol=' + encodeURIComponent(rol);
+      url += '&rol=' + encodeURIComponent(rol || 'PROFESOR');
       if (activo) url += '&activo=' + encodeURIComponent(activo);
 
       apiFetch(url).then(function (data) {
