@@ -666,8 +666,99 @@ async function guardiasHoy(req, res, next) {
   }
 }
 
+// ─── GUARDAR HORARIO COMPLETO ─────────────────────────
+
+async function guardarHorario(req, res, next) {
+  const conn = await pool.getConnection();
+  try {
+    const { id_usuario, curso_escolar, guardias } = req.body;
+
+    await conn.beginTransaction();
+
+    await conn.query(
+      'DELETE FROM guardia_creada WHERE id_usuario = ? AND curso_escolar = ?',
+      [id_usuario, curso_escolar]
+    );
+
+    const ids = [];
+    for (const g of guardias) {
+      const [result] = await conn.query(
+        `INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio)
+         VALUES (?, ?, ?, ?, ?)`,
+        [g.dia_semana, g.tramo_horario, curso_escolar, id_usuario, g.id_espacio || null]
+      );
+      ids.push(result.insertId);
+    }
+
+    await conn.commit();
+    return success(res, { ids, total: ids.length }, 201);
+  } catch (err) {
+    await conn.rollback();
+    next(err);
+  } finally {
+    conn.release();
+  }
+}
+
+// ─── IMPORTAR CSV ─────────────────────────────────────
+
+async function importarCSV(req, res, next) {
+  const conn = await pool.getConnection();
+  try {
+    const { curso_escolar, guardias } = req.body;
+
+    const correos = [...new Set(guardias.map(g => g.correo))];
+    const [usuarios] = await conn.query(
+      'SELECT id_usuario, correo FROM usuario WHERE correo IN (?)',
+      [correos]
+    );
+    const mapCorreo = {};
+    for (const u of usuarios) mapCorreo[u.correo.toLowerCase()] = u.id_usuario;
+
+    const errores = [];
+    const validos = [];
+    for (let i = 0; i < guardias.length; i++) {
+      const g = guardias[i];
+      const idUsuario = mapCorreo[(g.correo || '').toLowerCase()];
+      if (!idUsuario) {
+        errores.push({ fila: i + 1, correo: g.correo, error: 'Profesor no encontrado' });
+        continue;
+      }
+      if (!g.dia_semana || g.dia_semana < 1 || g.dia_semana > 5) {
+        errores.push({ fila: i + 1, correo: g.correo, error: 'Día inválido' });
+        continue;
+      }
+      if (!g.tramo_horario) {
+        errores.push({ fila: i + 1, correo: g.correo, error: 'Tramo vacío' });
+        continue;
+      }
+      validos.push({ ...g, id_usuario: idUsuario });
+    }
+
+    await conn.beginTransaction();
+
+    const ids = [];
+    for (const g of validos) {
+      const [result] = await conn.query(
+        `INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio)
+         VALUES (?, ?, ?, ?, ?)`,
+        [g.dia_semana, g.tramo_horario, curso_escolar, g.id_usuario, g.id_espacio || null]
+      );
+      ids.push(result.insertId);
+    }
+
+    await conn.commit();
+    return success(res, { creadas: ids.length, errores }, 201);
+  } catch (err) {
+    await conn.rollback();
+    next(err);
+  } finally {
+    conn.release();
+  }
+}
+
 module.exports = {
   listarCreadas, obtenerCreada, crearCreada, crearGrupo, actualizarCreada, eliminarCreada,
   listarAsignadas, crearAsignada, eliminarAsignada, responderGuardia,
-  guardiasHoy, asignarAutomaticamente
+  guardiasHoy, asignarAutomaticamente, guardarHorario, importarCSV
 };

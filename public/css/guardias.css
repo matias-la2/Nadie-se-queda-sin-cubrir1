@@ -143,3 +143,120 @@
   min-height: 80px;
   resize: vertical;
 }
+
+/* ───────────────────────────────────────────────────── */
+/* TABLA HORARIO (modal asignar horario completo)       */
+/* ───────────────────────────────────────────────────── */
+
+.tabla-horario {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.tabla-horario th {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 8px;
+}
+
+.celda-tramo-label {
+  font-size: 13px;
+  padding: 10px 12px !important;
+  background: #f8fafc;
+  min-width: 140px;
+  vertical-align: middle;
+}
+
+.celda-horario-check {
+  text-align: center;
+  vertical-align: middle;
+  padding: 8px !important;
+}
+
+.horario-check-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin: 0;
+}
+
+.horario-check-label input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.horario-check-visual {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: transparent;
+  font-size: 18px;
+  transition: all 0.15s ease;
+}
+
+.horario-check-label input[type="checkbox"]:checked + .horario-check-visual {
+  background: #1152d4;
+  border-color: #1152d4;
+  color: #ffffff;
+}
+
+.horario-check-label:hover .horario-check-visual {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(17, 82, 212, 0.08);
+}
+
+.horario-check-label input[type="checkbox"]:checked + .horario-check-visual:hover {
+  background: #0d3fa8;
+  border-color: #0d3fa8;
+}
+
+/* ───────────────────────────────────────────────────── */
+/* VISTA POR TRAMO (tab mapa de guardias)               */
+/* ───────────────────────────────────────────────────── */
+
+.tabla-tramos {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.tabla-tramos th {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 8px;
+}
+
+.celda-tramo-vacia {
+  text-align: center;
+  vertical-align: middle;
+  color: #cbd5e1;
+  font-size: 14px;
+  padding: 12px 8px !important;
+  background: #fafbfc;
+}
+
+.celda-tramo-llena {
+  vertical-align: middle;
+  padding: 8px !important;
+}
+
+.badge-prof-tramo {
+  display: inline-block;
+  background: #e8effe;
+  color: #1152d4;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin: 2px;
+  white-space: nowrap;
+}

@@ -43,8 +43,29 @@ function validar(schema) {
   };
 }
 
+const guardarHorarioSchema = z.object({
+  id_usuario: z.number().int().positive('El usuario es obligatorio'),
+  curso_escolar: z.string().min(1).max(10),
+  guardias: z.array(z.object({
+    dia_semana: z.number().int().min(1).max(5),
+    tramo_horario: z.string().min(1),
+    id_espacio: z.number().int().positive().nullish()
+  }))
+});
+
+const importarCSVSchema = z.object({
+  curso_escolar: z.string().min(1).max(10),
+  guardias: z.array(z.object({
+    correo: z.string().email('Correo inválido'),
+    dia_semana: z.coerce.number().int().min(1).max(5),
+    tramo_horario: z.string().min(1),
+    id_espacio: z.coerce.number().int().positive().nullish()
+  })).min(1, 'Debe incluir al menos una guardia')
+});
+
 module.exports = {
   crearGuardiaCreadaSchema, actualizarGuardiaCreadaSchema,
   crearGrupoGuardiaSchema, crearGuardiaAsignadaSchema,
+  guardarHorarioSchema, importarCSVSchema,
   validar
 };

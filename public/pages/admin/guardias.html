@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestión de Guardias — IES Río Arba</title>
+  <title>Gestion de Guardias — IES Rio Arba</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -21,7 +21,7 @@
     <!-- Cabecera -->
     <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
       <div class="pagina-header mb-0">
-        <h1>Gestión Global de Guardias</h1>
+        <h1>Gestion Global de Guardias</h1>
         <p>Visualiza y administra todas las guardias del centro.</p>
       </div>
     </div>
@@ -30,9 +30,7 @@
     <div class="row g-3 mb-4">
       <div class="col-6 col-md-3">
         <div class="tarjeta-resumen">
-          <div class="icono-circulo icono-pendientes">
-            <i class="bi bi-calendar-x"></i>
-          </div>
+          <div class="icono-circulo icono-pendientes"><i class="bi bi-calendar-x"></i></div>
           <div>
             <div class="etiqueta">Ausencias hoy</div>
             <div class="numero" id="num-ausencias-hoy">0</div>
@@ -41,9 +39,7 @@
       </div>
       <div class="col-6 col-md-3">
         <div class="tarjeta-resumen">
-          <div class="icono-circulo icono-realizadas">
-            <i class="bi bi-person-check"></i>
-          </div>
+          <div class="icono-circulo icono-realizadas"><i class="bi bi-person-check"></i></div>
           <div>
             <div class="etiqueta">Disponibles</div>
             <div class="numero" id="num-disponibles">0</div>
@@ -52,9 +48,7 @@
       </div>
       <div class="col-6 col-md-3">
         <div class="tarjeta-resumen">
-          <div class="icono-circulo icono-canceladas">
-            <i class="bi bi-shield-check"></i>
-          </div>
+          <div class="icono-circulo icono-canceladas"><i class="bi bi-shield-check"></i></div>
           <div>
             <div class="etiqueta">Asignadas hoy</div>
             <div class="numero" id="num-asignadas-hoy">0</div>
@@ -63,9 +57,7 @@
       </div>
       <div class="col-6 col-md-3">
         <div class="tarjeta-resumen">
-          <div class="icono-circulo icono-total">
-            <i class="bi bi-calendar-week"></i>
-          </div>
+          <div class="icono-circulo icono-total"><i class="bi bi-calendar-week"></i></div>
           <div>
             <div class="etiqueta">Planificadas</div>
             <div class="numero" id="num-planificadas">0</div>
@@ -83,7 +75,12 @@
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="tab-planificadas" data-bs-toggle="tab" data-bs-target="#panel-planificadas" type="button" role="tab">
-          <i class="bi bi-calendar-week me-1"></i> Guardias Planificadas
+          <i class="bi bi-calendar-week me-1"></i> Planificadas
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-tramos" data-bs-toggle="tab" data-bs-target="#panel-tramos" type="button" role="tab">
+          <i class="bi bi-grid-3x3 me-1"></i> Vista por Tramo
         </button>
       </li>
     </ul>
@@ -92,20 +89,14 @@
 
       <!-- TAB: Guardias de Hoy -->
       <div class="tab-pane fade show active" id="panel-hoy" role="tabpanel">
-
-        <!-- Ausencias sin cubrir -->
         <div class="tarjeta mb-3">
           <h2 class="tarjeta-titulo mb-3"><i class="bi bi-exclamation-triangle me-2"></i>Ausencias sin cubrir</h2>
           <div id="lista-sin-cubrir"></div>
         </div>
-
-        <!-- Profesores disponibles -->
         <div class="tarjeta mb-3">
           <h2 class="tarjeta-titulo mb-3"><i class="bi bi-person-check me-2"></i>Profesores disponibles</h2>
           <div id="lista-disponibles"></div>
         </div>
-
-        <!-- Guardias ya asignadas -->
         <div class="tarjeta">
           <h2 class="tarjeta-titulo mb-3"><i class="bi bi-shield-check me-2"></i>Guardias asignadas hoy</h2>
           <div class="tabla-responsive">
@@ -125,25 +116,55 @@
             </table>
           </div>
         </div>
-
       </div>
 
-      <!-- TAB: Guardias Planificadas (vista por grupos) -->
+      <!-- TAB: Guardias Planificadas -->
       <div class="tab-pane fade" id="panel-planificadas" role="tabpanel">
-
         <div class="tarjeta">
-          <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <h2 class="tarjeta-titulo mb-0">Grupos de guardia</h2>
-            <button class="btn-primario" data-bs-toggle="modal" data-bs-target="#modal-nueva-guardia">
-              <i class="bi bi-people-fill me-1"></i> Nuevo Grupo
-            </button>
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="btn-primario" data-bs-toggle="modal" data-bs-target="#modal-horario">
+                <i class="bi bi-calendar2-week me-1"></i> Asignar Horario
+              </button>
+              <button class="btn-secundario" data-bs-toggle="modal" data-bs-target="#modal-importar">
+                <i class="bi bi-upload me-1"></i> Importar CSV
+              </button>
+              <button class="btn-primario" data-bs-toggle="modal" data-bs-target="#modal-nueva-guardia">
+                <i class="bi bi-people-fill me-1"></i> Nuevo Grupo
+              </button>
+            </div>
           </div>
-
           <div id="contenedor-grupos"></div>
-
           <div class="contador-guardias" id="contador-planificadas">Mostrando 0 guardias</div>
         </div>
+      </div>
 
+      <!-- TAB: Vista por Tramo -->
+      <div class="tab-pane fade" id="panel-tramos" role="tabpanel">
+        <div class="tarjeta">
+          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h2 class="tarjeta-titulo mb-0">Mapa de guardias por tramo</h2>
+            <div class="d-flex gap-2 flex-wrap">
+              <select class="select-filtro" id="filtro-curso-tramo" style="min-width:130px;"></select>
+            </div>
+          </div>
+          <div class="tabla-responsive">
+            <table class="tabla-datos tabla-tramos" id="tabla-vista-tramos">
+              <thead>
+                <tr>
+                  <th style="min-width:160px;">Tramo</th>
+                  <th>Lunes</th>
+                  <th>Martes</th>
+                  <th>Miercoles</th>
+                  <th>Jueves</th>
+                  <th>Viernes</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-vista-tramos"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -151,50 +172,34 @@
   </main>
 
 
-  <!-- Modal nuevo grupo de guardia -->
+  <!-- Modal: Nuevo Grupo de Guardia -->
   <div class="modal fade" id="modal-nueva-guardia" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content modal-contenido">
-
         <div class="modal-header modal-cabecera">
-          <h5 class="modal-title modal-titulo">
-            <i class="bi bi-people-fill me-2 modal-icono-titulo"></i>
-            Nuevo Grupo de Guardia
-          </h5>
+          <h5 class="modal-title modal-titulo"><i class="bi bi-people-fill me-2 modal-icono-titulo"></i>Nuevo Grupo de Guardia</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
-
         <div class="modal-body modal-cuerpo">
           <div id="modal-error" class="modal-error"></div>
-
           <form id="form-guardia">
             <div class="row g-3 mb-3">
               <div class="col-12 col-sm-6">
-                <label class="modal-label">Día de la semana <span class="campo-obligatorio">*</span></label>
+                <label class="modal-label">Dia de la semana <span class="campo-obligatorio">*</span></label>
                 <select id="modal-dia" class="select-filtro campo-completo" required>
                   <option value="">Seleccionar...</option>
                   <option value="1">Lunes</option>
                   <option value="2">Martes</option>
-                  <option value="3">Miércoles</option>
+                  <option value="3">Miercoles</option>
                   <option value="4">Jueves</option>
                   <option value="5">Viernes</option>
                 </select>
               </div>
               <div class="col-12 col-sm-6">
                 <label class="modal-label">Tramo horario <span class="campo-obligatorio">*</span></label>
-                <select id="modal-tramo" class="select-filtro campo-completo" required>
-                  <option value="">Seleccionar...</option>
-                  <option value="08:00-09:00">08:00 - 09:00</option>
-                  <option value="09:00-10:00">09:00 - 10:00</option>
-                  <option value="10:00-11:00">10:00 - 11:00</option>
-                  <option value="11:00-12:00">11:00 - 12:00</option>
-                  <option value="12:00-13:00">12:00 - 13:00</option>
-                  <option value="13:00-14:00">13:00 - 14:00</option>
-                  <option value="14:00-15:00">14:00 - 15:00</option>
-                </select>
+                <select id="modal-tramo" class="select-filtro campo-completo" required></select>
               </div>
             </div>
-
             <div class="row g-3 mb-3">
               <div class="col-12 col-sm-6">
                 <label class="modal-label">Curso escolar <span class="campo-obligatorio">*</span></label>
@@ -207,7 +212,6 @@
                 </select>
               </div>
             </div>
-
             <div class="mb-3">
               <label class="modal-label">Profesores del grupo <span class="campo-obligatorio">*</span></label>
               <div class="input-group mb-2">
@@ -218,14 +222,114 @@
             </div>
           </form>
         </div>
-
         <div class="modal-footer modal-pie">
           <button type="button" class="btn-secundario" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" form="form-guardia" class="btn-primario" id="btn-guardar-guardia">
-            <i class="bi bi-check-lg"></i> Crear Grupo
+          <button type="submit" form="form-guardia" class="btn-primario" id="btn-guardar-guardia"><i class="bi bi-check-lg"></i> Crear Grupo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modal: Asignar Horario Completo -->
+  <div class="modal fade" id="modal-horario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+      <div class="modal-content modal-contenido">
+        <div class="modal-header modal-cabecera">
+          <h5 class="modal-title modal-titulo"><i class="bi bi-calendar2-week me-2 modal-icono-titulo"></i>Asignar Horario Completo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body modal-cuerpo">
+          <div id="horario-error" class="modal-error"></div>
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-sm-6">
+              <label class="modal-label">Profesor <span class="campo-obligatorio">*</span></label>
+              <select id="horario-profesor" class="select-filtro campo-completo">
+                <option value="">Seleccionar profesor...</option>
+              </select>
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="modal-label">Curso escolar <span class="campo-obligatorio">*</span></label>
+              <input type="text" id="horario-curso" class="select-filtro campo-completo" placeholder="Ej: 2025-2026" value="2025-2026">
+            </div>
+          </div>
+          <div id="horario-cargando" style="display:none;text-align:center;padding:12px;color:#64748b;font-size:13px;">
+            <i class="bi bi-hourglass-split me-1"></i>Cargando horario existente...
+          </div>
+          <div class="tabla-responsive">
+            <table class="tabla-datos tabla-horario" id="tabla-horario-grid">
+              <thead>
+                <tr>
+                  <th style="min-width:150px;">Tramo</th>
+                  <th>Lun</th>
+                  <th>Mar</th>
+                  <th>Mie</th>
+                  <th>Jue</th>
+                  <th>Vie</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-horario-grid"></tbody>
+            </table>
+          </div>
+          <div id="horario-resumen" style="margin-top:12px;font-size:13px;color:#64748b;">
+            <span id="horario-cuenta">0</span> guardias seleccionadas
+          </div>
+        </div>
+        <div class="modal-footer modal-pie">
+          <button type="button" class="btn-secundario" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn-primario" id="btn-guardar-horario" onclick="enviarHorario()">
+            <i class="bi bi-check-lg"></i> Guardar Horario
           </button>
         </div>
+      </div>
+    </div>
+  </div>
 
+
+  <!-- Modal: Importar CSV -->
+  <div class="modal fade" id="modal-importar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content modal-contenido">
+        <div class="modal-header modal-cabecera">
+          <h5 class="modal-title modal-titulo"><i class="bi bi-upload me-2 modal-icono-titulo"></i>Importar Guardias desde CSV</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body modal-cuerpo">
+          <div id="csv-error" class="modal-error"></div>
+          <div class="mb-3">
+            <label class="modal-label">Curso escolar <span class="campo-obligatorio">*</span></label>
+            <input type="text" id="csv-curso" class="select-filtro campo-completo" placeholder="Ej: 2025-2026" value="2025-2026">
+          </div>
+          <div class="mb-3">
+            <label class="modal-label">Archivo CSV <span class="campo-obligatorio">*</span></label>
+            <input type="file" id="csv-archivo" accept=".csv,.txt" class="select-filtro campo-completo">
+            <div style="font-size:12px;color:#94a3b8;margin-top:6px;">
+              Formato: <code>correo, dia_semana (1-5), tramo_horario</code><br>
+              Ejemplo: <code>profesor@iesrioarba.com, 1, 1a hora (08:15-09:10)</code>
+            </div>
+          </div>
+          <div id="csv-preview" style="display:none;">
+            <label class="modal-label">Vista previa</label>
+            <div class="tabla-responsive" style="max-height:250px;overflow-y:auto;">
+              <table class="tabla-datos" style="font-size:13px;">
+                <thead>
+                  <tr><th>Fila</th><th>Correo</th><th>Dia</th><th>Tramo</th><th>Estado</th></tr>
+                </thead>
+                <tbody id="csv-preview-body"></tbody>
+              </table>
+            </div>
+            <div style="margin-top:8px;font-size:13px;color:#64748b;">
+              <span id="csv-resumen-ok" style="color:#16a34a;font-weight:600;">0</span> validas,
+              <span id="csv-resumen-err" style="color:#ef4444;font-weight:600;">0</span> con errores
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer modal-pie">
+          <button type="button" class="btn-secundario" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn-primario" id="btn-importar-csv" onclick="enviarCSV()" disabled>
+            <i class="bi bi-upload"></i> Importar
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -238,28 +342,96 @@
   <script>
     var _profesoresDisponibles = [];
     var _todosLosProfesores = [];
+    var _todosLosEspacios = [];
     var _profesoresSeleccionados = [];
+    var _todasLasGuardias = [];
+    var _csvFilas = [];
+
+    var _TRAMOS = [
+      { valor: "1a hora (08:15-09:10)", etiqueta: "1a hora",  horario: "08:15 - 09:10" },
+      { valor: "2a hora (09:10-10:10)", etiqueta: "2a hora",  horario: "09:10 - 10:10" },
+      { valor: "3a hora (10:10-11:05)", etiqueta: "3a hora",  horario: "10:10 - 11:05" },
+      { valor: "Recreo (11:05-11:30)",  etiqueta: "Recreo",   horario: "11:05 - 11:30" },
+      { valor: "4a hora (11:30-12:25)", etiqueta: "4a hora",  horario: "11:30 - 12:25" },
+      { valor: "5a hora (12:25-13:20)", etiqueta: "5a hora",  horario: "12:25 - 13:20" },
+      { valor: "6a hora (13:20-14:15)", etiqueta: "6a hora",  horario: "13:20 - 14:15" }
+    ];
+
+    var _DIAS = ["", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes"];
 
     verificarSesion().then(function (usuario) {
       if (!usuario) return;
 
       crearSidebar("guardias", "../../");
-      cargarSelectsModal();
+      cargarDatosIniciales();
       recargar();
 
       document.getElementById("form-guardia").addEventListener("submit", guardarGrupo);
-
       document.getElementById("modal-buscar-profesor").addEventListener("input", function () {
         renderListaProfesores(this.value.toLowerCase());
       });
+      document.getElementById("horario-profesor").addEventListener("change", cargarHorarioExistente);
+      document.getElementById("horario-curso").addEventListener("change", cargarHorarioExistente);
+      document.getElementById("csv-archivo").addEventListener("change", parsearCSV);
+      document.getElementById("filtro-curso-tramo").addEventListener("change", renderVistaTramos);
+
+      document.getElementById("tab-tramos").addEventListener("shown.bs.tab", renderVistaTramos);
+
+      construirGridHorario();
+      poblarSelectTramo();
     });
+
+    function poblarSelectTramo() {
+      var sel = document.getElementById("modal-tramo");
+      sel.innerHTML = '<option value="">Seleccionar...</option>';
+      for (var i = 0; i < _TRAMOS.length; i++) {
+        sel.innerHTML += '<option value="' + _TRAMOS[i].valor + '">' + _TRAMOS[i].etiqueta + ' (' + _TRAMOS[i].horario + ')</option>';
+      }
+    }
 
     function recargar() {
       cargarGuardiasHoy();
       cargarPlanificadas();
     }
 
-    // ─── Guardias de Hoy ─────────────────────────────────
+    function cargarDatosIniciales() {
+      apiFetch('/api/v1/usuarios?rol=PROFESOR&activo=true&limit=200').then(function (data) {
+        _todosLosProfesores = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
+        renderListaProfesores("");
+        poblarSelectProfesorHorario();
+      });
+
+      apiFetch('/api/v1/espacios?limit=200').then(function (data) {
+        _todosLosEspacios = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
+        var select = document.getElementById("modal-espacio");
+        for (var i = 0; i < _todosLosEspacios.length; i++) {
+          var e = _todosLosEspacios[i];
+          var opt = document.createElement("option");
+          opt.value = e.id_espacio;
+          opt.textContent = e.nombre;
+          select.appendChild(opt);
+        }
+      });
+
+      document.getElementById("modal-nueva-guardia").addEventListener("hidden.bs.modal", function () {
+        _profesoresSeleccionados = [];
+        renderListaProfesores("");
+        renderProfesoresSeleccionados();
+      });
+    }
+
+    function poblarSelectProfesorHorario() {
+      var sel = document.getElementById("horario-profesor");
+      sel.innerHTML = '<option value="">Seleccionar profesor...</option>';
+      for (var i = 0; i < _todosLosProfesores.length; i++) {
+        var p = _todosLosProfesores[i];
+        sel.innerHTML += '<option value="' + p.id_usuario + '">' + p.nombre + ' ' + p.apellidos + '</option>';
+      }
+    }
+
+    // ============================================================
+    // GUARDIAS DE HOY
+    // ============================================================
 
     function cargarGuardiasHoy() {
       apiFetch('/api/v1/guardias/hoy').then(function (data) {
@@ -289,12 +461,10 @@
 
     function renderSinCubrir(ausencias, disponibles) {
       var contenedor = document.getElementById("lista-sin-cubrir");
-
       if (ausencias.length === 0) {
-        contenedor.innerHTML = '<div class="sin-resultados"><i class="bi bi-check-circle sin-resultados-icono"></i>Todas las ausencias están cubiertas</div>';
+        contenedor.innerHTML = '<div class="sin-resultados"><i class="bi bi-check-circle sin-resultados-icono"></i>Todas las ausencias estan cubiertas</div>';
         return;
       }
-
       var html = "";
       for (var i = 0; i < ausencias.length; i++) {
         var a = ausencias[i];
@@ -307,30 +477,21 @@
           var d = disponibles[j];
           var nombreDisp = (d.nombre || "") + " " + (d.apellidos || "");
           var idDisp = d.id_usuario || d.id;
-          var conteo = d.guardias_realizadas || 0;
-          opcionesSust += '<option value="' + idDisp + '">' + nombreDisp.trim() + ' (' + conteo + ' guardias)</option>';
+          opcionesSust += '<option value="' + idDisp + '">' + nombreDisp.trim() + ' (' + (d.guardias_realizadas || 0) + ' g.)</option>';
         }
 
         var infoTarea = "";
         if (a.hay_tarea) {
-          infoTarea = '<div style="font-size:12px;margin-top:4px;color:#1e40af;">' +
-            '<i class="bi bi-journal-text me-1"></i>' + (a.descripcion_tarea || "Tarea sin descripción");
-          if (a.archivo_tarea) {
-            infoTarea += ' <a href="/' + a.archivo_tarea + '" target="_blank" style="color:#1152d4;"><i class="bi bi-paperclip"></i> Archivo</a>';
-          }
+          infoTarea = '<div style="font-size:12px;margin-top:4px;color:#1e40af;"><i class="bi bi-journal-text me-1"></i>' + (a.descripcion_tarea || "Tarea sin descripcion");
+          if (a.archivo_tarea) infoTarea += ' <a href="/' + a.archivo_tarea + '" target="_blank" style="color:#1152d4;"><i class="bi bi-paperclip"></i> Archivo</a>';
           infoTarea += '</div>';
         }
 
         html += '<div class="tarjeta-cobertura d-flex justify-content-between align-items-center mb-2" style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;">' +
-                  '<div>' +
-                    '<strong>' + profesor + '</strong> — ' + tramo +
-                    infoTarea +
-                  '</div>' +
+                  '<div><strong>' + profesor + '</strong> — ' + tramo + infoTarea + '</div>' +
                   '<div class="d-flex gap-2 align-items-center">' +
                     '<select class="select-filtro" id="sust-' + idAusencia + '" style="min-width:200px;">' + opcionesSust + '</select>' +
-                    '<button class="btn-primario" onclick="asignarSustituto(' + idAusencia + ')" style="white-space:nowrap;">' +
-                      '<i class="bi bi-person-plus me-1"></i>Asignar' +
-                    '</button>' +
+                    '<button class="btn-primario" onclick="asignarSustituto(' + idAusencia + ')" style="white-space:nowrap;"><i class="bi bi-person-plus me-1"></i>Asignar</button>' +
                   '</div>' +
                 '</div>';
       }
@@ -339,21 +500,15 @@
 
     function renderDisponibles(disponibles) {
       var contenedor = document.getElementById("lista-disponibles");
-
       if (disponibles.length === 0) {
         contenedor.innerHTML = '<div class="sin-resultados"><i class="bi bi-person-x sin-resultados-icono"></i>No hay profesores disponibles</div>';
         return;
       }
-
       var html = '<div class="d-flex flex-wrap gap-2">';
       for (var i = 0; i < disponibles.length; i++) {
         var d = disponibles[i];
         var nombre = (d.nombre || "") + " " + (d.apellidos || "");
-        var conteo = d.guardias_realizadas || 0;
-        html += '<span class="badge-estado badge-cubierta" style="padding:6px 12px;">' +
-                  '<i class="bi bi-person-check me-1"></i>' + nombre.trim() +
-                  ' <strong>(' + conteo + ')</strong>' +
-                '</span>';
+        html += '<span class="badge-estado badge-cubierta" style="padding:6px 12px;"><i class="bi bi-person-check me-1"></i>' + nombre.trim() + ' <strong>(' + (d.guardias_realizadas || 0) + ')</strong></span>';
       }
       html += '</div>';
       contenedor.innerHTML = html;
@@ -361,41 +516,27 @@
 
     function renderAsignadasHoy(asignadas) {
       var tbody = document.getElementById("tabla-asignadas-hoy");
-
       if (asignadas.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No hay guardias asignadas hoy</td></tr>';
         return;
       }
-
       var html = "";
       for (var i = 0; i < asignadas.length; i++) {
         var g = asignadas[i];
-        var tramo = g.tramo_horario || g.tramo || "—";
-        var sustituto = g.sustituto_nombre || g.profesor_sustituto || "—";
-        var ausente = g.ausente_nombre || g.profesor_ausente || "—";
-        var clase = g.clase || g.curso || "—";
-        var idAsignada = g.id_guardia_asignada || g.id;
-
         var claseTipo = g.tipo_asignacion === "AUTOMATICA" ? "badge-cerrada" : "badge-en-proceso";
         var textoTipo = g.tipo_asignacion === "AUTOMATICA" ? "Auto" : "Manual";
-
-        var estadoBadge;
-        if (g.estado === "ACEPTADA") {
-          estadoBadge = '<span class="badge-estado badge-resuelta">Aceptada</span>';
-        } else {
-          estadoBadge = '<span class="badge-estado badge-pendiente">Pendiente</span>';
-        }
+        var estadoBadge = g.estado === "ACEPTADA"
+          ? '<span class="badge-estado badge-resuelta">Aceptada</span>'
+          : '<span class="badge-estado badge-pendiente">Pendiente</span>';
 
         html += '<tr>' +
-                  '<td class="celda-sm">' + tramo + '</td>' +
-                  '<td><div class="profesor-principal">' + sustituto + '</div><div class="profesor-etiqueta">Sustituto</div></td>' +
-                  '<td><div class="celda-sm">' + ausente + '</div><div class="profesor-etiqueta">Ausente</div></td>' +
-                  '<td class="celda-sm">' + clase + '</td>' +
+                  '<td class="celda-sm">' + (g.tramo_horario || "—") + '</td>' +
+                  '<td><div class="profesor-principal">' + (g.sustituto_nombre || "—") + '</div><div class="profesor-etiqueta">Sustituto</div></td>' +
+                  '<td><div class="celda-sm">' + (g.ausente_nombre || "—") + '</div><div class="profesor-etiqueta">Ausente</div></td>' +
+                  '<td class="celda-sm">' + (g.clase_curso || "—") + '</td>' +
                   '<td><span class="badge-estado ' + claseTipo + '">' + textoTipo + '</span></td>' +
                   '<td>' + estadoBadge + '</td>' +
-                  '<td>' +
-                    '<button class="btn-accion peligro" title="Eliminar" onclick="eliminarAsignada(' + idAsignada + ')"><i class="bi bi-trash"></i></button>' +
-                  '</td>' +
+                  '<td><button class="btn-accion peligro" title="Eliminar" onclick="eliminarAsignada(' + (g.id_guardia_asignada || g.id) + ')"><i class="bi bi-trash"></i></button></td>' +
                 '</tr>';
       }
       tbody.innerHTML = html;
@@ -404,81 +545,73 @@
     function asignarSustituto(idAusencia) {
       var select = document.getElementById("sust-" + idAusencia);
       if (!select || !select.value) { alert("Selecciona un profesor sustituto."); return; }
-
       var hoy = new Date();
       var fechaHoy = hoy.getFullYear() + "-" + String(hoy.getMonth() + 1).padStart(2, "0") + "-" + String(hoy.getDate()).padStart(2, "0");
-
       apiFetch('/api/v1/guardias/asignadas', {
         method: 'POST',
-        body: JSON.stringify({
-          id_ausencia: idAusencia,
-          id_profesor_sustituto: parseInt(select.value),
-          fecha: fechaHoy,
-          tramo_horario: "pendiente",
-          tipo_asignacion: "MANUAL"
-        })
+        body: JSON.stringify({ id_ausencia: idAusencia, id_profesor_sustituto: parseInt(select.value), fecha: fechaHoy, tramo_horario: "pendiente", tipo_asignacion: "MANUAL" })
       }).then(function (data) {
-        if (data && data.ok) {
-          recargar();
-        } else {
-          alert((data && data.mensaje) || "Error al asignar sustituto");
-        }
-      }).catch(function () { alert("Error de conexión"); });
+        if (data && data.ok) recargar();
+        else alert((data && data.mensaje) || "Error al asignar sustituto");
+      }).catch(function () { alert("Error de conexion"); });
     }
 
     function eliminarAsignada(id) {
-      if (!confirm("¿Eliminar esta guardia asignada?")) return;
-      apiFetch('/api/v1/guardias/asignadas/' + id, { method: 'DELETE' }).then(function () {
-        recargar();
-      });
+      if (!confirm("Eliminar esta guardia asignada?")) return;
+      apiFetch('/api/v1/guardias/asignadas/' + id, { method: 'DELETE' }).then(function () { recargar(); });
     }
 
-    // ─── Guardias Planificadas (vista agrupada) ──────────
+    // ============================================================
+    // GUARDIAS PLANIFICADAS
+    // ============================================================
 
     function cargarPlanificadas() {
       apiFetch('/api/v1/guardias/creadas?limit=200').then(function (data) {
         var filas = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
         var pag = (data && data.datos && data.datos.paginacion) ? data.datos.paginacion : { total: 0 };
 
+        _todasLasGuardias = filas;
+
         document.getElementById("num-planificadas").textContent = pag.total;
-        document.getElementById("contador-planificadas").textContent =
-          "Mostrando " + filas.length + " de " + pag.total + " guardias";
+        document.getElementById("contador-planificadas").textContent = "Mostrando " + filas.length + " de " + pag.total + " guardias";
 
         renderGrupos(filas);
+        poblarFiltroCurso(filas);
       }).catch(function () {
-        document.getElementById("contenedor-grupos").innerHTML =
-          '<div class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No hay guardias planificadas</div>';
+        document.getElementById("contenedor-grupos").innerHTML = '<div class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No hay guardias planificadas</div>';
         document.getElementById("contador-planificadas").textContent = "Mostrando 0 guardias";
       });
     }
 
+    function poblarFiltroCurso(filas) {
+      var cursos = {};
+      for (var i = 0; i < filas.length; i++) {
+        if (filas[i].curso_escolar) cursos[filas[i].curso_escolar] = true;
+      }
+      var sel = document.getElementById("filtro-curso-tramo");
+      var valorActual = sel.value;
+      sel.innerHTML = '<option value="">Todos los cursos</option>';
+      var keys = Object.keys(cursos).sort();
+      for (var j = 0; j < keys.length; j++) {
+        sel.innerHTML += '<option value="' + keys[j] + '">' + keys[j] + '</option>';
+      }
+      if (valorActual) sel.value = valorActual;
+    }
+
     function renderGrupos(filas) {
       var contenedor = document.getElementById("contenedor-grupos");
-
       if (filas.length === 0) {
         contenedor.innerHTML = '<div class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No hay grupos de guardia</div>';
         return;
       }
-
-      var diasSemana = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
       var grupos = {};
-
       for (var i = 0; i < filas.length; i++) {
         var g = filas[i];
         var clave = (g.dia_semana || 0) + "_" + (g.tramo_horario || "");
         if (!grupos[clave]) {
-          grupos[clave] = {
-            dia_semana: g.dia_semana,
-            tramo_horario: g.tramo_horario,
-            espacio: g.espacio_nombre || "—",
-            curso_escolar: g.curso_escolar || "—",
-            profesores: []
-          };
+          grupos[clave] = { dia_semana: g.dia_semana, tramo_horario: g.tramo_horario, espacio: g.espacio_nombre || "—", curso_escolar: g.curso_escolar || "—", profesores: [] };
         }
-        grupos[clave].profesores.push({
-          id: g.id_guardia_creada,
-          nombre: (g.profesor_nombre || "") + " " + (g.profesor_apellidos || "")
-        });
+        grupos[clave].profesores.push({ id: g.id_guardia_creada, nombre: (g.profesor_nombre || "") + " " + (g.profesor_apellidos || "") });
       }
 
       var claves = Object.keys(grupos).sort(function (a, b) {
@@ -490,103 +623,54 @@
       var html = "";
       for (var k = 0; k < claves.length; k++) {
         var grupo = grupos[claves[k]];
-        var diaNombre = grupo.dia_semana ? diasSemana[grupo.dia_semana] : "—";
+        var diaNombre = grupo.dia_semana ? _DIAS[grupo.dia_semana] : "—";
 
         html += '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:12px;">' +
                   '<div class="d-flex justify-content-between align-items-center mb-2">' +
-                    '<div>' +
-                      '<strong style="font-size:15px;"><i class="bi bi-calendar-event me-1"></i>' + diaNombre + ' — ' + (grupo.tramo_horario || "—") + '</strong>' +
-                      '<span style="margin-left:12px;font-size:13px;color:#64748b;">' + grupo.espacio + ' · ' + grupo.curso_escolar + '</span>' +
-                    '</div>' +
-                    '<span class="badge-estado badge-cubierta" style="padding:4px 10px;font-size:12px;">' +
-                      grupo.profesores.length + ' profesor' + (grupo.profesores.length !== 1 ? 'es' : '') +
-                    '</span>' +
-                  '</div>' +
-                  '<div class="d-flex flex-wrap gap-2">';
+                    '<div><strong style="font-size:15px;"><i class="bi bi-calendar-event me-1"></i>' + diaNombre + ' — ' + (grupo.tramo_horario || "—") + '</strong>' +
+                      '<span style="margin-left:12px;font-size:13px;color:#64748b;">' + grupo.espacio + ' · ' + grupo.curso_escolar + '</span></div>' +
+                    '<span class="badge-estado badge-cubierta" style="padding:4px 10px;font-size:12px;">' + grupo.profesores.length + ' prof.</span>' +
+                  '</div><div class="d-flex flex-wrap gap-2">';
 
         for (var p = 0; p < grupo.profesores.length; p++) {
           var prof = grupo.profesores[p];
           html += '<span class="badge-estado badge-en-proceso" style="padding:5px 10px;font-size:13px;">' +
                     '<i class="bi bi-person me-1"></i>' + prof.nombre.trim() +
-                    ' <button class="btn-accion peligro" style="margin-left:6px;padding:0 4px;font-size:11px;border:none;background:none;color:#dc2626;cursor:pointer;" ' +
-                      'onclick="eliminarPlanificada(' + prof.id + ')" title="Quitar del grupo">' +
-                      '<i class="bi bi-x-lg"></i>' +
-                    '</button>' +
-                  '</span>';
+                    ' <button class="btn-accion peligro" style="margin-left:6px;padding:0 4px;font-size:11px;border:none;background:none;color:#dc2626;cursor:pointer;" onclick="eliminarPlanificada(' + prof.id + ')" title="Quitar del grupo"><i class="bi bi-x-lg"></i></button></span>';
         }
-
         html += '</div></div>';
       }
-
       contenedor.innerHTML = html;
     }
 
     function eliminarPlanificada(id) {
-      if (!confirm("¿Quitar este profesor del grupo de guardia?")) return;
-      apiFetch('/api/v1/guardias/creadas/' + id, { method: 'DELETE' }).then(function () {
-        recargar();
-      });
+      if (!confirm("Quitar este profesor del grupo de guardia?")) return;
+      apiFetch('/api/v1/guardias/creadas/' + id, { method: 'DELETE' }).then(function () { recargar(); });
     }
 
-    // ─── Modal nuevo grupo de guardia ────────────────────
-
-    function cargarSelectsModal() {
-      apiFetch('/api/v1/usuarios?rol=PROFESOR&activo=true&limit=100').then(function (data) {
-        _todosLosProfesores = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
-        renderListaProfesores("");
-      });
-
-      apiFetch('/api/v1/espacios?limit=100').then(function (data) {
-        var espacios = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
-        var select = document.getElementById("modal-espacio");
-        for (var i = 0; i < espacios.length; i++) {
-          var e = espacios[i];
-          var opt = document.createElement("option");
-          opt.value = e.id_espacio;
-          opt.textContent = e.nombre;
-          select.appendChild(opt);
-        }
-      });
-
-      document.getElementById("modal-nueva-guardia").addEventListener("hidden.bs.modal", function () {
-        _profesoresSeleccionados = [];
-        renderListaProfesores("");
-        renderProfesoresSeleccionados();
-      });
-    }
+    // ============================================================
+    // MODAL NUEVO GRUPO
+    // ============================================================
 
     function renderListaProfesores(filtro) {
       var contenedor = document.getElementById("modal-lista-profesores");
       var html = "";
-
       for (var i = 0; i < _todosLosProfesores.length; i++) {
         var u = _todosLosProfesores[i];
         var nombre = u.nombre + " " + u.apellidos;
         if (filtro && nombre.toLowerCase().indexOf(filtro) === -1) continue;
-
         var seleccionado = _profesoresSeleccionados.indexOf(u.id_usuario) !== -1;
-        html += '<div style="padding:6px 8px;cursor:pointer;border-radius:6px;display:flex;align-items:center;gap:8px;' +
-                (seleccionado ? 'background:#e0f2fe;' : '') + '" ' +
-                'onclick="toggleProfesor(' + u.id_usuario + ')">' +
-                  '<input type="checkbox" ' + (seleccionado ? 'checked' : '') + ' style="pointer-events:none;">' +
-                  '<span style="font-size:14px;">' + nombre + '</span>' +
-                '</div>';
+        html += '<div style="padding:6px 8px;cursor:pointer;border-radius:6px;display:flex;align-items:center;gap:8px;' + (seleccionado ? 'background:#e0f2fe;' : '') + '" onclick="toggleProfesor(' + u.id_usuario + ')">' +
+                  '<input type="checkbox" ' + (seleccionado ? 'checked' : '') + ' style="pointer-events:none;"><span style="font-size:14px;">' + nombre + '</span></div>';
       }
-
-      if (!html) {
-        html = '<div style="padding:8px;color:#94a3b8;font-size:13px;">No se encontraron profesores</div>';
-      }
-
+      if (!html) html = '<div style="padding:8px;color:#94a3b8;font-size:13px;">No se encontraron profesores</div>';
       contenedor.innerHTML = html;
     }
 
     function toggleProfesor(id) {
       var idx = _profesoresSeleccionados.indexOf(id);
-      if (idx === -1) {
-        _profesoresSeleccionados.push(id);
-      } else {
-        _profesoresSeleccionados.splice(idx, 1);
-      }
+      if (idx === -1) _profesoresSeleccionados.push(id);
+      else _profesoresSeleccionados.splice(idx, 1);
       var filtro = document.getElementById("modal-buscar-profesor").value.toLowerCase();
       renderListaProfesores(filtro);
       renderProfesoresSeleccionados();
@@ -594,28 +678,19 @@
 
     function renderProfesoresSeleccionados() {
       var contenedor = document.getElementById("modal-profesores-seleccionados");
-
       if (_profesoresSeleccionados.length === 0) {
-        contenedor.innerHTML = '<span style="font-size:13px;color:#94a3b8;">Ningún profesor seleccionado</span>';
+        contenedor.innerHTML = '<span style="font-size:13px;color:#94a3b8;">Ningun profesor seleccionado</span>';
         return;
       }
-
       var html = "";
       for (var i = 0; i < _profesoresSeleccionados.length; i++) {
         var id = _profesoresSeleccionados[i];
         var nombre = "";
         for (var j = 0; j < _todosLosProfesores.length; j++) {
-          if (_todosLosProfesores[j].id_usuario === id) {
-            nombre = _todosLosProfesores[j].nombre + " " + _todosLosProfesores[j].apellidos;
-            break;
-          }
+          if (_todosLosProfesores[j].id_usuario === id) { nombre = _todosLosProfesores[j].nombre + " " + _todosLosProfesores[j].apellidos; break; }
         }
-        html += '<span class="badge-estado badge-cubierta" style="padding:4px 10px;font-size:13px;">' +
-                  nombre +
-                  ' <button type="button" onclick="toggleProfesor(' + id + ')" style="border:none;background:none;cursor:pointer;color:#dc2626;padding:0 2px;font-size:12px;">' +
-                    '<i class="bi bi-x-lg"></i>' +
-                  '</button>' +
-                '</span>';
+        html += '<span class="badge-estado badge-cubierta" style="padding:4px 10px;font-size:13px;">' + nombre +
+                ' <button type="button" onclick="toggleProfesor(' + id + ')" style="border:none;background:none;cursor:pointer;color:#dc2626;padding:0 2px;font-size:12px;"><i class="bi bi-x-lg"></i></button></span>';
       }
       contenedor.innerHTML = html;
     }
@@ -624,12 +699,7 @@
       event.preventDefault();
       var errorDiv = document.getElementById("modal-error");
       errorDiv.style.display = "none";
-
-      if (_profesoresSeleccionados.length === 0) {
-        errorDiv.textContent = "Selecciona al menos un profesor para el grupo.";
-        errorDiv.style.display = "block";
-        return;
-      }
+      if (_profesoresSeleccionados.length === 0) { errorDiv.textContent = "Selecciona al menos un profesor para el grupo."; errorDiv.style.display = "block"; return; }
 
       var body = {
         dia_semana: parseInt(document.getElementById("modal-dia").value),
@@ -637,14 +707,10 @@
         curso_escolar: document.getElementById("modal-curso").value.trim(),
         id_usuarios: _profesoresSeleccionados
       };
-
       var espacio = document.getElementById("modal-espacio").value;
       if (espacio) body.id_espacio = parseInt(espacio);
 
-      apiFetch('/api/v1/guardias/creadas/grupo', {
-        method: 'POST',
-        body: JSON.stringify(body)
-      }).then(function (data) {
+      apiFetch('/api/v1/guardias/creadas/grupo', { method: 'POST', body: JSON.stringify(body) }).then(function (data) {
         if (data && data.ok) {
           bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-nueva-guardia")).hide();
           document.getElementById("form-guardia").reset();
@@ -654,10 +720,277 @@
           errorDiv.textContent = (data && data.mensaje) || "Error al crear el grupo";
           errorDiv.style.display = "block";
         }
+      }).catch(function () { errorDiv.textContent = "Error de conexion"; errorDiv.style.display = "block"; });
+    }
+
+    // ============================================================
+    // MODAL HORARIO COMPLETO
+    // ============================================================
+
+    function construirGridHorario() {
+      var tbody = document.getElementById("tbody-horario-grid");
+      var html = "";
+      for (var t = 0; t < _TRAMOS.length; t++) {
+        var tramo = _TRAMOS[t];
+        html += '<tr><td class="celda-tramo-label"><strong>' + tramo.etiqueta + '</strong><br><span style="font-size:11px;color:#94a3b8;">' + tramo.horario + '</span></td>';
+        for (var d = 1; d <= 5; d++) {
+          var chkId = "hg-" + d + "-" + t;
+          html += '<td class="celda-horario-check"><label class="horario-check-label"><input type="checkbox" id="' + chkId + '" onchange="actualizarCuentaHorario()"><span class="horario-check-visual"><i class="bi bi-check-lg"></i></span></label></td>';
+        }
+        html += '</tr>';
+      }
+      tbody.innerHTML = html;
+    }
+
+    function actualizarCuentaHorario() {
+      var total = 0;
+      for (var t = 0; t < _TRAMOS.length; t++) {
+        for (var d = 1; d <= 5; d++) {
+          if (document.getElementById("hg-" + d + "-" + t).checked) total++;
+        }
+      }
+      document.getElementById("horario-cuenta").textContent = total;
+    }
+
+    function cargarHorarioExistente() {
+      var idProfesor = document.getElementById("horario-profesor").value;
+      var curso = document.getElementById("horario-curso").value.trim();
+
+      for (var t = 0; t < _TRAMOS.length; t++) {
+        for (var d = 1; d <= 5; d++) {
+          document.getElementById("hg-" + d + "-" + t).checked = false;
+        }
+      }
+      actualizarCuentaHorario();
+
+      if (!idProfesor || !curso) return;
+
+      document.getElementById("horario-cargando").style.display = "block";
+
+      apiFetch('/api/v1/guardias/creadas?id_usuario=' + idProfesor + '&curso_escolar=' + encodeURIComponent(curso) + '&limit=200').then(function (data) {
+        document.getElementById("horario-cargando").style.display = "none";
+        var filas = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
+
+        for (var i = 0; i < filas.length; i++) {
+          var g = filas[i];
+          var idxTramo = -1;
+          for (var t = 0; t < _TRAMOS.length; t++) {
+            if (_TRAMOS[t].valor === g.tramo_horario) { idxTramo = t; break; }
+          }
+          if (idxTramo !== -1 && g.dia_semana >= 1 && g.dia_semana <= 5) {
+            document.getElementById("hg-" + g.dia_semana + "-" + idxTramo).checked = true;
+          }
+        }
+        actualizarCuentaHorario();
       }).catch(function () {
-        errorDiv.textContent = "Error de conexión";
+        document.getElementById("horario-cargando").style.display = "none";
+      });
+    }
+
+    function enviarHorario() {
+      var errorDiv = document.getElementById("horario-error");
+      errorDiv.style.display = "none";
+      var idProfesor = document.getElementById("horario-profesor").value;
+      var curso = document.getElementById("horario-curso").value.trim();
+
+      if (!idProfesor) { errorDiv.textContent = "Selecciona un profesor."; errorDiv.style.display = "block"; return; }
+      if (!curso) { errorDiv.textContent = "Introduce el curso escolar."; errorDiv.style.display = "block"; return; }
+
+      var guardias = [];
+      for (var t = 0; t < _TRAMOS.length; t++) {
+        for (var d = 1; d <= 5; d++) {
+          if (document.getElementById("hg-" + d + "-" + t).checked) {
+            guardias.push({ dia_semana: d, tramo_horario: _TRAMOS[t].valor });
+          }
+        }
+      }
+
+      var btn = document.getElementById("btn-guardar-horario");
+      btn.disabled = true;
+      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Guardando...';
+
+      apiFetch('/api/v1/guardias/creadas/horario', {
+        method: 'POST',
+        body: JSON.stringify({ id_usuario: parseInt(idProfesor), curso_escolar: curso, guardias: guardias })
+      }).then(function (data) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Guardar Horario';
+        if (data && data.ok) {
+          bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-horario")).hide();
+          recargar();
+          alert("Horario guardado: " + (data.datos ? data.datos.total : 0) + " guardias creadas.");
+        } else {
+          errorDiv.textContent = (data && data.mensaje) || "Error al guardar horario";
+          errorDiv.style.display = "block";
+        }
+      }).catch(function () {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Guardar Horario';
+        errorDiv.textContent = "Error de conexion";
         errorDiv.style.display = "block";
       });
+    }
+
+    // ============================================================
+    // MODAL IMPORTAR CSV
+    // ============================================================
+
+    function parsearCSV() {
+      var archivo = document.getElementById("csv-archivo").files[0];
+      if (!archivo) return;
+
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var lineas = e.target.result.split(/\r?\n/).filter(function (l) { return l.trim(); });
+        _csvFilas = [];
+
+        for (var i = 0; i < lineas.length; i++) {
+          var linea = lineas[i].trim();
+          if (!linea || linea.toLowerCase().indexOf("correo") === 0) continue;
+          var partes = linea.split(",");
+          if (partes.length < 3) continue;
+
+          _csvFilas.push({
+            correo: partes[0].trim(),
+            dia_semana: parseInt(partes[1].trim()),
+            tramo_horario: partes[2].trim(),
+            id_espacio: partes[3] ? parseInt(partes[3].trim()) || null : null
+          });
+        }
+
+        renderPreviewCSV();
+      };
+      reader.readAsText(archivo);
+    }
+
+    function renderPreviewCSV() {
+      var tbody = document.getElementById("csv-preview-body");
+      if (_csvFilas.length === 0) {
+        document.getElementById("csv-preview").style.display = "none";
+        document.getElementById("btn-importar-csv").disabled = true;
+        return;
+      }
+
+      document.getElementById("csv-preview").style.display = "block";
+      var html = "";
+      var validas = 0, errores = 0;
+
+      for (var i = 0; i < _csvFilas.length; i++) {
+        var f = _csvFilas[i];
+        var problemas = [];
+        if (!f.correo || f.correo.indexOf("@") === -1) problemas.push("correo");
+        if (!f.dia_semana || f.dia_semana < 1 || f.dia_semana > 5) problemas.push("dia");
+        if (!f.tramo_horario) problemas.push("tramo");
+
+        var esValida = problemas.length === 0;
+        if (esValida) validas++; else errores++;
+
+        var estadoBadge = esValida
+          ? '<span class="badge-estado badge-cubierta" style="font-size:11px;">OK</span>'
+          : '<span class="badge-estado badge-pendiente" style="font-size:11px;">' + problemas.join(", ") + '</span>';
+
+        html += '<tr>' +
+                  '<td class="celda-sm">' + (i + 1) + '</td>' +
+                  '<td class="celda-sm">' + (f.correo || "—") + '</td>' +
+                  '<td class="celda-sm">' + (_DIAS[f.dia_semana] || f.dia_semana || "—") + '</td>' +
+                  '<td class="celda-sm">' + (f.tramo_horario || "—") + '</td>' +
+                  '<td>' + estadoBadge + '</td>' +
+                '</tr>';
+      }
+      tbody.innerHTML = html;
+      document.getElementById("csv-resumen-ok").textContent = validas;
+      document.getElementById("csv-resumen-err").textContent = errores;
+      document.getElementById("btn-importar-csv").disabled = validas === 0;
+    }
+
+    function enviarCSV() {
+      var errorDiv = document.getElementById("csv-error");
+      errorDiv.style.display = "none";
+      var curso = document.getElementById("csv-curso").value.trim();
+      if (!curso) { errorDiv.textContent = "Introduce el curso escolar."; errorDiv.style.display = "block"; return; }
+      if (_csvFilas.length === 0) { errorDiv.textContent = "No hay datos para importar."; errorDiv.style.display = "block"; return; }
+
+      var btn = document.getElementById("btn-importar-csv");
+      btn.disabled = true;
+      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Importando...';
+
+      apiFetch('/api/v1/guardias/creadas/importar', {
+        method: 'POST',
+        body: JSON.stringify({ curso_escolar: curso, guardias: _csvFilas })
+      }).then(function (data) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-upload"></i> Importar';
+        if (data && data.ok) {
+          var d = data.datos || {};
+          var msgErr = "";
+          if (d.errores && d.errores.length > 0) {
+            msgErr = "\n\nErrores:\n";
+            for (var i = 0; i < d.errores.length; i++) {
+              msgErr += "- Fila " + d.errores[i].fila + ": " + d.errores[i].error + " (" + d.errores[i].correo + ")\n";
+            }
+          }
+          bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-importar")).hide();
+          _csvFilas = [];
+          document.getElementById("csv-archivo").value = "";
+          document.getElementById("csv-preview").style.display = "none";
+          recargar();
+          alert("Importacion completada: " + (d.creadas || 0) + " guardias creadas." + msgErr);
+        } else {
+          errorDiv.textContent = (data && data.mensaje) || "Error al importar";
+          errorDiv.style.display = "block";
+        }
+      }).catch(function () {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-upload"></i> Importar';
+        errorDiv.textContent = "Error de conexion";
+        errorDiv.style.display = "block";
+      });
+    }
+
+    // ============================================================
+    // VISTA POR TRAMO
+    // ============================================================
+
+    function renderVistaTramos() {
+      var filtCurso = document.getElementById("filtro-curso-tramo").value;
+      var filas = _todasLasGuardias;
+
+      if (filtCurso) {
+        filas = filas.filter(function (g) { return g.curso_escolar === filtCurso; });
+      }
+
+      var mapa = {};
+      for (var i = 0; i < filas.length; i++) {
+        var g = filas[i];
+        var clave = (g.tramo_horario || "") + "_" + (g.dia_semana || 0);
+        if (!mapa[clave]) mapa[clave] = [];
+        mapa[clave].push((g.profesor_nombre || "") + " " + (g.profesor_apellidos || ""));
+      }
+
+      var tbody = document.getElementById("tbody-vista-tramos");
+      var html = "";
+
+      for (var t = 0; t < _TRAMOS.length; t++) {
+        var tramo = _TRAMOS[t];
+        html += '<tr><td class="celda-tramo-label"><strong>' + tramo.etiqueta + '</strong><br><span style="font-size:11px;color:#94a3b8;">' + tramo.horario + '</span></td>';
+
+        for (var d = 1; d <= 5; d++) {
+          var clave = tramo.valor + "_" + d;
+          var profs = mapa[clave] || [];
+
+          if (profs.length === 0) {
+            html += '<td class="celda-tramo-vacia">—</td>';
+          } else {
+            html += '<td class="celda-tramo-llena">';
+            for (var p = 0; p < profs.length; p++) {
+              html += '<span class="badge-prof-tramo">' + profs[p].trim() + '</span>';
+            }
+            html += '</td>';
+          }
+        }
+        html += '</tr>';
+      }
+      tbody.innerHTML = html;
     }
   </script>
 
