@@ -1,4 +1,7 @@
 const { Router } = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const { verificarToken } = require('../middleware/auth.middleware');
 const { requiereRol } = require('../middleware/rol.middleware');
 const { registrarAccion } = require('../middleware/log.middleware');
@@ -9,6 +12,25 @@ const {
   guardarHorarioSchema, importarCSVSchema
 } = require('../validators/guardias.validator');
 const controller = require('../controllers/guardias.controller');
+
+const UPLOAD_DIR = path.join(__dirname, '..', 'uploads', 'excel');
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+
+const uploadExcel = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
+    filename: (_req, file, cb) => {
+      const unique = Date.now() + '-' + Math.round(Math.random() * 1e6);
+      cb(null, unique + path.extname(file.originalname));
+    }
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (['.xls', '.xlsx'].includes(ext)) return cb(null, true);
+    cb(new Error('Solo se permiten archivos .xls o .xlsx'));
+  }
+});
 
 const router = Router();
 router.use(verificarToken);
@@ -42,6 +64,12 @@ router.post('/creadas/importar',
   validar(importarCSVSchema),
   registrarAccion('IMPORTAR_GUARDIAS', 'guardia_creada'),
   controller.importarCSV
+);
+router.post('/creadas/importar-excel',
+  requiereRol('EQUIPO_DIRECTIVO', 'ADMINISTRADOR'),
+  uploadExcel.single('archivo'),
+  registrarAccion('IMPORTAR_GUARDIAS_EXCEL', 'guardia_creada'),
+  controller.importarExcel
 );
 router.put('/creadas/:id',
   requiereRol('EQUIPO_DIRECTIVO', 'ADMINISTRADOR'),

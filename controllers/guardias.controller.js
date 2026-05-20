@@ -1,3 +1,5 @@
+const fs = require('fs');
+const XLSX = require('xlsx');
 const pool = require('../config/db');
 const { success, error } = require('../helpers/response.helper');
 const { paginar, respuestaPaginada } = require('../helpers/pagination.helper');
@@ -700,6 +702,169 @@ async function guardarHorario(req, res, next) {
   }
 }
 
+// ─── IMPORTAR EXCEL ───────────────────────────────────
+
+async function importarExcel(req, res, next) {
+  const conn = await pool.getConnection();
+  try {
+    if (!req.file) return error(res, 'No se ha enviado ningun archivo', 400);
+
+    const curso_escolar = req.body.curso_escolar;
+    if (!curso_escolar) return error(res, 'El curso escolar es obligatorio', 400);
+
+    const workbook = XLSX.readFile(req.file.path);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+    if (data.length < 3) return error(res, 'El archivo no tiene suficientes filas', 400);
+
+    const TRAMO_MAP = [
+      '1a hora (08:15-09:10)',
+      '2a hora (09:10-10:10)',
+      '3a hora (10:10-11:05)',
+      '4a hora (11:30-12:25)',
+      '5a hora (12:25-13:20)',
+      '6a hora (13:20-14:15)'
+    ];
+
+    const DIA_OFFSETS = [
+      { dia: 1, colInicio: 1 },
+      { dia: 2, colInicio: 7 },
+      { dia: 3, colInicio: 13 },
+      { dia: 4, colInicio: 19 },
+      { dia: 5, colInicio: 25 }
+    ];
+
+    const [edificiosDB] = await conn.query('SELECT id_edificio, nombre FROM edificio');
+    const edificioMap = {};
+    for (const e of edificiosDB) {
+      edificioMap[e.nombre.toUpperCase().trim()] = e.id_edificio;
+    }
+
+    const guardiasDetectadas = [];
+    const profesoresNoEncontrados = [];
+    const errores = [];
+
+    for (let fila = 2; fila < data.length; fila++) {
+      const row = data[fila];
+      const nombreCompleto = (row[0] || '').toString().trim();
+      if (!nombreCompleto) continue;
+
+      for (const diaInfo of DIA_OFFSETS) {
+        for (let offset = 0; offset < 6; offset++) {
+          const col = diaInfo.colInicio + offset;
+          const celda = (row[col] || '').toString().trim();
+          if (!celda.toUpperCase().includes('GUARDIA')) continue;
+
+          const lineas = celda.split(/\n/);
+          let edificioNombre = null;
+          if (lineas.length > 1) {
+            edificioNombre = lineas[1].trim().toUpperCase();
+          }
+
+          guardiasDetectadas.push({
+            fila: fila + 1,
+            nombre: nombreCompleto,
+            dia_semana: diaInfo.dia,
+            tramo_horario: TRAMO_MAP[offset],
+            edificio: edificioNombre,
+            id_edificio: edificioNombre ? (edificioMap[edificioNombre] || null) : null
+          });
+        }
+      }
+    }
+
+    const nombresUnicos = [...new Set(guardiasDetectadas.map(g => g.nombre))];
+    const mapaNombreId = {};
+
+    for (const nombre of nombresUnicos) {
+      const partes = nombre.split(/[\s,]+/).filter(Boolean);
+      let encontrado = null;
+
+      if (partes.length >= 2) {
+        const condiciones = [];
+        const params = [];
+
+        condiciones.push('CONCAT(u.apellidos, \' \', u.nombre) LIKE ?');
+        params.push(`%${nombre}%`);
+        condiciones.push('CONCAT(u.nombre, \' \', u.apellidos) LIKE ?');
+        params.push(`%${nombre}%`);
+
+        const [rows] = await conn.query(
+          `SELECT u.id_usuario, u.nombre, u.apellidos FROM usuario u
+           JOIN usuario_rol ur ON u.id_usuario = ur.id_usuario
+           JOIN rol r ON ur.id_rol = r.id_rol
+           WHERE r.nombre_rol = 'PROFESOR' AND u.activo = 1
+           AND (${condiciones.join(' OR ')})
+           LIMIT 1`,
+          params
+        );
+        if (rows.length > 0) encontrado = rows[0];
+      }
+
+      if (!encontrado) {
+        const [rows2] = await conn.query(
+          `SELECT u.id_usuario, u.nombre, u.apellidos FROM usuario u
+           JOIN usuario_rol ur ON u.id_usuario = ur.id_usuario
+           JOIN rol r ON ur.id_rol = r.id_rol
+           WHERE r.nombre_rol = 'PROFESOR' AND u.activo = 1
+           AND (CONCAT(u.nombre, ' ', u.apellidos) LIKE ? OR CONCAT(u.apellidos, ' ', u.nombre) LIKE ?)
+           LIMIT 1`,
+          [`%${partes[0]}%${partes.length > 1 ? '%' + partes[1] + '%' : ''}`,
+           `%${partes[0]}%${partes.length > 1 ? '%' + partes[1] + '%' : ''}`]
+        );
+        if (rows2.length > 0) encontrado = rows2[0];
+      }
+
+      if (encontrado) {
+        mapaNombreId[nombre] = encontrado.id_usuario;
+      } else {
+        profesoresNoEncontrados.push(nombre);
+      }
+    }
+
+    const validos = [];
+    for (const g of guardiasDetectadas) {
+      const idUsuario = mapaNombreId[g.nombre];
+      if (!idUsuario) {
+        errores.push({ fila: g.fila, nombre: g.nombre, error: 'Profesor no encontrado en la BD' });
+        continue;
+      }
+      validos.push({ ...g, id_usuario: idUsuario });
+    }
+
+    await conn.beginTransaction();
+
+    const ids = [];
+    for (const g of validos) {
+      const [result] = await conn.query(
+        `INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio)
+         VALUES (?, ?, ?, ?, ?)`,
+        [g.dia_semana, g.tramo_horario, curso_escolar, g.id_usuario, null]
+      );
+      ids.push(result.insertId);
+    }
+
+    await conn.commit();
+
+    try { fs.unlinkSync(req.file.path); } catch (_e) { /* best-effort cleanup */ }
+
+    return success(res, {
+      creadas: ids.length,
+      errores,
+      profesores_no_encontrados: profesoresNoEncontrados
+    }, 201);
+  } catch (err) {
+    await conn.rollback();
+    if (req.file) {
+      try { fs.unlinkSync(req.file.path); } catch (_e) { /* best-effort cleanup */ }
+    }
+    next(err);
+  } finally {
+    conn.release();
+  }
+}
+
 // ─── IMPORTAR CSV ─────────────────────────────────────
 
 async function importarCSV(req, res, next) {
@@ -760,5 +925,5 @@ async function importarCSV(req, res, next) {
 module.exports = {
   listarCreadas, obtenerCreada, crearCreada, crearGrupo, actualizarCreada, eliminarCreada,
   listarAsignadas, crearAsignada, eliminarAsignada, responderGuardia,
-  guardiasHoy, asignarAutomaticamente, guardarHorario, importarCSV
+  guardiasHoy, asignarAutomaticamente, guardarHorario, importarCSV, importarExcel
 };

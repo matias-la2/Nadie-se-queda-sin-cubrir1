@@ -130,6 +130,9 @@
               <button class="btn-secundario" data-bs-toggle="modal" data-bs-target="#modal-importar">
                 <i class="bi bi-upload me-1"></i> Importar CSV
               </button>
+              <button class="btn-secundario" data-bs-toggle="modal" data-bs-target="#modal-importar-excel">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i> Importar Excel
+              </button>
               <button class="btn-primario" data-bs-toggle="modal" data-bs-target="#modal-nueva-guardia">
                 <i class="bi bi-people-fill me-1"></i> Nuevo Grupo
               </button>
@@ -335,7 +338,61 @@
   </div>
 
 
+  <!-- Modal: Importar Excel -->
+  <div class="modal fade" id="modal-importar-excel" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+      <div class="modal-content modal-contenido">
+        <div class="modal-header modal-cabecera">
+          <h5 class="modal-title modal-titulo"><i class="bi bi-file-earmark-spreadsheet me-2 modal-icono-titulo"></i>Importar Guardias desde Excel</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body modal-cuerpo">
+          <div id="excel-error" class="modal-error"></div>
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-sm-6">
+              <label class="modal-label">Curso escolar <span class="campo-obligatorio">*</span></label>
+              <input type="text" id="excel-curso" class="select-filtro campo-completo" placeholder="Ej: 2025-2026" value="2025-2026">
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="modal-label">Archivo Excel <span class="campo-obligatorio">*</span></label>
+              <input type="file" id="excel-archivo" accept=".xls,.xlsx" class="select-filtro campo-completo">
+            </div>
+          </div>
+          <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">
+            <i class="bi bi-info-circle me-1"></i>
+            El Excel debe tener: fila 0 = dias, fila 1 = tramos, columna 0 = nombre del profesor.
+            Las celdas con "GUARDIA" se importaran automaticamente.
+          </div>
+          <div id="excel-preview" style="display:none;">
+            <label class="modal-label">Vista previa</label>
+            <div class="tabla-responsive" style="max-height:350px;overflow-y:auto;">
+              <table class="tabla-datos" style="font-size:13px;">
+                <thead>
+                  <tr><th>Fila</th><th>Profesor</th><th>Dia</th><th>Tramo</th><th>Edificio</th><th>Estado</th></tr>
+                </thead>
+                <tbody id="excel-preview-body"></tbody>
+              </table>
+            </div>
+            <div style="margin-top:8px;font-size:13px;color:#64748b;">
+              <span id="excel-resumen-prof" style="font-weight:600;">0</span> profesores,
+              <span id="excel-resumen-ok" style="color:#16a34a;font-weight:600;">0</span> guardias detectadas
+              <span id="excel-resumen-warn" style="color:#f59e0b;display:none;"> — <span id="excel-warn-count">0</span> profesores no encontrados</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer modal-pie">
+          <button type="button" class="btn-secundario" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn-primario" id="btn-importar-excel" onclick="enviarExcel()" disabled>
+            <i class="bi bi-file-earmark-spreadsheet"></i> Importar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="../../js/auth.js"></script>
   <script src="../../js/sidebar.js"></script>
 
@@ -346,6 +403,8 @@
     var _profesoresSeleccionados = [];
     var _todasLasGuardias = [];
     var _csvFilas = [];
+    var _excelFilas = [];
+    var _excelArchivo = null;
 
     var _TRAMOS = [
       { valor: "1a hora (08:15-09:10)", etiqueta: "1a hora",  horario: "08:15 - 09:10" },
@@ -373,6 +432,7 @@
       document.getElementById("horario-profesor").addEventListener("change", cargarHorarioExistente);
       document.getElementById("horario-curso").addEventListener("change", cargarHorarioExistente);
       document.getElementById("csv-archivo").addEventListener("change", parsearCSV);
+      document.getElementById("excel-archivo").addEventListener("change", parsearExcel);
       document.getElementById("filtro-curso-tramo").addEventListener("change", renderVistaTramos);
 
       document.getElementById("tab-tramos").addEventListener("shown.bs.tab", renderVistaTramos);
@@ -945,6 +1005,194 @@
         errorDiv.textContent = "Error de conexion";
         errorDiv.style.display = "block";
       });
+    }
+
+    // ============================================================
+    // MODAL IMPORTAR EXCEL
+    // ============================================================
+
+    function parsearExcel() {
+      var input = document.getElementById("excel-archivo");
+      var archivo = input.files[0];
+      if (!archivo) return;
+
+      _excelArchivo = archivo;
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          var data = new Uint8Array(e.target.result);
+          var workbook = XLSX.read(data, { type: "array" });
+          var sheet = workbook.Sheets[workbook.SheetNames[0]];
+          var rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+          if (rows.length < 3) {
+            document.getElementById("excel-error").textContent = "El archivo no tiene suficientes filas (minimo 3).";
+            document.getElementById("excel-error").style.display = "block";
+            return;
+          }
+          document.getElementById("excel-error").style.display = "none";
+
+          var TRAMO_MAP = [
+            "1a hora (08:15-09:10)",
+            "2a hora (09:10-10:10)",
+            "3a hora (10:10-11:05)",
+            "4a hora (11:30-12:25)",
+            "5a hora (12:25-13:20)",
+            "6a hora (13:20-14:15)"
+          ];
+
+          var DIA_OFFSETS = [
+            { dia: 1, colInicio: 1 },
+            { dia: 2, colInicio: 7 },
+            { dia: 3, colInicio: 13 },
+            { dia: 4, colInicio: 19 },
+            { dia: 5, colInicio: 25 }
+          ];
+
+          _excelFilas = [];
+          var profesoresSet = {};
+
+          for (var fila = 2; fila < rows.length; fila++) {
+            var row = rows[fila];
+            var nombreCompleto = (row[0] || "").toString().trim();
+            if (!nombreCompleto) continue;
+            profesoresSet[nombreCompleto] = true;
+
+            for (var di = 0; di < DIA_OFFSETS.length; di++) {
+              var diaInfo = DIA_OFFSETS[di];
+              for (var offset = 0; offset < 6; offset++) {
+                var col = diaInfo.colInicio + offset;
+                var celda = (row[col] || "").toString().trim();
+                if (celda.toUpperCase().indexOf("GUARDIA") === -1) continue;
+
+                var lineas = celda.split(/\n/);
+                var edificioNombre = lineas.length > 1 ? lineas[1].trim() : "";
+
+                _excelFilas.push({
+                  fila: fila + 1,
+                  nombre: nombreCompleto,
+                  dia_semana: diaInfo.dia,
+                  tramo_horario: TRAMO_MAP[offset],
+                  edificio: edificioNombre || null
+                });
+              }
+            }
+          }
+
+          renderPreviewExcel(profesoresSet);
+        } catch (err) {
+          document.getElementById("excel-error").textContent = "Error al leer el archivo: " + err.message;
+          document.getElementById("excel-error").style.display = "block";
+        }
+      };
+      reader.readAsArrayBuffer(archivo);
+    }
+
+    function renderPreviewExcel(profesoresSet) {
+      var tbody = document.getElementById("excel-preview-body");
+      if (_excelFilas.length === 0) {
+        document.getElementById("excel-preview").style.display = "none";
+        document.getElementById("btn-importar-excel").disabled = true;
+        if (_excelArchivo) {
+          document.getElementById("excel-error").textContent = "No se encontraron celdas con 'GUARDIA' en el archivo.";
+          document.getElementById("excel-error").style.display = "block";
+        }
+        return;
+      }
+
+      document.getElementById("excel-preview").style.display = "block";
+      document.getElementById("excel-error").style.display = "none";
+
+      var html = "";
+      for (var i = 0; i < _excelFilas.length; i++) {
+        var f = _excelFilas[i];
+        html += '<tr>' +
+                  '<td class="celda-sm">' + f.fila + '</td>' +
+                  '<td class="celda-sm">' + f.nombre + '</td>' +
+                  '<td class="celda-sm">' + (_DIAS[f.dia_semana] || "—") + '</td>' +
+                  '<td class="celda-sm">' + (f.tramo_horario || "—") + '</td>' +
+                  '<td class="celda-sm">' + (f.edificio || "—") + '</td>' +
+                  '<td><span class="badge-estado badge-cubierta" style="font-size:11px;">OK</span></td>' +
+                '</tr>';
+      }
+      tbody.innerHTML = html;
+
+      var numProfs = Object.keys(profesoresSet || {}).length;
+      document.getElementById("excel-resumen-prof").textContent = numProfs;
+      document.getElementById("excel-resumen-ok").textContent = _excelFilas.length;
+      document.getElementById("btn-importar-excel").disabled = false;
+    }
+
+    function enviarExcel() {
+      var errorDiv = document.getElementById("excel-error");
+      errorDiv.style.display = "none";
+
+      var curso = document.getElementById("excel-curso").value.trim();
+      if (!curso) { errorDiv.textContent = "Introduce el curso escolar."; errorDiv.style.display = "block"; return; }
+
+      var input = document.getElementById("excel-archivo");
+      if (!input.files[0]) { errorDiv.textContent = "Selecciona un archivo Excel."; errorDiv.style.display = "block"; return; }
+
+      var btn = document.getElementById("btn-importar-excel");
+      btn.disabled = true;
+      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Importando...';
+
+      var formData = new FormData();
+      formData.append("archivo", input.files[0]);
+      formData.append("curso_escolar", curso);
+
+      var token = document.cookie.split(";").reduce(function (acc, c) {
+        var parts = c.trim().split("=");
+        return parts[0] === "token" ? parts[1] : acc;
+      }, "");
+
+      fetch("/api/v1/guardias/creadas/importar-excel", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token },
+        body: formData
+      }).then(function (r) { return r.json(); })
+        .then(function (data) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-file-earmark-spreadsheet"></i> Importar';
+
+          if (data && data.ok) {
+            var d = data.datos || {};
+            var msgExtra = "";
+
+            if (d.profesores_no_encontrados && d.profesores_no_encontrados.length > 0) {
+              msgExtra += "\n\nProfesores no encontrados:\n";
+              for (var j = 0; j < d.profesores_no_encontrados.length; j++) {
+                msgExtra += "- " + d.profesores_no_encontrados[j] + "\n";
+              }
+              document.getElementById("excel-resumen-warn").style.display = "inline";
+              document.getElementById("excel-warn-count").textContent = d.profesores_no_encontrados.length;
+            }
+
+            if (d.errores && d.errores.length > 0) {
+              msgExtra += "\n\nErrores:\n";
+              for (var k = 0; k < d.errores.length; k++) {
+                msgExtra += "- Fila " + d.errores[k].fila + ": " + d.errores[k].error + " (" + d.errores[k].nombre + ")\n";
+              }
+            }
+
+            bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-importar-excel")).hide();
+            _excelFilas = [];
+            _excelArchivo = null;
+            input.value = "";
+            document.getElementById("excel-preview").style.display = "none";
+            document.getElementById("excel-resumen-warn").style.display = "none";
+            recargar();
+            alert("Importacion completada: " + (d.creadas || 0) + " guardias creadas." + msgExtra);
+          } else {
+            errorDiv.textContent = (data && data.mensaje) || "Error al importar";
+            errorDiv.style.display = "block";
+          }
+        }).catch(function () {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-file-earmark-spreadsheet"></i> Importar';
+          errorDiv.textContent = "Error de conexion";
+          errorDiv.style.display = "block";
+        });
     }
 
     // ============================================================

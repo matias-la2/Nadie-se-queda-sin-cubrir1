@@ -6,7 +6,7 @@ const {
   validar,
   crearEdificioSchema, actualizarEdificioSchema,
   crearEspacioSchema, actualizarEspacioSchema,
-  crearBloqueoSchema
+  crearBloqueoSchema, nombreCursoSchema
 } = require('../validators/espacios.validator');
 const controller = require('../controllers/espacios.controller');
 
@@ -32,6 +32,20 @@ router.delete('/edificios/:id',
   requiereRol('ADMINISTRADOR'),
   registrarAccion('ELIMINAR_EDIFICIO', 'edificio'),
   controller.eliminarEdificio
+);
+
+// ─── Nombres de curso ─────────────────────────────────
+router.get('/nombres-curso', controller.listarNombresCurso);
+router.put('/nombres-curso/:id',
+  requiereRol('ADMINISTRADOR', 'EQUIPO_DIRECTIVO'),
+  validar(nombreCursoSchema),
+  registrarAccion('GUARDAR_NOMBRE_CURSO', 'espacio_curso'),
+  controller.guardarNombreCurso
+);
+router.delete('/nombres-curso/:id',
+  requiereRol('ADMINISTRADOR', 'EQUIPO_DIRECTIVO'),
+  registrarAccion('ELIMINAR_NOMBRE_CURSO', 'espacio_curso'),
+  controller.eliminarNombreCurso
 );
 
 // ─── Bloqueos ──────────────────────────────────────────

@@ -8,9 +8,11 @@ const crearEdificioSchema = z.object({
 const actualizarEdificioSchema = crearEdificioSchema.partial();
 
 const crearEspacioSchema = z.object({
+  id_espacio: z.number().int().positive().nullish(),
   nombre: z.string().min(1, 'El nombre es obligatorio').max(50),
   estado_disponibilidad: z.enum(['DISPONIBLE', 'NO_DISPONIBLE', 'MANTENIMIENTO']).optional(),
   capacidad: z.number().int().positive().nullish(),
+  planta: z.string().max(20).nullish(),
   id_edificio: z.number().int().positive('El edificio es obligatorio')
 });
 
@@ -23,6 +25,11 @@ const crearBloqueoSchema = z.object({
   fecha_desde: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato: YYYY-MM-DD'),
   fecha_hasta: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato: YYYY-MM-DD').nullish(),
   motivo: z.string().max(255).nullish()
+});
+
+const nombreCursoSchema = z.object({
+  curso_escolar: z.string().min(1, 'El curso escolar es obligatorio').max(10),
+  nombre_curso: z.string().min(1, 'El nombre de curso es obligatorio').max(100)
 });
 
 function validar(schema) {
@@ -41,6 +48,6 @@ function validar(schema) {
 module.exports = {
   crearEdificioSchema, actualizarEdificioSchema,
   crearEspacioSchema, actualizarEspacioSchema,
-  crearBloqueoSchema,
+  crearBloqueoSchema, nombreCursoSchema,
   validar
 };

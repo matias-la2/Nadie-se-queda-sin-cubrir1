@@ -87,6 +87,7 @@ async function listarEspacios(req, res, next) {
     const { page, limit, offset } = paginar(req.query);
     const where = [];
     const params = [];
+    const curso_escolar = req.query.curso_escolar || null;
 
     if (req.query.id_edificio) {
       where.push('e.id_edificio = ?');
@@ -97,25 +98,36 @@ async function listarEspacios(req, res, next) {
       params.push(req.query.estado);
     }
     if (req.query.busqueda) {
-      where.push('e.nombre LIKE ?');
-      params.push(`%${req.query.busqueda}%`);
+      if (curso_escolar) {
+        where.push('(e.nombre LIKE ? OR ec.nombre_curso LIKE ?)');
+        params.push(`%${req.query.busqueda}%`, `%${req.query.busqueda}%`);
+      } else {
+        where.push('e.nombre LIKE ?');
+        params.push(`%${req.query.busqueda}%`);
+      }
     }
 
     const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
+    const joinCurso = curso_escolar
+      ? 'LEFT JOIN espacio_curso ec ON e.id_espacio = ec.id_espacio AND ec.curso_escolar = ?'
+      : '';
+    const cursoParams = curso_escolar ? [curso_escolar] : [];
 
     const [[{ total }]] = await pool.query(
-      `SELECT COUNT(*) as total FROM espacio e ${whereSql}`,
-      params
+      `SELECT COUNT(*) as total FROM espacio e ${joinCurso} ${whereSql}`,
+      [...cursoParams, ...params]
     );
 
     const [rows] = await pool.query(
       `SELECT e.*, ed.nombre AS edificio_nombre
+              ${curso_escolar ? ', ec.nombre_curso' : ''}
        FROM espacio e
        JOIN edificio ed ON e.id_edificio = ed.id_edificio
+       ${joinCurso}
        ${whereSql}
-       ORDER BY ed.nombre, e.nombre
+       ORDER BY ed.nombre, e.planta, e.nombre
        LIMIT ? OFFSET ?`,
-      [...params, limit, offset]
+      [...cursoParams, ...params, limit, offset]
     );
 
     return success(res, respuestaPaginada(rows, total, { page, limit }));
@@ -126,12 +138,20 @@ async function listarEspacios(req, res, next) {
 
 async function obtenerEspacio(req, res, next) {
   try {
+    const curso_escolar = req.query.curso_escolar || null;
+    const joinCurso = curso_escolar
+      ? 'LEFT JOIN espacio_curso ec ON e.id_espacio = ec.id_espacio AND ec.curso_escolar = ?'
+      : '';
+    const params = curso_escolar ? [curso_escolar, req.params.id] : [req.params.id];
+
     const [rows] = await pool.query(
       `SELECT e.*, ed.nombre AS edificio_nombre
+              ${curso_escolar ? ', ec.nombre_curso' : ''}
        FROM espacio e
        JOIN edificio ed ON e.id_edificio = ed.id_edificio
+       ${joinCurso}
        WHERE e.id_espacio = ?`,
-      [req.params.id]
+      params
     );
     if (rows.length === 0) return error(res, 'Espacio no encontrado', 404);
     return success(res, rows[0]);
@@ -142,11 +162,23 @@ async function obtenerEspacio(req, res, next) {
 
 async function crearEspacio(req, res, next) {
   try {
-    const { nombre, estado_disponibilidad, capacidad, id_edificio } = req.body;
+    const { id_espacio, nombre, estado_disponibilidad, capacidad, planta, id_edificio } = req.body;
+
+    if (id_espacio) {
+      const [existing] = await pool.query('SELECT id_espacio FROM espacio WHERE id_espacio = ?', [id_espacio]);
+      if (existing.length > 0) return error(res, 'Ya existe un espacio con ese ID', 409);
+
+      await pool.query(
+        'INSERT INTO espacio (id_espacio, nombre, estado_disponibilidad, capacidad, planta, id_edificio) VALUES (?, ?, ?, ?, ?, ?)',
+        [id_espacio, nombre, estado_disponibilidad || 'DISPONIBLE', capacidad || null, planta || null, id_edificio]
+      );
+      res.registroId = id_espacio;
+      return success(res, { id: id_espacio }, 201);
+    }
+
     const [result] = await pool.query(
-      `INSERT INTO espacio (nombre, estado_disponibilidad, capacidad, id_edificio)
-       VALUES (?, ?, ?, ?)`,
-      [nombre, estado_disponibilidad || 'DISPONIBLE', capacidad || null, id_edificio]
+      'INSERT INTO espacio (nombre, estado_disponibilidad, capacidad, planta, id_edificio) VALUES (?, ?, ?, ?, ?)',
+      [nombre, estado_disponibilidad || 'DISPONIBLE', capacidad || null, planta || null, id_edificio]
     );
     res.registroId = result.insertId;
     return success(res, { id: result.insertId }, 201);
@@ -165,6 +197,7 @@ async function actualizarEspacio(req, res, next) {
     if (req.body.nombre !== undefined) { campos.push('nombre = ?'); valores.push(req.body.nombre); }
     if (req.body.estado_disponibilidad !== undefined) { campos.push('estado_disponibilidad = ?'); valores.push(req.body.estado_disponibilidad); }
     if (req.body.capacidad !== undefined) { campos.push('capacidad = ?'); valores.push(req.body.capacidad); }
+    if (req.body.planta !== undefined) { campos.push('planta = ?'); valores.push(req.body.planta); }
     if (req.body.id_edificio !== undefined) { campos.push('id_edificio = ?'); valores.push(req.body.id_edificio); }
     if (campos.length === 0) return error(res, 'No se enviaron campos para actualizar', 400);
 
@@ -195,6 +228,65 @@ async function eliminarEspacio(req, res, next) {
     if (err.code === 'ER_ROW_IS_REFERENCED_2') {
       return error(res, 'No se puede eliminar: tiene reservas o incidencias asociadas', 409);
     }
+    next(err);
+  }
+}
+
+// ─── NOMBRES DE CURSO ─────────────────────────────────
+
+async function listarNombresCurso(req, res, next) {
+  try {
+    const curso = req.query.curso_escolar;
+    if (!curso) return error(res, 'El curso escolar es obligatorio', 400);
+
+    const [rows] = await pool.query(
+      `SELECT ec.*, e.nombre AS nombre_espacio, ed.nombre AS edificio_nombre, e.planta
+       FROM espacio_curso ec
+       JOIN espacio e ON ec.id_espacio = e.id_espacio
+       JOIN edificio ed ON e.id_edificio = ed.id_edificio
+       WHERE ec.curso_escolar = ?
+       ORDER BY ed.nombre, e.planta, ec.nombre_curso`,
+      [curso]
+    );
+    return success(res, rows);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function guardarNombreCurso(req, res, next) {
+  try {
+    const { curso_escolar, nombre_curso } = req.body;
+    const id_espacio = parseInt(req.params.id);
+
+    const [existing] = await pool.query('SELECT id_espacio FROM espacio WHERE id_espacio = ?', [id_espacio]);
+    if (existing.length === 0) return error(res, 'Espacio no encontrado', 404);
+
+    await pool.query(
+      `INSERT INTO espacio_curso (id_espacio, curso_escolar, nombre_curso)
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE nombre_curso = VALUES(nombre_curso)`,
+      [id_espacio, curso_escolar, nombre_curso]
+    );
+    return success(res, { mensaje: 'Nombre de curso guardado correctamente' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function eliminarNombreCurso(req, res, next) {
+  try {
+    const id_espacio = parseInt(req.params.id);
+    const curso = req.query.curso_escolar;
+    if (!curso) return error(res, 'El curso escolar es obligatorio', 400);
+
+    const [result] = await pool.query(
+      'DELETE FROM espacio_curso WHERE id_espacio = ? AND curso_escolar = ?',
+      [id_espacio, curso]
+    );
+    if (result.affectedRows === 0) return error(res, 'Nombre de curso no encontrado', 404);
+    return success(res, { mensaje: 'Nombre de curso eliminado correctamente' });
+  } catch (err) {
     next(err);
   }
 }
@@ -269,5 +361,6 @@ async function eliminarBloqueo(req, res, next) {
 module.exports = {
   listarEdificios, obtenerEdificio, crearEdificio, actualizarEdificio, eliminarEdificio,
   listarEspacios, obtenerEspacio, crearEspacio, actualizarEspacio, eliminarEspacio,
+  listarNombresCurso, guardarNombreCurso, eliminarNombreCurso,
   listarBloqueos, crearBloqueo, eliminarBloqueo
 };
