@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestión de Profesores — IES Río Arba</title>
+  <title>Profesores — IES Río Arba</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -18,11 +18,10 @@
 
   <main class="contenido-principal">
 
-    <!-- Cabecera -->
     <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
       <div class="pagina-header mb-0">
-        <h1>Gestión de Profesores</h1>
-        <p>Administra los usuarios del profesorado y su estado en el sistema.</p>
+        <h1>Profesores</h1>
+        <p>Consulta el estado de los profesores del centro.</p>
       </div>
     </div>
 
@@ -56,7 +55,7 @@
             <i class="bi bi-people"></i>
           </div>
           <div>
-            <div class="etiqueta">Total</div>
+            <div class="etiqueta">Total Profesores</div>
             <div class="numero" id="num-total">0</div>
           </div>
         </div>
@@ -84,12 +83,6 @@
           id="input-busqueda"
           placeholder="Buscar por nombre o correo..."
         >
-        <select class="select-filtro" id="filtro-rol">
-          <option value="">Solo profesores</option>
-          <option value="EQUIPO_DIRECTIVO">Equipo Directivo</option>
-          <option value="ADMINISTRADOR">Administrador</option>
-          <option value="CONSERJE">Conserje</option>
-        </select>
         <select class="select-filtro" id="filtro-estado">
           <option value="">Todos los estados</option>
           <option value="true">Activo</option>
@@ -97,14 +90,12 @@
         </select>
       </div>
 
-      <!-- Tabla de usuarios -->
       <div class="tabla-responsive">
         <table class="tabla-datos">
           <thead>
             <tr>
-              <th>Usuario</th>
+              <th>Profesor</th>
               <th>Correo electrónico</th>
-              <th>Roles</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -113,7 +104,6 @@
         </table>
       </div>
 
-      <!-- Contador -->
       <div class="contador-profesores" id="contador-texto">
         Mostrando 0 profesores
       </div>
@@ -121,60 +111,6 @@
     </div>
 
   </main>
-
-
-  <!-- Modal editar roles -->
-  <div class="modal fade" id="modal-roles" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content modal-contenido">
-
-        <div class="modal-header modal-cabecera">
-          <h5 class="modal-title modal-titulo">
-            <i class="bi bi-person-gear me-2 modal-icono-titulo"></i>
-            Editar Roles
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        </div>
-
-        <div class="modal-body modal-cuerpo">
-          <div id="modal-roles-error" class="modal-error"></div>
-          <p class="mb-3" id="modal-roles-nombre" style="font-weight:600;"></p>
-
-          <input type="hidden" id="modal-roles-id">
-
-          <div class="mb-2">
-            <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
-              <input type="checkbox" id="chk-profesor" value="PROFESOR"> Profesor
-            </label>
-          </div>
-          <div class="mb-2">
-            <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
-              <input type="checkbox" id="chk-directivo" value="EQUIPO_DIRECTIVO"> Equipo Directivo
-            </label>
-          </div>
-          <div class="mb-2">
-            <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
-              <input type="checkbox" id="chk-admin" value="ADMINISTRADOR"> Administrador
-            </label>
-          </div>
-          <div class="mb-2">
-            <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
-              <input type="checkbox" id="chk-conserje" value="CONSERJE"> Conserje
-            </label>
-          </div>
-        </div>
-
-        <div class="modal-footer modal-pie">
-          <button type="button" class="btn-secundario" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn-primario" onclick="guardarRoles()">
-            <i class="bi bi-check-lg"></i> Guardar Roles
-          </button>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../../js/auth.js"></script>
@@ -186,15 +122,14 @@
 
       crearSidebar("profesores", "../../");
       actualizarResumen();
-      cargarUsuarios();
+      cargarProfesores();
 
-      document.getElementById("filtro-rol").addEventListener("change", function () { cargarUsuarios(); });
-      document.getElementById("filtro-estado").addEventListener("change", function () { cargarUsuarios(); });
+      document.getElementById("filtro-estado").addEventListener("change", function () { cargarProfesores(); });
 
       var timerBusqueda;
       document.getElementById("input-busqueda").addEventListener("input", function () {
         clearTimeout(timerBusqueda);
-        timerBusqueda = setTimeout(function () { cargarUsuarios(); }, 300);
+        timerBusqueda = setTimeout(function () { cargarProfesores(); }, 300);
       });
     });
 
@@ -212,14 +147,12 @@
       }).catch(function () { document.getElementById("num-total").textContent = "0"; });
     }
 
-    function cargarUsuarios() {
+    function cargarProfesores() {
       var busqueda = document.getElementById("input-busqueda").value.trim();
-      var rol = document.getElementById("filtro-rol").value;
       var activo = document.getElementById("filtro-estado").value;
 
-      var url = '/api/v1/usuarios?limit=200';
+      var url = '/api/v1/usuarios?limit=200&rol=PROFESOR';
       if (busqueda) url += '&busqueda=' + encodeURIComponent(busqueda);
-      url += '&rol=' + encodeURIComponent(rol || 'PROFESOR');
       if (activo) url += '&activo=' + encodeURIComponent(activo);
 
       apiFetch(url).then(function (data) {
@@ -231,7 +164,7 @@
           "Mostrando " + filas.length + " de " + pag.total + " profesores";
 
         if (filas.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron usuarios</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="4" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron profesores</td></tr>';
           return;
         }
 
@@ -240,19 +173,6 @@
           var u = filas[i];
           var nombreCompleto = (u.nombre || "") + " " + (u.apellidos || "");
           var avatarSrc = u.avatar_url || "https://ui-avatars.com/api/?name=" + encodeURIComponent(nombreCompleto.trim()) + "&background=dbeafe&color=1152d4&bold=true";
-
-          var roles = u.roles || [];
-          var badgesRol = "";
-          for (var j = 0; j < roles.length; j++) {
-            var r = roles[j];
-            var textoRol, claseRol;
-            if (r === "PROFESOR")              { textoRol = "Profesor";         claseRol = "badge-cerrada"; }
-            else if (r === "EQUIPO_DIRECTIVO") { textoRol = "Equipo Directivo"; claseRol = "badge-en-proceso"; }
-            else if (r === "ADMINISTRADOR")    { textoRol = "Administrador";    claseRol = "badge-tipo"; }
-            else if (r === "CONSERJE")         { textoRol = "Conserje";         claseRol = "badge-pendiente"; }
-            else                               { textoRol = r;                  claseRol = "badge-cerrada"; }
-            badgesRol += '<span class="badge-estado ' + claseRol + ' badge-rol">' + textoRol + '</span>';
-          }
 
           var badgeEstado;
           if (u.activo) {
@@ -265,75 +185,23 @@
           var tituloToggle = u.activo ? "Desactivar" : "Activar";
           var iconoToggle = u.activo ? "bi-person-slash" : "bi-person-check";
 
-          var rolesJson = JSON.stringify(roles).replace(/"/g, '&quot;');
-
           html += '<tr>' +
                     '<td><div class="celda-profesor">' +
                       '<img src="' + avatarSrc + '" class="avatar-profesor" alt="">' +
                       '<div><div class="profesor-nombre">' + nombreCompleto.trim() + '</div><div class="profesor-id">ID: ' + String(u.id_usuario).padStart(4, "0") + '</div></div>' +
                     '</div></td>' +
                     '<td class="celda-sm">' + (u.correo || "—") + '</td>' +
-                    '<td>' + badgesRol + '</td>' +
                     '<td>' + badgeEstado + '</td>' +
-                    '<td><div class="d-flex gap-1">' +
-                      '<button class="btn-accion" title="Editar roles" onclick="abrirModalRoles(' + u.id_usuario + ', \'' + nombreCompleto.trim().replace(/'/g, "\\'") + '\', ' + rolesJson + ')"><i class="bi bi-person-gear"></i></button>' +
+                    '<td>' +
                       '<button class="btn-accion' + clasePeligro + '" title="' + tituloToggle + '" onclick="toggleActivo(' + u.id_usuario + ', \'' + nombreCompleto.trim().replace(/'/g, "\\'") + '\', ' + (u.activo ? 'true' : 'false') + ')"><i class="bi ' + iconoToggle + '"></i></button>' +
-                    '</div></td>' +
+                    '</td>' +
                   '</tr>';
         }
         tbody.innerHTML = html;
       }).catch(function () {
         document.getElementById("tabla-body").innerHTML =
-          '<tr><td colspan="5" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron usuarios</td></tr>';
+          '<tr><td colspan="4" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron profesores</td></tr>';
         document.getElementById("contador-texto").textContent = "Mostrando 0 profesores";
-      });
-    }
-
-    function abrirModalRoles(id, nombre, rolesActuales) {
-      document.getElementById("modal-roles-id").value = id;
-      document.getElementById("modal-roles-nombre").textContent = nombre;
-      document.getElementById("modal-roles-error").style.display = "none";
-
-      document.getElementById("chk-profesor").checked = rolesActuales.indexOf("PROFESOR") !== -1;
-      document.getElementById("chk-directivo").checked = rolesActuales.indexOf("EQUIPO_DIRECTIVO") !== -1;
-      document.getElementById("chk-admin").checked = rolesActuales.indexOf("ADMINISTRADOR") !== -1;
-      document.getElementById("chk-conserje").checked = rolesActuales.indexOf("CONSERJE") !== -1;
-
-      bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-roles")).show();
-    }
-
-    function guardarRoles() {
-      var id = document.getElementById("modal-roles-id").value;
-      var errorDiv = document.getElementById("modal-roles-error");
-      errorDiv.style.display = "none";
-
-      var roles = [];
-      if (document.getElementById("chk-profesor").checked) roles.push("PROFESOR");
-      if (document.getElementById("chk-directivo").checked) roles.push("EQUIPO_DIRECTIVO");
-      if (document.getElementById("chk-admin").checked) roles.push("ADMINISTRADOR");
-      if (document.getElementById("chk-conserje").checked) roles.push("CONSERJE");
-
-      if (roles.length === 0) {
-        errorDiv.textContent = "Debes seleccionar al menos un rol.";
-        errorDiv.style.display = "block";
-        return;
-      }
-
-      apiFetch('/api/v1/usuarios/' + id + '/roles', {
-        method: 'PUT',
-        body: JSON.stringify({ roles: roles })
-      }).then(function (data) {
-        if (data && data.ok) {
-          bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-roles")).hide();
-          actualizarResumen();
-          cargarUsuarios();
-        } else {
-          errorDiv.textContent = (data && data.mensaje) || "Error al actualizar roles";
-          errorDiv.style.display = "block";
-        }
-      }).catch(function () {
-        errorDiv.textContent = "Error de conexión";
-        errorDiv.style.display = "block";
       });
     }
 
@@ -346,7 +214,7 @@
       }).then(function (data) {
         if (data && data.ok) {
           actualizarResumen();
-          cargarUsuarios();
+          cargarProfesores();
         } else {
           alert((data && data.mensaje) || "Error al cambiar estado");
         }

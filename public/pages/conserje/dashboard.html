@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Conserje — IES Río Arba</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/estilos.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+</head>
+
+<body>
+
+  <div id="sidebar-container"></div>
+
+  <main class="contenido-principal">
+
+    <div class="pagina-header">
+      <h1 id="saludo">Panel de Conserjería</h1>
+      <p>Incidencias asignadas y reservas del día.</p>
+    </div>
+
+    <!-- Tarjetas resumen -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-incidencias">
+            <i class="bi bi-exclamation-triangle"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Incidencias Pendientes</div>
+            <div class="numero" id="num-pendientes">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-ausencias">
+            <i class="bi bi-gear"></i>
+          </div>
+          <div>
+            <div class="etiqueta">En Proceso</div>
+            <div class="numero" id="num-en-proceso">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-reservas">
+            <i class="bi bi-check-circle"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Resueltas Hoy</div>
+            <div class="numero" id="num-resueltas">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="tarjeta-resumen">
+          <div class="icono-circulo icono-profesores">
+            <i class="bi bi-calendar-check"></i>
+          </div>
+          <div>
+            <div class="etiqueta">Reservas Hoy</div>
+            <div class="numero" id="num-reservas-hoy">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+
+      <!-- Incidencias pendientes -->
+      <div class="col-12 col-md-7">
+        <div class="tarjeta tarjeta-altura-completa">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="tarjeta-titulo mb-0">Incidencias Pendientes</h2>
+            <a href="incidencias.html" class="btn-secundario btn-ver-todo">
+              Ver todas <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+          <div class="tabla-responsive">
+            <table class="tabla-datos">
+              <thead>
+                <tr>
+                  <th>Incidencia</th>
+                  <th>Tipo</th>
+                  <th>Estado</th>
+                  <th>Fecha</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-incidencias-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reservas de hoy -->
+      <div class="col-12 col-md-5">
+        <div class="tarjeta tarjeta-altura-completa">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="tarjeta-titulo mb-0">Reservas de Hoy</h2>
+          </div>
+          <div id="lista-reservas-hoy"></div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/sidebar.js"></script>
+
+  <script>
+    verificarSesion().then(function (usuario) {
+      if (!usuario) return;
+
+      crearSidebar("dashboard", "../../");
+      document.getElementById("saludo").textContent = "Bienvenido/a, " + usuario.nombre;
+
+      apiFetch('/api/v1/incidencias?estado=ABIERTA&limit=1').then(function (d) {
+        document.getElementById("num-pendientes").textContent =
+          (d && d.datos && d.datos.paginacion) ? d.datos.paginacion.total : 0;
+      }).catch(function () { document.getElementById("num-pendientes").textContent = "0"; });
+
+      apiFetch('/api/v1/incidencias?estado=EN_PROCESO&limit=1').then(function (d) {
+        document.getElementById("num-en-proceso").textContent =
+          (d && d.datos && d.datos.paginacion) ? d.datos.paginacion.total : 0;
+      }).catch(function () { document.getElementById("num-en-proceso").textContent = "0"; });
+
+      apiFetch('/api/v1/incidencias?estado=RESUELTA&limit=1').then(function (d) {
+        document.getElementById("num-resueltas").textContent =
+          (d && d.datos && d.datos.paginacion) ? d.datos.paginacion.total : 0;
+      }).catch(function () { document.getElementById("num-resueltas").textContent = "0"; });
+
+      // Incidencias pendientes y en proceso
+      Promise.all([
+        apiFetch('/api/v1/incidencias?estado=ABIERTA&limit=10'),
+        apiFetch('/api/v1/incidencias?estado=EN_PROCESO&limit=10')
+      ]).then(function (res) {
+        var pendientes = (res[0] && res[0].datos && res[0].datos.registros) ? res[0].datos.registros : [];
+        var enProceso = (res[1] && res[1].datos && res[1].datos.registros) ? res[1].datos.registros : [];
+        var filas = pendientes.concat(enProceso);
+
+        var tbody = document.getElementById("tabla-incidencias-body");
+        if (filas.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="sin-resultados" style="text-align:center;padding:24px;color:#64748b;">' +
+            '<i class="bi bi-check-circle" style="font-size:28px;display:block;margin-bottom:8px;"></i>Sin incidencias pendientes</td></tr>';
+          return;
+        }
+
+        var html = "";
+        for (var i = 0; i < filas.length; i++) {
+          var inc = filas[i];
+          var partes = inc.fecha.split("-");
+          var fecha = partes[2] + "/" + partes[1];
+
+          var claseBadge, textoEstado;
+          if (inc.estado === "ABIERTA") { claseBadge = "badge-pendiente"; textoEstado = "Pendiente"; }
+          else { claseBadge = "badge-en-proceso"; textoEstado = "En proceso"; }
+
+          var espacio = inc.espacio_nombre || "";
+
+          var sigEstado = inc.estado === "ABIERTA" ? "EN_PROCESO" : "RESUELTA";
+          var textoBoton = inc.estado === "ABIERTA" ? "Iniciar" : "Resolver";
+          var iconoBoton = inc.estado === "ABIERTA" ? "bi-play-fill" : "bi-check-lg";
+          var claseBoton = inc.estado === "ABIERTA" ? "btn-warning" : "btn-success";
+
+          html += '<tr>' +
+                    '<td><div class="inc-titulo">' + inc.titulo + '</div>' +
+                      (espacio ? '<div class="texto-secundario-celda">' + espacio + '</div>' : '') +
+                    '</td>' +
+                    '<td><span class="badge-tipo">' + (inc.tipo || "—") + '</span></td>' +
+                    '<td><span class="badge-estado ' + claseBadge + '">' + textoEstado + '</span></td>' +
+                    '<td class="celda-fecha-gris">' + fecha + '</td>' +
+                    '<td>' +
+                      '<button class="btn btn-sm ' + claseBoton + '" style="font-size:12px;padding:4px 10px;" ' +
+                        'onclick="cambiarEstado(' + inc.id_incidencia + ', \'' + sigEstado + '\')">' +
+                        '<i class="bi ' + iconoBoton + ' me-1"></i>' + textoBoton +
+                      '</button>' +
+                    '</td>' +
+                  '</tr>';
+        }
+        tbody.innerHTML = html;
+      }).catch(function () {
+        document.getElementById("tabla-incidencias-body").innerHTML =
+          '<tr><td colspan="5" class="sin-resultados" style="text-align:center;padding:24px;color:#64748b;">Sin incidencias</td></tr>';
+      });
+
+      // Reservas de hoy
+      var hoy = new Date().toISOString().split("T")[0];
+      apiFetch('/api/v1/reservas?fecha=' + hoy + '&limit=20').then(function (data) {
+        var filas = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
+        document.getElementById("num-reservas-hoy").textContent = filas.length;
+
+        var contenedor = document.getElementById("lista-reservas-hoy");
+        if (filas.length === 0) {
+          contenedor.innerHTML =
+            '<div style="text-align:center;padding:24px;color:#64748b;">' +
+              '<i class="bi bi-calendar-check" style="font-size:28px;display:block;margin-bottom:8px;"></i>' +
+              'No hay reservas para hoy' +
+            '</div>';
+          return;
+        }
+
+        var html = "";
+        for (var i = 0; i < filas.length; i++) {
+          var r = filas[i];
+          html += '<div style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;">' +
+                    '<div style="font-weight:600;font-size:14px;">' + (r.espacio_nombre || "Espacio " + r.id_espacio) + '</div>' +
+                    '<div style="font-size:13px;color:#64748b;margin-top:2px;">' +
+                      '<i class="bi bi-clock me-1"></i>' + (r.tramo_horario || "—") +
+                    '</div>' +
+                    '<div style="font-size:13px;color:#64748b;margin-top:2px;">' +
+                      '<i class="bi bi-person me-1"></i>' + (r.profesor_nombre || "—") +
+                    '</div>' +
+                    (r.motivo ? '<div style="font-size:12px;color:#94a3b8;margin-top:4px;">' + r.motivo + '</div>' : '') +
+                  '</div>';
+        }
+        contenedor.innerHTML = html;
+      }).catch(function () {
+        document.getElementById("num-reservas-hoy").textContent = "0";
+        document.getElementById("lista-reservas-hoy").innerHTML =
+          '<div style="text-align:center;padding:24px;color:#64748b;">No hay reservas para hoy</div>';
+      });
+    });
+
+    function cambiarEstado(idIncidencia, nuevoEstado) {
+      var textoAccion = nuevoEstado === "EN_PROCESO" ? "iniciar" : "marcar como resuelta";
+      if (!confirm("¿Seguro que quieres " + textoAccion + " esta incidencia?")) return;
+
+      apiFetch('/api/v1/incidencias/' + idIncidencia + '/estado', {
+        method: 'PATCH',
+        body: JSON.stringify({ estado: nuevoEstado })
+      }).then(function (data) {
+        if (data && data.ok) {
+          window.location.reload();
+        } else {
+          alert((data && data.mensaje) || "Error al cambiar estado");
+        }
+      }).catch(function () { alert("Error de conexión"); });
+    }
+  </script>
+
+</body>
+</html>

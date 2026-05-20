@@ -21,13 +21,44 @@ function verificarSesion() {
       window.location.href = '/index.html';
       return null;
     }
+    verificarAccesoPagina(usuario);
     return usuario;
   });
 }
 
+function verificarAccesoPagina(usuario) {
+  var ruta = window.location.pathname;
+  var roles = usuario.roles || [];
+  var esAdmin = roles.indexOf('ADMINISTRADOR') !== -1;
+  var esDirectivo = roles.indexOf('EQUIPO_DIRECTIVO') !== -1;
+  var esConserje = roles.indexOf('CONSERJE') !== -1;
+
+  var tieneAcceso = true;
+
+  if (ruta.indexOf('/pages/admin/') !== -1) {
+    tieneAcceso = esAdmin || esDirectivo;
+  } else if (ruta.indexOf('/pages/conserje/') !== -1) {
+    tieneAcceso = esConserje || esAdmin;
+  } else if (ruta.indexOf('/pages/profesor/') !== -1) {
+    tieneAcceso = !esConserje || esAdmin || esDirectivo || roles.indexOf('PROFESOR') !== -1;
+  }
+
+  if (!tieneAcceso) {
+    var destino;
+    if (esAdmin || esDirectivo) {
+      destino = '/pages/admin/dashboard.html';
+    } else if (esConserje) {
+      destino = '/pages/conserje/dashboard.html';
+    } else {
+      destino = '/pages/profesor/dashboard.html';
+    }
+    window.location.href = destino;
+  }
+}
+
 function tieneRol(rolBuscado) {
   if (!_usuarioCache || !_usuarioCache.roles) return false;
-  return _usuarioCache.roles.includes(rolBuscado);
+  return _usuarioCache.roles.indexOf(rolBuscado) !== -1;
 }
 
 function cerrarSesion() {

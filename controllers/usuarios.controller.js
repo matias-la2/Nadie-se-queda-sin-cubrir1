@@ -387,8 +387,57 @@ async function eliminarDirectivo(req, res, next) {
   }
 }
 
+// ─── LOG DE ACTIVIDAD ──────────────────────────────────
+
+async function listarLogs(req, res, next) {
+  try {
+    const { page, limit, offset } = paginar(req.query);
+    const where = [];
+    const params = [];
+
+    if (req.query.accion) {
+      where.push('l.accion LIKE ?');
+      params.push(`%${req.query.accion}%`);
+    }
+    if (req.query.id_usuario) {
+      where.push('l.id_usuario = ?');
+      params.push(req.query.id_usuario);
+    }
+    if (req.query.fecha_desde) {
+      where.push('l.created_at >= ?');
+      params.push(req.query.fecha_desde);
+    }
+    if (req.query.fecha_hasta) {
+      where.push('l.created_at <= ?');
+      params.push(req.query.fecha_hasta + ' 23:59:59');
+    }
+
+    const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
+
+    const [[{ total }]] = await pool.query(
+      `SELECT COUNT(*) as total FROM log_acciones l ${whereSql}`,
+      params
+    );
+
+    const [rows] = await pool.query(
+      `SELECT l.*, u.nombre AS usuario_nombre, u.apellidos AS usuario_apellidos
+       FROM log_acciones l
+       LEFT JOIN usuario u ON l.id_usuario = u.id_usuario
+       ${whereSql}
+       ORDER BY l.created_at DESC
+       LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
+    );
+
+    return success(res, respuestaPaginada(rows, total, { page, limit }));
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listar, obtenerPorId, actualizar, toggleActivo, cambiarRoles,
   listarProfesores, crearProfesor, actualizarProfesor, eliminarProfesor,
-  listarDirectivos, crearDirectivo, actualizarDirectivo, eliminarDirectivo
+  listarDirectivos, crearDirectivo, actualizarDirectivo, eliminarDirectivo,
+  listarLogs
 };

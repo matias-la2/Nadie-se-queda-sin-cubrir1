@@ -7,69 +7,109 @@ function crearSidebar(paginaActiva, rutaBase) {
     if (!usuario) return;
 
     var nombreCompleto = usuario.nombre + " " + usuario.apellidos;
-    var esAdmin = usuario.roles.includes("ADMINISTRADOR");
-    var esDirectivo = usuario.roles.includes("EQUIPO_DIRECTIVO");
-    var esConserje = usuario.roles.includes("CONSERJE") && !esAdmin && !esDirectivo;
-    var esAdminODirectivo = esAdmin || esDirectivo;
+    var roles = usuario.roles || [];
+    var esAdmin = roles.indexOf("ADMINISTRADOR") !== -1;
+    var esDirectivo = roles.indexOf("EQUIPO_DIRECTIVO") !== -1;
+    var esConserje = roles.indexOf("CONSERJE") !== -1;
 
-    var enlacesComunes;
+    var enlacesPrincipal = [];
+    var enlacesGestion = [];
+    var tituloGestion = "";
 
-    if (esConserje) {
-      enlacesComunes = [
-        { pagina: "dashboard",   icono: "bi-house",               texto: "Dashboard",
-          href: rutaBase + "pages/profesor/dashboard.html" },
-        { pagina: "incidencias", icono: "bi-exclamation-triangle", texto: "Incidencias",
-          href: rutaBase + "pages/profesor/incidencias.html" }
+    if (esAdmin) {
+      enlacesPrincipal = [
+        { pagina: "dashboard",   icono: "bi-house",                texto: "Dashboard",
+          href: rutaBase + "pages/admin/dashboard.html" },
+        { pagina: "incidencias", icono: "bi-exclamation-triangle",  texto: "Incidencias",
+          href: rutaBase + "pages/admin/incidencias.html" },
+        { pagina: "reservas",    icono: "bi-calendar-check",        texto: "Reservas",
+          href: rutaBase + "pages/profesor/reservas.html" }
       ];
+      tituloGestion = "Administración";
+      enlacesGestion = [
+        { pagina: "usuarios",    icono: "bi-people-fill",   texto: "Usuarios",
+          href: rutaBase + "pages/admin/usuarios.html" },
+        { pagina: "guardias",    icono: "bi-shield-check",  texto: "Guardias",
+          href: rutaBase + "pages/admin/guardias.html" },
+        { pagina: "ausencias",   icono: "bi-calendar-x",    texto: "Ausencias",
+          href: rutaBase + "pages/admin/ausencias.html" },
+        { pagina: "aulas",       icono: "bi-door-open",     texto: "Aulas y Espacios",
+          href: rutaBase + "pages/admin/aulas.html" },
+        { pagina: "logs",        icono: "bi-clock-history", texto: "Log de actividad",
+          href: rutaBase + "pages/admin/logs.html" }
+      ];
+
+    } else if (esDirectivo) {
+      enlacesPrincipal = [
+        { pagina: "dashboard",   icono: "bi-house",                texto: "Dashboard",
+          href: rutaBase + "pages/admin/dashboard.html" },
+        { pagina: "incidencias", icono: "bi-exclamation-triangle",  texto: "Incidencias",
+          href: rutaBase + "pages/admin/incidencias.html" },
+        { pagina: "reservas",    icono: "bi-calendar-check",        texto: "Reservas",
+          href: rutaBase + "pages/profesor/reservas.html" }
+      ];
+      tituloGestion = "Gestión del Centro";
+      enlacesGestion = [
+        { pagina: "profesores",  icono: "bi-people",        texto: "Profesores",
+          href: rutaBase + "pages/admin/profesores.html" },
+        { pagina: "guardias",    icono: "bi-shield-check",  texto: "Guardias",
+          href: rutaBase + "pages/admin/guardias.html" },
+        { pagina: "ausencias",   icono: "bi-calendar-x",    texto: "Ausencias",
+          href: rutaBase + "pages/admin/ausencias.html" },
+        { pagina: "aulas",       icono: "bi-door-open",     texto: "Aulas y Espacios",
+          href: rutaBase + "pages/admin/aulas.html" }
+      ];
+
+    } else if (esConserje) {
+      enlacesPrincipal = [
+        { pagina: "dashboard",   icono: "bi-house",                texto: "Dashboard",
+          href: rutaBase + "pages/conserje/dashboard.html" },
+        { pagina: "incidencias", icono: "bi-exclamation-triangle",  texto: "Incidencias",
+          href: rutaBase + "pages/conserje/incidencias.html" }
+      ];
+
     } else {
-      enlacesComunes = [
-        { pagina: "dashboard",   icono: "bi-house",           texto: "Dashboard",
-          href: esAdminODirectivo ? rutaBase + "pages/admin/dashboard.html"   : rutaBase + "pages/profesor/dashboard.html" },
-        { pagina: "incidencias", icono: "bi-exclamation-triangle", texto: "Incidencias",
-          href: esAdminODirectivo ? rutaBase + "pages/admin/incidencias.html" : rutaBase + "pages/profesor/incidencias.html" },
-        { pagina: "ausencias",   icono: "bi-calendar-x",      texto: "Ausencias",
-          href: esAdminODirectivo ? rutaBase + "pages/admin/ausencias.html"   : rutaBase + "pages/profesor/ausencias.html" },
-        { pagina: "guardias",    icono: "bi-shield-check",    texto: "Guardias",
-          href: esAdminODirectivo ? rutaBase + "pages/admin/guardias.html"    : rutaBase + "pages/profesor/guardias.html" },
-        { pagina: "reservas",    icono: "bi-calendar-check",  texto: "Reservas",
+      enlacesPrincipal = [
+        { pagina: "dashboard",   icono: "bi-house",                texto: "Dashboard",
+          href: rutaBase + "pages/profesor/dashboard.html" },
+        { pagina: "guardias",    icono: "bi-shield-check",         texto: "Mis Guardias",
+          href: rutaBase + "pages/profesor/guardias.html" },
+        { pagina: "ausencias",   icono: "bi-calendar-x",           texto: "Mis Ausencias",
+          href: rutaBase + "pages/profesor/ausencias.html" },
+        { pagina: "incidencias", icono: "bi-exclamation-triangle",  texto: "Incidencias",
+          href: rutaBase + "pages/profesor/incidencias.html" },
+        { pagina: "reservas",    icono: "bi-calendar-check",        texto: "Reservas",
           href: rutaBase + "pages/profesor/reservas.html" }
       ];
     }
 
-    var enlacesAdmin = [
-      { pagina: "profesores", icono: "bi-people",    texto: "Profesores",       href: rutaBase + "pages/admin/profesores.html" },
-      { pagina: "aulas",      icono: "bi-door-open", texto: "Aulas y Espacios", href: rutaBase + "pages/admin/aulas.html" }
-    ];
-
-    var htmlEnlacesComunes = "";
-    for (var i = 0; i < enlacesComunes.length; i++) {
-      var e = enlacesComunes[i];
+    var htmlEnlacesPrincipal = "";
+    for (var i = 0; i < enlacesPrincipal.length; i++) {
+      var e = enlacesPrincipal[i];
       var claseActivo = (e.pagina === paginaActiva) ? " activo" : "";
-      htmlEnlacesComunes += '<a href="' + e.href + '" class="sidebar-enlace' + claseActivo + '">' +
-                              '<i class="bi ' + e.icono + '"></i>' +
-                              '<span>' + e.texto + '</span>' +
-                            '</a>';
+      htmlEnlacesPrincipal += '<a href="' + e.href + '" class="sidebar-enlace' + claseActivo + '">' +
+                                '<i class="bi ' + e.icono + '"></i>' +
+                                '<span>' + e.texto + '</span>' +
+                              '</a>';
     }
 
-    var htmlSeccionAdmin = "";
-    if (esAdmin) {
-      var htmlEnlacesAdmin = "";
-      for (var j = 0; j < enlacesAdmin.length; j++) {
-        var ea = enlacesAdmin[j];
-        var claseActivoAdmin = (ea.pagina === paginaActiva) ? " activo" : "";
-        htmlEnlacesAdmin += '<a href="' + ea.href + '" class="sidebar-enlace' + claseActivoAdmin + '">' +
-                              '<i class="bi ' + ea.icono + '"></i>' +
-                              '<span>' + ea.texto + '</span>' +
-                            '</a>';
+    var htmlSeccionGestion = "";
+    if (enlacesGestion.length > 0) {
+      var htmlEnlacesGestion = "";
+      for (var j = 0; j < enlacesGestion.length; j++) {
+        var eg = enlacesGestion[j];
+        var claseActivoG = (eg.pagina === paginaActiva) ? " activo" : "";
+        htmlEnlacesGestion += '<a href="' + eg.href + '" class="sidebar-enlace' + claseActivoG + '">' +
+                                '<i class="bi ' + eg.icono + '"></i>' +
+                                '<span>' + eg.texto + '</span>' +
+                              '</a>';
       }
-      htmlSeccionAdmin = '<div class="sidebar-seccion-titulo">Administración</div>' + htmlEnlacesAdmin;
+      htmlSeccionGestion = '<div class="sidebar-seccion-titulo">' + tituloGestion + '</div>' + htmlEnlacesGestion;
     }
 
-    var rolTexto = usuario.roles[0].replace("_", " ").toLowerCase();
-    rolTexto = rolTexto.charAt(0).toUpperCase() + rolTexto.slice(1);
+    var rolTexto = obtenerRolPrincipal(roles);
 
     var avatarSrc = usuario.avatar_url || "https://ui-avatars.com/api/?name=" + encodeURIComponent(nombreCompleto) + "&background=4f46e5&color=fff&size=80";
-
     var rutaLogin = rutaBase + "index.html";
 
     var htmlSidebar =
@@ -84,8 +124,8 @@ function crearSidebar(paginaActiva, rutaBase) {
         '</div>' +
         '<div class="sidebar-nav">' +
           '<div class="sidebar-seccion-titulo">Menú Principal</div>' +
-          htmlEnlacesComunes +
-          htmlSeccionAdmin +
+          htmlEnlacesPrincipal +
+          htmlSeccionGestion +
         '</div>' +
         '<div class="sidebar-footer">' +
           '<div class="sidebar-footer-usuario">' +
@@ -106,6 +146,19 @@ function crearSidebar(paginaActiva, rutaBase) {
   });
 }
 
+function obtenerRolPrincipal(roles) {
+  var prioridad = ["ADMINISTRADOR", "EQUIPO_DIRECTIVO", "CONSERJE", "PROFESOR"];
+  var etiquetas = {
+    "ADMINISTRADOR": "Administrador",
+    "EQUIPO_DIRECTIVO": "Equipo directivo",
+    "CONSERJE": "Conserje",
+    "PROFESOR": "Profesor"
+  };
+  for (var i = 0; i < prioridad.length; i++) {
+    if (roles.indexOf(prioridad[i]) !== -1) return etiquetas[prioridad[i]];
+  }
+  return "Usuario";
+}
 
 function toggleSidebar() {
   var sidebar = document.getElementById("sidebar");

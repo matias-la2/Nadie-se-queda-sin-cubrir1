@@ -27,10 +27,15 @@ function googleCallback(req, res) {
     maxAge:   7 * 24 * 60 * 60 * 1000
   });
 
-  const esAdmin = req.user.roles && (
-    req.user.roles.includes('ADMINISTRADOR') || req.user.roles.includes('EQUIPO_DIRECTIVO')
-  );
-  const destino = esAdmin ? '/pages/admin/dashboard.html' : '/pages/profesor/dashboard.html';
+  const roles = req.user.roles || [];
+  let destino;
+  if (roles.includes('ADMINISTRADOR') || roles.includes('EQUIPO_DIRECTIVO')) {
+    destino = '/pages/admin/dashboard.html';
+  } else if (roles.includes('CONSERJE')) {
+    destino = '/pages/conserje/dashboard.html';
+  } else {
+    destino = '/pages/profesor/dashboard.html';
+  }
   res.redirect(destino);
 }
 
