@@ -10,12 +10,16 @@ function obtenerCredenciales() {
   }
 
   if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+    const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON.trim();
     try {
-      const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
-      return { credentials };
-    } catch (err) {
-      console.error('[google-group] GOOGLE_SERVICE_ACCOUNT_JSON no es JSON válido:', err.message);
-      return null;
+      return { credentials: JSON.parse(raw) };
+    } catch (_) {
+      try {
+        return { credentials: JSON.parse(Buffer.from(raw, 'base64').toString('utf8')) };
+      } catch (err) {
+        console.error('[google-group] GOOGLE_SERVICE_ACCOUNT_JSON no es JSON ni Base64 válido:', err.message);
+        return null;
+      }
     }
   }
 
