@@ -129,13 +129,12 @@
 
             <!-- Espacios afectados -->
             <div class="campo-grupo">
-              <label>Espacios afectados <span class="obligatorio">*</span></label>
+              <label for="select-espacio">Espacios afectados <span class="obligatorio">*</span></label>
               <p class="adjunto-info">Selecciona al menos un espacio donde impartes clase en ese tramo.</p>
-              <div class="espacios-selector">
-                <input type="text" id="buscar-espacio" class="espacios-buscador" placeholder="Buscar aula o espacio...">
-                <div id="espacios-seleccionados" class="espacios-badges"></div>
-                <div id="contenedor-espacios" class="espacios-lista"></div>
-              </div>
+              <select id="select-espacio" onchange="agregarEspacio(this)">
+                <option value="">Seleccionar espacio...</option>
+              </select>
+              <div id="espacios-seleccionados" class="espacios-badges"></div>
             </div>
 
             <!-- Botón enviar -->
@@ -197,34 +196,23 @@
           espacios = Array.isArray(data.datos) ? data.datos : (data.datos.registros || []);
         }
         _espaciosData = espacios;
-        renderEspacios("");
+        poblarSelectEspacios();
       }).catch(function () {});
-
-      document.getElementById("buscar-espacio").addEventListener("input", function () {
-        renderEspacios(this.value.toLowerCase());
-      });
     }
 
-    function renderEspacios(filtro) {
-      var contenedor = document.getElementById("contenedor-espacios");
-      if (_espaciosData.length === 0) {
-        contenedor.innerHTML = '<span class="comentario-vacio">No hay espacios disponibles</span>';
-        return;
-      }
+    function poblarSelectEspacios() {
+      var select = document.getElementById("select-espacio");
+      select.innerHTML = '<option value="">Seleccionar espacio...</option>';
 
       var porEdificio = {};
+      var orden = ["ESO", "Bachillerato", "Ciclos"];
       for (var i = 0; i < _espaciosData.length; i++) {
         var e = _espaciosData[i];
-        var nombre = e.nombre;
-        if (e.nombre_curso) nombre += " - " + e.nombre_curso;
-        var edificio = e.edificio_nombre || "Sin edificio";
-        var textoCompleto = (nombre + " " + edificio).toLowerCase();
-        if (filtro && textoCompleto.indexOf(filtro) === -1) continue;
+        var edificio = e.edificio_nombre || "Otros";
         if (!porEdificio[edificio]) porEdificio[edificio] = [];
-        porEdificio[edificio].push({ id: e.id_espacio, nombre: nombre, edificio: edificio });
+        porEdificio[edificio].push(e);
       }
 
-      var orden = ["ESO", "Bachillerato", "Ciclos", "Sin edificio"];
       var claves = Object.keys(porEdificio).sort(function (a, b) {
         var ia = orden.indexOf(a), ib = orden.indexOf(b);
         if (ia === -1) ia = 99;
@@ -232,28 +220,39 @@
         return ia - ib;
       });
 
-      var html = "";
       for (var k = 0; k < claves.length; k++) {
+        var optgroup = document.createElement("optgroup");
+        optgroup.label = claves[k];
         var grupo = porEdificio[claves[k]];
-        html += '<div class="espacios-grupo-header">' + claves[k] + '</div>';
         for (var j = 0; j < grupo.length; j++) {
           var esp = grupo[j];
-          var seleccionado = _espaciosSeleccionados.indexOf(esp.id) !== -1;
-          html += '<div class="espacios-item' + (seleccionado ? ' seleccionado' : '') + '" onclick="toggleEspacio(' + esp.id + ')">' +
-                    '<input type="checkbox" ' + (seleccionado ? 'checked' : '') + ' style="pointer-events:none;accent-color:#1152d4;">' +
-                    '<span>' + esp.nombre + ' <span class="espacios-edificio-tag">(' + esp.edificio + ')</span></span>' +
-                  '</div>';
+          if (_espaciosSeleccionados.indexOf(esp.id_espacio) !== -1) continue;
+          var opt = document.createElement("option");
+          opt.value = esp.id_espacio;
+          var texto = esp.nombre;
+          if (esp.nombre_curso) texto += " - " + esp.nombre_curso;
+          opt.textContent = texto;
+          optgroup.appendChild(opt);
         }
+        if (optgroup.children.length > 0) select.appendChild(optgroup);
       }
-      if (!html) html = '<div style="padding:12px;color:#94a3b8;font-size:13px;text-align:center;">No se encontraron espacios</div>';
-      contenedor.innerHTML = html;
     }
 
-    function toggleEspacio(id) {
+    function agregarEspacio(select) {
+      var id = parseInt(select.value);
+      if (!id) return;
+      if (_espaciosSeleccionados.indexOf(id) === -1) {
+        _espaciosSeleccionados.push(id);
+      }
+      select.value = "";
+      poblarSelectEspacios();
+      renderBadgesEspacios();
+    }
+
+    function quitarEspacio(id) {
       var idx = _espaciosSeleccionados.indexOf(id);
-      if (idx === -1) _espaciosSeleccionados.push(id);
-      else _espaciosSeleccionados.splice(idx, 1);
-      renderEspacios(document.getElementById("buscar-espacio").value.toLowerCase());
+      if (idx !== -1) _espaciosSeleccionados.splice(idx, 1);
+      poblarSelectEspacios();
       renderBadgesEspacios();
     }
 
@@ -275,7 +274,7 @@
           }
         }
         html += '<span class="espacios-badge">' + nombre +
-                ' <button type="button" onclick="toggleEspacio(' + id + ')" class="espacios-badge-x"><i class="bi bi-x-lg"></i></button></span>';
+                ' <button type="button" onclick="quitarEspacio(' + id + ')" class="espacios-badge-x"><i class="bi bi-x-lg"></i></button></span>';
       }
       contenedor.innerHTML = html;
     }

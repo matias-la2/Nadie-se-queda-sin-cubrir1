@@ -270,38 +270,15 @@
   text-decoration: underline;
 }
 
-/* Selector de espacios mejorado */
-.espacios-selector {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.espacios-buscador {
-  width: 100%;
-  padding: 10px 14px;
-  border: none;
-  border-bottom: 1px solid #e2e8f0;
-  font-size: 14px;
-  font-family: 'Inter', sans-serif;
-  color: #1e293b;
-  outline: none;
-}
-
-.espacios-buscador:focus {
-  box-shadow: inset 0 -2px 0 0 #1152d4;
-}
-
+/* Badges de espacios seleccionados */
 .espacios-badges {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  padding: 0;
 }
 
 .espacios-badges:not(:empty) {
-  padding: 10px 12px;
-  border-bottom: 1px solid #e2e8f0;
+  margin-top: 8px;
 }
 
 .espacios-badge {
@@ -312,7 +289,7 @@
   color: #0369a1;
   font-size: 12px;
   font-weight: 500;
-  padding: 4px 8px;
+  padding: 4px 10px;
   border-radius: 6px;
 }
 
@@ -324,44 +301,4 @@
   padding: 0 2px;
   font-size: 10px;
   line-height: 1;
-}
-
-.espacios-lista {
-  max-height: 220px;
-  overflow-y: auto;
-  padding: 4px 0;
-}
-
-.espacios-grupo-header {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #64748b;
-  padding: 8px 14px 4px;
-  background: #f8fafc;
-  border-top: 1px solid #f1f5f9;
-}
-
-.espacios-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 14px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: background-color 0.1s;
-}
-
-.espacios-item:hover {
-  background: #f8fafc;
-}
-
-.espacios-item.seleccionado {
-  background: #eff6ff;
-}
-
-.espacios-edificio-tag {
-  color: #94a3b8;
-  font-size: 12px;
 }
