@@ -1,6 +1,7 @@
 const { google } = require('googleapis');
 const path = require('path');
 const fs = require('fs');
+const pool = require('../config/db');
 
 const KEY_PATH = path.join(__dirname, '..', 'service-account.json');
 
@@ -34,7 +35,7 @@ async function esMiembroDelGrupo(correo) {
   }
 
   const creds = obtenerCredenciales();
-  if (!creds) return false;
+  if (!creds) return fallbackBD(correo);
 
   let auth;
   try {
@@ -45,7 +46,7 @@ async function esMiembroDelGrupo(correo) {
     });
   } catch (err) {
     console.error('[google-group] Error al crear GoogleAuth:', err.message);
-    return false;
+    return fallbackBD(correo);
   }
 
   try {
@@ -59,11 +60,29 @@ async function esMiembroDelGrupo(correo) {
     if (err.code === 404 || err.message?.includes('Member not found')) {
       return false;
     }
-    if (err.code === 'ENOENT') {
-      console.error('[google-group] ENOENT durante llamada API — service-account.json no accesible en', KEY_PATH);
-      return false;
+
+    const msg = err.message || '';
+    if (msg.includes('invalid_grant') || msg.includes('Invalid signature')) {
+      console.warn('[google-group] Error de credenciales (' + msg + ') — fallback a BD');
+      return fallbackBD(correo);
     }
-    console.error('[google-group] Error al verificar membresía:', err.message);
+
+    console.error('[google-group] Error al verificar membresía:', msg);
+    return fallbackBD(correo);
+  }
+}
+
+async function fallbackBD(correo) {
+  try {
+    const [[row]] = await pool.query(
+      'SELECT id_usuario FROM usuario WHERE correo = ? AND activo = 1',
+      [correo]
+    );
+    const existe = !!row;
+    console.warn('[google-group] FALLBACK BD para ' + correo + ' — ' + (existe ? 'usuario activo encontrado' : 'no encontrado o inactivo'));
+    return existe;
+  } catch (err) {
+    console.error('[google-group] Error en fallback BD:', err.message);
     return false;
   }
 }
