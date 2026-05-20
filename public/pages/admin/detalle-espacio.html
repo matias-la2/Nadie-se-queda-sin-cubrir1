@@ -203,7 +203,7 @@
 
     function cargarBloqueos() {
       apiFetch('/api/v1/espacios/bloqueos?id_espacio=' + _espacioId).then(function (data) {
-        var bloqueos = (data && data.datos) ? data.datos : [];
+        var bloqueos = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
         var tbody = document.getElementById("tabla-bloqueos");
 
         if (bloqueos.length === 0) {

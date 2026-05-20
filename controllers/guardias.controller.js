@@ -459,7 +459,7 @@ async function asignarAutomaticamente(conn, idAusencia, fecha, tramoHorario, idP
   if (!excluidos.includes(idProfesorAusente)) excluidos.push(idProfesorAusente);
 
   const [candidatos] = await conn.query(
-    `SELECT gc.id_usuario, gc.id_guardia_creada,
+    `SELECT gc.id_usuario, MIN(gc.id_guardia_creada) AS id_guardia_creada,
             u.nombre AS profesor_nombre, u.apellidos AS profesor_apellidos,
             COALESCE(conteo.total, 0) AS guardias_realizadas
      FROM guardia_creada gc
@@ -479,7 +479,7 @@ async function asignarAutomaticamente(conn, idAusencia, fecha, tramoHorario, idP
        AND ga2.fecha = ? AND ga2.tramo_horario = ?
        AND ga2.estado IN ('PENDIENTE', 'ACEPTADA')
      )
-     GROUP BY gc.id_usuario
+     GROUP BY gc.id_usuario, u.nombre, u.apellidos, conteo.total
      ORDER BY guardias_realizadas ASC, RAND()
      LIMIT 1`,
     [diaSemanaDB, fecha, tramoHorario, excluidos, fecha, tramoHorario]
@@ -610,7 +610,9 @@ async function guardiasHoy(req, res, next) {
       disponibleParams.push(filtroEdificio);
     }
 
-    disponibleSql += ` GROUP BY gc.id_guardia_creada`;
+    disponibleSql += ` GROUP BY gc.id_guardia_creada, gc.id_usuario, gc.dia_semana, gc.tramo_horario,
+                                gc.curso_escolar, gc.fecha, gc.id_espacio,
+                                u.nombre, u.apellidos, es.nombre`;
 
     const [disponibles] = await pool.query(disponibleSql, disponibleParams);
 
