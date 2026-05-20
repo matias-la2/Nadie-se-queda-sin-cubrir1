@@ -10,6 +10,11 @@ async function esMiembroDelGrupo(correo) {
     return true;
   }
 
+  if (!fs.existsSync(KEY_PATH)) {
+    console.error('[google-group] FALTA service-account.json en', KEY_PATH, '— asegúrate de que el archivo existe en el contenedor Docker');
+    return false;
+  }
+
   let auth;
   try {
     auth = new google.auth.GoogleAuth({
@@ -18,10 +23,6 @@ async function esMiembroDelGrupo(correo) {
       clientOptions: { subject: process.env.GOOGLE_ADMIN_EMAIL }
     });
   } catch (err) {
-    if (err.code === 'ENOENT' && process.env.NODE_ENV !== 'production') {
-      console.warn('[google-group] service-account.json no encontrado — se omite verificación en desarrollo');
-      return true;
-    }
     console.error('[google-group] Error al crear GoogleAuth:', err.message);
     return false;
   }
@@ -35,6 +36,10 @@ async function esMiembroDelGrupo(correo) {
     return data.isMember === true;
   } catch (err) {
     if (err.code === 404 || err.message?.includes('Member not found')) {
+      return false;
+    }
+    if (err.code === 'ENOENT') {
+      console.error('[google-group] ENOENT durante llamada API — service-account.json no accesible en', KEY_PATH);
       return false;
     }
     console.error('[google-group] Error al verificar membresía:', err.message);
