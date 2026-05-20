@@ -4,21 +4,38 @@ const fs = require('fs');
 
 const KEY_PATH = path.join(__dirname, '..', 'service-account.json');
 
+function obtenerCredenciales() {
+  if (fs.existsSync(KEY_PATH)) {
+    return { keyFile: KEY_PATH };
+  }
+
+  if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+    try {
+      const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+      return { credentials };
+    } catch (err) {
+      console.error('[google-group] GOOGLE_SERVICE_ACCOUNT_JSON no es JSON válido:', err.message);
+      return null;
+    }
+  }
+
+  console.error('[google-group] No se encontró service-account.json ni GOOGLE_SERVICE_ACCOUNT_JSON');
+  return null;
+}
+
 async function esMiembroDelGrupo(correo) {
   if (process.env.NODE_ENV !== 'production') {
     console.warn('[google-group] Modo desarrollo — se omite verificación de grupo');
     return true;
   }
 
-  if (!fs.existsSync(KEY_PATH)) {
-    console.error('[google-group] FALTA service-account.json en', KEY_PATH, '— asegúrate de que el archivo existe en el contenedor Docker');
-    return false;
-  }
+  const creds = obtenerCredenciales();
+  if (!creds) return false;
 
   let auth;
   try {
     auth = new google.auth.GoogleAuth({
-      keyFile: KEY_PATH,
+      ...creds,
       scopes: ['https://www.googleapis.com/auth/admin.directory.group.member.readonly'],
       clientOptions: { subject: process.env.GOOGLE_ADMIN_EMAIL }
     });
