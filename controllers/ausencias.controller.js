@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const { success, error } = require('../helpers/response.helper');
 const { paginar, respuestaPaginada } = require('../helpers/pagination.helper');
+const { asignarAutomaticamente } = require('./guardias.controller');
 
 async function listar(req, res, next) {
   try {
@@ -116,9 +117,21 @@ async function crear(req, res, next) {
       );
     }
 
+    const asignacion = await asignarAutomaticamente(
+      conn, idAusencia, fecha, tramo_horario, profesorId, hay_tarea ? true : false
+    );
+
     await conn.commit();
     res.registroId = idAusencia;
-    return success(res, { id: idAusencia }, 201);
+
+    const respuesta = { id: idAusencia };
+    if (asignacion) {
+      respuesta.guardia_asignada = {
+        id: asignacion.id_guardia_asignada,
+        profesor: asignacion.nombre
+      };
+    }
+    return success(res, respuesta, 201);
   } catch (err) {
     await conn.rollback();
     next(err);

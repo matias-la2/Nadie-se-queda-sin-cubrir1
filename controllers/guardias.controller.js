@@ -221,7 +221,8 @@ async function crearAsignada(req, res, next) {
 
     const [[{ conflictos }]] = await conn.query(
       `SELECT COUNT(*) as conflictos FROM guardia_asignada
-       WHERE id_profesor_sustituto = ? AND fecha = ? AND tramo_horario = ?`,
+       WHERE id_profesor_sustituto = ? AND fecha = ? AND tramo_horario = ?
+       AND estado IN ('PENDIENTE', 'ACEPTADA')`,
       [id_profesor_sustituto, fecha, tramo_horario]
     );
     if (conflictos > 0) {
@@ -252,17 +253,12 @@ async function crearAsignada(req, res, next) {
 
     const [result] = await conn.query(
       `INSERT INTO guardia_asignada
-       (fecha, tramo_horario, tipo_asignacion, comentario, id_ausencia, id_profesor_sustituto, id_clase, id_guardia_creada)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+       (fecha, tramo_horario, tipo_asignacion, estado, comentario, id_ausencia, id_profesor_sustituto, id_clase, id_guardia_creada)
+       VALUES (?, ?, ?, 'PENDIENTE', ?, ?, ?, ?, ?)`,
       [fecha, tramo_horario, tipo_asignacion || 'MANUAL', comentario || null,
        id_ausencia, id_profesor_sustituto, id_clase || null, id_guardia_creada || null]
     );
     const idGuardiaAsignada = result.insertId;
-
-    await conn.query(
-      `UPDATE ausencia SET estado = 'CUBIERTA' WHERE id_ausencia = ?`,
-      [id_ausencia]
-    );
 
     const [[ausencia]] = await conn.query(
       `SELECT a.*, u.nombre AS ausente_nombre, u.apellidos AS ausente_apellidos
@@ -272,14 +268,14 @@ async function crearAsignada(req, res, next) {
       [id_ausencia]
     );
 
-    let mensaje = `Se te ha asignado una guardia el ${fecha} en el tramo ${tramo_horario}.`;
+    let mensaje = `Se te ha asignado una guardia el ${fecha} en el tramo ${tramo_horario}. Por favor, acepta o rechaza la asignación.`;
     if (ausencia.hay_tarea) {
       mensaje += ' Hay tarea para los alumnos.';
     }
 
     await conn.query(
       `INSERT INTO notificacion (id_usuario, tipo, mensaje, referencia_id, referencia_tipo)
-       VALUES (?, 'AUSENCIA_ASIGNADA', ?, ?, 'guardia_asignada')`,
+       VALUES (?, 'GUARDIA_PENDIENTE', ?, ?, 'guardia_asignada')`,
       [id_profesor_sustituto, mensaje, idGuardiaAsignada]
     );
 
@@ -332,6 +328,206 @@ async function eliminarAsignada(req, res, next) {
   } catch (err) {
     next(err);
   }
+}
+
+async function responderGuardia(req, res, next) {
+  const conn = await pool.getConnection();
+  try {
+    const { id } = req.params;
+    const { accion } = req.body;
+    const idUsuario = req.usuario.id;
+
+    if (!['ACEPTADA', 'RECHAZADA'].includes(accion)) {
+      return error(res, 'Acción no válida. Usa ACEPTADA o RECHAZADA', 400);
+    }
+
+    const [[guardia]] = await conn.query(
+      `SELECT ga.*, a.id_profesor AS id_ausente, a.hay_tarea, a.descripcion_tarea
+       FROM guardia_asignada ga
+       JOIN ausencia a ON ga.id_ausencia = a.id_ausencia
+       WHERE ga.id_guardia_asignada = ?`,
+      [id]
+    );
+
+    if (!guardia) return error(res, 'Guardia asignada no encontrada', 404);
+    if (guardia.id_profesor_sustituto !== idUsuario) {
+      return error(res, 'No tienes permiso para responder a esta guardia', 403);
+    }
+    if (guardia.estado !== 'PENDIENTE') {
+      return error(res, 'Esta guardia ya fue respondida', 409);
+    }
+
+    await conn.beginTransaction();
+
+    await conn.query(
+      `UPDATE guardia_asignada SET estado = ? WHERE id_guardia_asignada = ?`,
+      [accion, id]
+    );
+
+    const [[sustituto]] = await conn.query(
+      `SELECT nombre, apellidos FROM usuario WHERE id_usuario = ?`,
+      [idUsuario]
+    );
+
+    if (accion === 'ACEPTADA') {
+      await conn.query(
+        `UPDATE ausencia SET estado = 'CUBIERTA' WHERE id_ausencia = ?`,
+        [guardia.id_ausencia]
+      );
+
+      const [directivos] = await conn.query(
+        `SELECT ur.id_usuario FROM usuario_rol ur
+         JOIN rol r ON ur.id_rol = r.id_rol
+         WHERE r.nombre_rol IN ('EQUIPO_DIRECTIVO', 'ADMINISTRADOR')`
+      );
+
+      const msgDirectivo = `${sustituto.nombre} ${sustituto.apellidos} ha aceptado la guardia del ${guardia.fecha} (${guardia.tramo_horario}).`;
+      for (const d of directivos) {
+        await conn.query(
+          `INSERT INTO notificacion (id_usuario, tipo, mensaje, referencia_id, referencia_tipo)
+           VALUES (?, 'AUSENCIA_ASIGNADA', ?, ?, 'guardia_asignada')`,
+          [d.id_usuario, msgDirectivo, id]
+        );
+      }
+    }
+
+    let reasignado = null;
+
+    if (accion === 'RECHAZADA') {
+      const [profesoresRechazaron] = await conn.query(
+        `SELECT id_profesor_sustituto FROM guardia_asignada
+         WHERE id_ausencia = ? AND estado = 'RECHAZADA'`,
+        [guardia.id_ausencia]
+      );
+      const idsExcluir = profesoresRechazaron.map(r => r.id_profesor_sustituto);
+      idsExcluir.push(guardia.id_ausente);
+
+      const resultado = await asignarAutomaticamente(
+        conn, guardia.id_ausencia, guardia.fecha, guardia.tramo_horario,
+        guardia.id_ausente, guardia.hay_tarea, idsExcluir
+      );
+
+      if (resultado) {
+        reasignado = { id_usuario: resultado.id_usuario, nombre: resultado.nombre };
+      } else {
+        await conn.query(
+          `UPDATE ausencia SET estado = 'SIN_CUBRIR' WHERE id_ausencia = ?`,
+          [guardia.id_ausencia]
+        );
+
+        const [directivos] = await conn.query(
+          `SELECT ur.id_usuario FROM usuario_rol ur
+           JOIN rol r ON ur.id_rol = r.id_rol
+           WHERE r.nombre_rol IN ('EQUIPO_DIRECTIVO', 'ADMINISTRADOR')`
+        );
+
+        const msgDirectivo = `No quedan profesores disponibles para cubrir la guardia del ${guardia.fecha} (${guardia.tramo_horario}). Todos los candidatos han rechazado.`;
+        for (const d of directivos) {
+          await conn.query(
+            `INSERT INTO notificacion (id_usuario, tipo, mensaje, referencia_id, referencia_tipo)
+             VALUES (?, 'GUARDIA_RECHAZADA', ?, ?, 'guardia_asignada')`,
+            [d.id_usuario, msgDirectivo, id]
+          );
+        }
+      }
+    }
+
+    await conn.commit();
+
+    const respuesta = { mensaje: accion === 'ACEPTADA' ? 'Guardia aceptada' : 'Guardia rechazada' };
+    if (reasignado) {
+      respuesta.reasignado_a = reasignado.nombre;
+    }
+    return success(res, respuesta);
+  } catch (err) {
+    await conn.rollback();
+    next(err);
+  } finally {
+    conn.release();
+  }
+}
+
+// ─── ASIGNACION AUTOMATICA ─────────────────────────────
+
+async function asignarAutomaticamente(conn, idAusencia, fecha, tramoHorario, idProfesorAusente, hayTarea, idsExcluir) {
+  const diaSemana = new Date(fecha).getDay();
+  const diaSemanaDB = diaSemana === 0 ? 7 : diaSemana;
+
+  const excluidos = Array.isArray(idsExcluir) && idsExcluir.length > 0
+    ? idsExcluir
+    : [idProfesorAusente];
+  if (!excluidos.includes(idProfesorAusente)) excluidos.push(idProfesorAusente);
+
+  const [candidatos] = await conn.query(
+    `SELECT gc.id_usuario, gc.id_guardia_creada,
+            u.nombre AS profesor_nombre, u.apellidos AS profesor_apellidos,
+            COALESCE(conteo.total, 0) AS guardias_realizadas
+     FROM guardia_creada gc
+     JOIN usuario u ON gc.id_usuario = u.id_usuario
+     LEFT JOIN (
+       SELECT id_profesor_sustituto, COUNT(*) AS total
+       FROM guardia_asignada
+       WHERE estado = 'ACEPTADA' AND fecha >= '2025-09-01'
+       GROUP BY id_profesor_sustituto
+     ) conteo ON gc.id_usuario = conteo.id_profesor_sustituto
+     WHERE (gc.dia_semana = ? OR gc.fecha = ?)
+     AND gc.tramo_horario = ?
+     AND gc.id_usuario NOT IN (?)
+     AND NOT EXISTS (
+       SELECT 1 FROM guardia_asignada ga2
+       WHERE ga2.id_profesor_sustituto = gc.id_usuario
+       AND ga2.fecha = ? AND ga2.tramo_horario = ?
+       AND ga2.estado IN ('PENDIENTE', 'ACEPTADA')
+     )
+     GROUP BY gc.id_usuario
+     ORDER BY guardias_realizadas ASC, RAND()
+     LIMIT 1`,
+    [diaSemanaDB, fecha, tramoHorario, excluidos, fecha, tramoHorario]
+  );
+
+  if (candidatos.length === 0) {
+    return null;
+  }
+
+  const elegido = candidatos[0];
+
+  const [result] = await conn.query(
+    `INSERT INTO guardia_asignada
+     (fecha, tramo_horario, tipo_asignacion, estado, comentario, id_ausencia, id_profesor_sustituto, id_guardia_creada)
+     VALUES (?, ?, 'AUTOMATICA', 'PENDIENTE', 'Asignada automaticamente', ?, ?, ?)`,
+    [fecha, tramoHorario, idAusencia, elegido.id_usuario, elegido.id_guardia_creada || null]
+  );
+  const idGuardiaAsignada = result.insertId;
+
+  let mensaje = `Se te ha asignado una guardia el ${fecha} en el tramo ${tramoHorario}. Por favor, acepta o rechaza la asignacion.`;
+  if (hayTarea) {
+    mensaje += ' Hay tarea para los alumnos.';
+  }
+
+  await conn.query(
+    `INSERT INTO notificacion (id_usuario, tipo, mensaje, referencia_id, referencia_tipo)
+     VALUES (?, 'GUARDIA_PENDIENTE', ?, ?, 'guardia_asignada')`,
+    [elegido.id_usuario, mensaje, idGuardiaAsignada]
+  );
+
+  try {
+    const [[correo]] = await conn.query(
+      `SELECT correo FROM usuario WHERE id_usuario = ?`, [elegido.id_usuario]
+    );
+    const htmlEmail = plantillaNotificacion({
+      titulo: `Guardia asignada - ${fecha}`,
+      cuerpo: mensaje,
+      enlace: null
+    });
+    await enviarEmail({ para: correo.correo, asunto: `Guardia asignada - ${fecha}`, html: htmlEmail });
+  } catch (_emailErr) {}
+
+  return {
+    id_guardia_asignada: idGuardiaAsignada,
+    id_usuario: elegido.id_usuario,
+    nombre: `${elegido.profesor_nombre} ${elegido.profesor_apellidos}`,
+    guardias_realizadas: elegido.guardias_realizadas
+  };
 }
 
 // ─── GUARDIAS DE HOY ───────────────────────────────────
@@ -402,6 +598,7 @@ async function guardiasHoy(req, res, next) {
         WHERE ga.id_profesor_sustituto = gc.id_usuario
         AND ga.fecha = CURDATE()
         AND ga.tramo_horario = gc.tramo_horario
+        AND ga.estado IN ('PENDIENTE', 'ACEPTADA')
       )`;
     const disponibleParams = [];
 
@@ -430,7 +627,7 @@ async function guardiasHoy(req, res, next) {
         `SELECT id_profesor_sustituto, WEEKDAY(fecha) + 1 AS dia_semana,
                 tramo_horario, COUNT(*) AS total
          FROM guardia_asignada
-         WHERE fecha >= '2025-09-01' AND id_profesor_sustituto IN (?)
+         WHERE estado = 'ACEPTADA' AND fecha >= '2025-09-01' AND id_profesor_sustituto IN (?)
          GROUP BY id_profesor_sustituto, dia_semana, tramo_horario`,
         [idsDisponibles]
       );
@@ -457,7 +654,8 @@ async function guardiasHoy(req, res, next) {
        JOIN ausencia a ON ga.id_ausencia = a.id_ausencia
        JOIN usuario ua ON a.id_profesor = ua.id_usuario
        LEFT JOIN clase c ON ga.id_clase = c.id_clase
-       WHERE ga.fecha = CURDATE()`
+       WHERE ga.fecha = CURDATE()
+       AND ga.estado IN ('PENDIENTE', 'ACEPTADA')`
     );
 
     return success(res, { ausencias, disponibles, asignadas });
@@ -468,6 +666,6 @@ async function guardiasHoy(req, res, next) {
 
 module.exports = {
   listarCreadas, obtenerCreada, crearCreada, crearGrupo, actualizarCreada, eliminarCreada,
-  listarAsignadas, crearAsignada, eliminarAsignada,
-  guardiasHoy
+  listarAsignadas, crearAsignada, eliminarAsignada, responderGuardia,
+  guardiasHoy, asignarAutomaticamente
 };

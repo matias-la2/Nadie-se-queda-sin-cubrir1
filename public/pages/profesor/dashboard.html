@@ -77,6 +77,19 @@
 
     </div>
 
+    <!-- Guardias pendientes de respuesta -->
+    <div class="row g-3 mb-4" id="seccion-guardias-pendientes" style="display:none;">
+      <div class="col-12">
+        <div class="tarjeta" style="border-left:4px solid #f59e0b;">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="tarjeta-titulo mb-0"><i class="bi bi-bell-fill me-2" style="color:#f59e0b;"></i>Guardias pendientes de respuesta</h2>
+            <span class="badge-estado badge-pendiente" id="badge-pendientes-count">0</span>
+          </div>
+          <div id="lista-guardias-pendientes"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Fila inferior -->
     <div class="row g-3">
 
@@ -164,6 +177,9 @@
           (data && data.datos && data.datos.paginacion) ? data.datos.paginacion.total : 0;
       }).catch(function () { document.getElementById("num-ausencias").textContent = "0"; });
       }
+
+      // Guardias pendientes de respuesta
+      if (!esConserje) cargarGuardiasPendientes(usuario);
 
       // Guardias de hoy
       if (!esConserje) apiFetch('/api/v1/guardias/hoy').then(function (data) {
@@ -265,6 +281,88 @@
           '<tr><td colspan="3" class="sin-resultados" style="text-align:center;padding:24px;color:#64748b;">Sin incidencias</td></tr>';
       });
     });
+
+    function cargarGuardiasPendientes(usuario) {
+      apiFetch('/api/v1/guardias/asignadas?id_profesor_sustituto=' + usuario.id).then(function (data) {
+        var filas = [];
+        if (data && data.datos) {
+          filas = Array.isArray(data.datos) ? data.datos : (data.datos.registros || []);
+        }
+
+        var pendientes = [];
+        for (var i = 0; i < filas.length; i++) {
+          if (filas[i].estado === 'PENDIENTE') pendientes.push(filas[i]);
+        }
+
+        var seccion = document.getElementById("seccion-guardias-pendientes");
+        if (pendientes.length === 0) {
+          seccion.style.display = "none";
+          return;
+        }
+
+        seccion.style.display = "block";
+        document.getElementById("badge-pendientes-count").textContent = pendientes.length + " pendiente" + (pendientes.length !== 1 ? "s" : "");
+
+        var contenedor = document.getElementById("lista-guardias-pendientes");
+        var html = "";
+
+        for (var i = 0; i < pendientes.length; i++) {
+          var g = pendientes[i];
+          var fecha = "—";
+          if (g.fecha) {
+            var partes = g.fecha.split("-");
+            fecha = partes[2] + "/" + partes[1] + "/" + partes[0];
+          }
+          var ausente = g.ausente_nombre || "—";
+          if (g.ausente_apellidos) ausente += " " + g.ausente_apellidos;
+          var tramo = g.tramo_horario || "—";
+          var clase = g.clase_curso || "—";
+
+          html += '<div style="padding:14px;border:1px solid #fde68a;border-radius:10px;margin-bottom:10px;background:#fffbeb;">' +
+                    '<div class="d-flex justify-content-between align-items-start flex-wrap gap-2">' +
+                      '<div>' +
+                        '<div style="font-weight:600;font-size:15px;color:#92400e;"><i class="bi bi-shield-exclamation me-1"></i>Guardia asignada</div>' +
+                        '<div style="font-size:13px;color:#78350f;margin-top:4px;">' +
+                          '<i class="bi bi-calendar3 me-1"></i>' + fecha +
+                          ' <i class="bi bi-clock ms-2 me-1"></i>' + tramo +
+                        '</div>' +
+                        '<div style="font-size:13px;color:#78350f;margin-top:2px;">' +
+                          '<i class="bi bi-person-x me-1"></i>Ausente: ' + ausente +
+                        '</div>' +
+                        (clase !== "—" ? '<div style="font-size:13px;color:#78350f;margin-top:2px;"><i class="bi bi-mortarboard me-1"></i>Clase: ' + clase + '</div>' : '') +
+                      '</div>' +
+                      '<div class="d-flex gap-2">' +
+                        '<button class="btn btn-success btn-sm" onclick="responderGuardia(' + g.id_guardia_asignada + ', \'ACEPTADA\')" style="font-size:13px;padding:6px 16px;">' +
+                          '<i class="bi bi-check-lg me-1"></i>Aceptar' +
+                        '</button>' +
+                        '<button class="btn btn-danger btn-sm" onclick="responderGuardia(' + g.id_guardia_asignada + ', \'RECHAZADA\')" style="font-size:13px;padding:6px 16px;">' +
+                          '<i class="bi bi-x-lg me-1"></i>Rechazar' +
+                        '</button>' +
+                      '</div>' +
+                    '</div>' +
+                  '</div>';
+        }
+        contenedor.innerHTML = html;
+      }).catch(function () {
+        document.getElementById("seccion-guardias-pendientes").style.display = "none";
+      });
+    }
+
+    function responderGuardia(idGuardia, accion) {
+      var textoAccion = accion === 'ACEPTADA' ? 'aceptar' : 'rechazar';
+      if (!confirm("¿Seguro que quieres " + textoAccion + " esta guardia?")) return;
+
+      apiFetch('/api/v1/guardias/asignadas/' + idGuardia + '/responder', {
+        method: 'PATCH',
+        body: JSON.stringify({ accion: accion })
+      }).then(function (data) {
+        if (data && data.ok) {
+          window.location.reload();
+        } else {
+          alert((data && data.mensaje) || "Error al responder");
+        }
+      }).catch(function () { alert("Error de conexión"); });
+    }
   </script>
 
 </body>

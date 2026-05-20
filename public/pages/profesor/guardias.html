@@ -41,9 +41,15 @@
       </div>
     </div>
 
+    <!-- Guardias pendientes de respuesta -->
+    <div class="tarjeta mb-4" id="seccion-pendientes" style="display:none;">
+      <h2 class="tarjeta-titulo mb-3" style="color:#92400e;"><i class="bi bi-bell-fill me-2"></i>Guardias pendientes de respuesta</h2>
+      <div id="lista-pendientes-guardias"></div>
+    </div>
+
     <!-- Guardias cubiertas -->
     <div class="tarjeta">
-      <h2 class="tarjeta-titulo mb-3"><i class="bi bi-shield-check me-2"></i>Guardias cubiertas</h2>
+      <h2 class="tarjeta-titulo mb-3"><i class="bi bi-shield-check me-2"></i>Guardias asignadas</h2>
       <div class="tabla-responsive">
         <table class="tabla-datos">
           <thead>
@@ -53,6 +59,7 @@
               <th>Profesor ausente</th>
               <th>Clase</th>
               <th>Tipo</th>
+              <th>Estado</th>
             </tr>
           </thead>
           <tbody id="tabla-cubiertas"></tbody>
@@ -120,8 +127,58 @@
           filas = Array.isArray(data.datos) ? data.datos : (data.datos.registros || []);
         }
 
+        // Separar pendientes del resto
+        var pendientes = [];
+        var resto = [];
+        for (var i = 0; i < filas.length; i++) {
+          if (filas[i].estado === 'PENDIENTE') {
+            pendientes.push(filas[i]);
+          } else {
+            resto.push(filas[i]);
+          }
+        }
+
+        // Renderizar pendientes
+        var seccionPend = document.getElementById("seccion-pendientes");
+        if (pendientes.length > 0) {
+          seccionPend.style.display = "block";
+          var htmlPend = "";
+          for (var i = 0; i < pendientes.length; i++) {
+            var g = pendientes[i];
+            var fecha = "—";
+            if (g.fecha) { var p = g.fecha.split("-"); fecha = p[2] + "/" + p[1] + "/" + p[0]; }
+            var ausente = g.ausente_nombre || "—";
+            if (g.ausente_apellidos) ausente += " " + g.ausente_apellidos;
+
+            htmlPend += '<div style="padding:14px;border:1px solid #fde68a;border-radius:10px;margin-bottom:10px;background:#fffbeb;">' +
+              '<div class="d-flex justify-content-between align-items-start flex-wrap gap-2">' +
+                '<div>' +
+                  '<div style="font-weight:600;font-size:15px;color:#92400e;"><i class="bi bi-shield-exclamation me-1"></i>Guardia asignada</div>' +
+                  '<div style="font-size:13px;color:#78350f;margin-top:4px;">' +
+                    '<i class="bi bi-calendar3 me-1"></i>' + fecha +
+                    ' <i class="bi bi-clock ms-2 me-1"></i>' + (g.tramo_horario || "—") +
+                  '</div>' +
+                  '<div style="font-size:13px;color:#78350f;margin-top:2px;">' +
+                    '<i class="bi bi-person-x me-1"></i>Ausente: ' + ausente +
+                  '</div>' +
+                '</div>' +
+                '<div class="d-flex gap-2">' +
+                  '<button class="btn btn-success btn-sm" onclick="responderGuardia(' + g.id_guardia_asignada + ', \'ACEPTADA\')" style="font-size:13px;padding:6px 16px;">' +
+                    '<i class="bi bi-check-lg me-1"></i>Aceptar</button>' +
+                  '<button class="btn btn-danger btn-sm" onclick="responderGuardia(' + g.id_guardia_asignada + ', \'RECHAZADA\')" style="font-size:13px;padding:6px 16px;">' +
+                    '<i class="bi bi-x-lg me-1"></i>Rechazar</button>' +
+                '</div>' +
+              '</div>' +
+            '</div>';
+          }
+          document.getElementById("lista-pendientes-guardias").innerHTML = htmlPend;
+        } else {
+          seccionPend.style.display = "none";
+        }
+
+        // Renderizar tabla de todas las guardias asignadas
         if (filas.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" class="sin-resultados"><i class="bi bi-shield-x sin-resultados-icono"></i>No has cubierto guardias</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-shield-x sin-resultados-icono"></i>No tienes guardias asignadas</td></tr>';
           return;
         }
 
@@ -137,9 +194,18 @@
 
           var tipoBadge;
           if (g.tipo_asignacion === "AUTOMATICA") {
-            tipoBadge = '<span class="tipo-automatica">Automática</span>';
+            tipoBadge = '<span class="tipo-automatica">Automatica</span>';
           } else {
             tipoBadge = '<span class="tipo-manual">Manual</span>';
+          }
+
+          var estadoBadge;
+          if (g.estado === "ACEPTADA") {
+            estadoBadge = '<span class="badge-estado badge-cubierta">Aceptada</span>';
+          } else if (g.estado === "RECHAZADA") {
+            estadoBadge = '<span class="badge-estado badge-cerrada">Rechazada</span>';
+          } else {
+            estadoBadge = '<span class="badge-estado badge-pendiente">Pendiente</span>';
           }
 
           html += '<tr>' +
@@ -148,13 +214,30 @@
                     '<td>' + (g.ausente_nombre || g.profesor_ausente || "—") + '</td>' +
                     '<td>' + (g.clase_curso || g.clase || "—") + '</td>' +
                     '<td>' + tipoBadge + '</td>' +
+                    '<td>' + estadoBadge + '</td>' +
                   '</tr>';
         }
         tbody.innerHTML = html;
       }).catch(function () {
         document.getElementById("tabla-cubiertas").innerHTML =
-          '<tr><td colspan="5" class="sin-resultados"><i class="bi bi-shield-x sin-resultados-icono"></i>No has cubierto guardias</td></tr>';
+          '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-shield-x sin-resultados-icono"></i>No tienes guardias asignadas</td></tr>';
       });
+    }
+
+    function responderGuardia(idGuardia, accion) {
+      var textoAccion = accion === 'ACEPTADA' ? 'aceptar' : 'rechazar';
+      if (!confirm("¿Seguro que quieres " + textoAccion + " esta guardia?")) return;
+
+      apiFetch('/api/v1/guardias/asignadas/' + idGuardia + '/responder', {
+        method: 'PATCH',
+        body: JSON.stringify({ accion: accion })
+      }).then(function (data) {
+        if (data && data.ok) {
+          window.location.reload();
+        } else {
+          alert((data && data.mensaje) || "Error al responder");
+        }
+      }).catch(function () { alert("Error de conexion"); });
     }
   </script>
 

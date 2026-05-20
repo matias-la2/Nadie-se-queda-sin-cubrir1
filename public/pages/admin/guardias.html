@@ -117,6 +117,7 @@
                   <th>Profesor Ausente</th>
                   <th>Clase</th>
                   <th>Tipo</th>
+                  <th>Estado</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -282,7 +283,7 @@
         document.getElementById("num-asignadas-hoy").textContent = "0";
         document.getElementById("lista-sin-cubrir").innerHTML = '<div class="sin-resultados">Sin datos</div>';
         document.getElementById("lista-disponibles").innerHTML = '<div class="sin-resultados">Sin datos</div>';
-        document.getElementById("tabla-asignadas-hoy").innerHTML = '<tr><td colspan="6" class="sin-resultados">Sin datos</td></tr>';
+        document.getElementById("tabla-asignadas-hoy").innerHTML = '<tr><td colspan="7" class="sin-resultados">Sin datos</td></tr>';
       });
     }
 
@@ -362,7 +363,7 @@
       var tbody = document.getElementById("tabla-asignadas-hoy");
 
       if (asignadas.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No hay guardias asignadas hoy</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No hay guardias asignadas hoy</td></tr>';
         return;
       }
 
@@ -378,12 +379,20 @@
         var claseTipo = g.tipo_asignacion === "AUTOMATICA" ? "badge-cerrada" : "badge-en-proceso";
         var textoTipo = g.tipo_asignacion === "AUTOMATICA" ? "Auto" : "Manual";
 
+        var estadoBadge;
+        if (g.estado === "ACEPTADA") {
+          estadoBadge = '<span class="badge-estado badge-resuelta">Aceptada</span>';
+        } else {
+          estadoBadge = '<span class="badge-estado badge-pendiente">Pendiente</span>';
+        }
+
         html += '<tr>' +
                   '<td class="celda-sm">' + tramo + '</td>' +
                   '<td><div class="profesor-principal">' + sustituto + '</div><div class="profesor-etiqueta">Sustituto</div></td>' +
                   '<td><div class="celda-sm">' + ausente + '</div><div class="profesor-etiqueta">Ausente</div></td>' +
                   '<td class="celda-sm">' + clase + '</td>' +
                   '<td><span class="badge-estado ' + claseTipo + '">' + textoTipo + '</span></td>' +
+                  '<td>' + estadoBadge + '</td>' +
                   '<td>' +
                     '<button class="btn-accion peligro" title="Eliminar" onclick="eliminarAsignada(' + idAsignada + ')"><i class="bi bi-trash"></i></button>' +
                   '</td>' +

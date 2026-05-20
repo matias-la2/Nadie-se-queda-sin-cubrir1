@@ -197,6 +197,8 @@ CREATE TABLE IF NOT EXISTS guardia_asignada (
     tramo_horario       VARCHAR(50)     NOT NULL,
     tipo_asignacion     ENUM('AUTOMATICA','MANUAL')
                         NOT NULL DEFAULT 'AUTOMATICA',
+    estado              ENUM('PENDIENTE','ACEPTADA','RECHAZADA')
+                        NOT NULL DEFAULT 'PENDIENTE',
     comentario          TEXT            NULL,
     id_ausencia         INT UNSIGNED    NOT NULL,
     id_profesor_sustituto INT UNSIGNED  NOT NULL,
@@ -258,7 +260,8 @@ CREATE TABLE IF NOT EXISTS notificacion (
     id_notificacion INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY,
     id_usuario      INT UNSIGNED    NOT NULL,
     tipo            ENUM('RESERVA_RECORDATORIO','AUSENCIA_ASIGNADA',
-                    'GUARDIA_REASIGNADA','INCIDENCIA_CAMBIO') NOT NULL,
+                    'GUARDIA_REASIGNADA','INCIDENCIA_CAMBIO',
+                    'GUARDIA_PENDIENTE','GUARDIA_RECHAZADA') NOT NULL,
     mensaje         TEXT            NOT NULL,
     leida           TINYINT(1)      NOT NULL DEFAULT 0,
     referencia_id   INT UNSIGNED    NULL,
@@ -296,6 +299,7 @@ CREATE INDEX idx_gc_usuario         ON guardia_creada(id_usuario);
 CREATE INDEX idx_gc_dia             ON guardia_creada(dia_semana, tramo_horario);
 CREATE INDEX idx_ga_ausencia        ON guardia_asignada(id_ausencia);
 CREATE INDEX idx_ga_sustituto       ON guardia_asignada(id_profesor_sustituto);
+CREATE INDEX idx_ga_estado          ON guardia_asignada(estado);
 CREATE INDEX idx_res_profesor       ON reserva(id_profesor);
 CREATE INDEX idx_res_fecha          ON reserva(fecha);
 CREATE INDEX idx_res_espacio_fecha  ON reserva(id_espacio, fecha);

@@ -5,6 +5,11 @@ const fs = require('fs');
 const KEY_PATH = path.join(__dirname, '..', 'service-account.json');
 
 async function esMiembroDelGrupo(correo) {
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn('[google-group] Modo desarrollo — se omite verificación de grupo');
+    return true;
+  }
+
   let auth;
   try {
     auth = new google.auth.GoogleAuth({

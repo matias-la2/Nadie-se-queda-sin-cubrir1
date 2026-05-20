@@ -50,6 +50,10 @@ router.post('/asignadas',
   registrarAccion('ASIGNAR_GUARDIA', 'guardia_asignada'),
   controller.crearAsignada
 );
+router.patch('/asignadas/:id/responder',
+  registrarAccion('RESPONDER_GUARDIA', 'guardia_asignada'),
+  controller.responderGuardia
+);
 router.delete('/asignadas/:id',
   requiereRol('EQUIPO_DIRECTIVO', 'ADMINISTRADOR'),
   registrarAccion('ELIMINAR_GUARDIA_ASIGNADA', 'guardia_asignada'),
