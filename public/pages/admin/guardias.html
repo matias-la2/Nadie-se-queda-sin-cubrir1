@@ -127,32 +127,18 @@
 
       </div>
 
-      <!-- TAB: Guardias Planificadas -->
+      <!-- TAB: Guardias Planificadas (vista por grupos) -->
       <div class="tab-pane fade" id="panel-planificadas" role="tabpanel">
 
         <div class="tarjeta">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="tarjeta-titulo mb-0">Guardias planificadas</h2>
+            <h2 class="tarjeta-titulo mb-0">Grupos de guardia</h2>
             <button class="btn-primario" data-bs-toggle="modal" data-bs-target="#modal-nueva-guardia">
-              <i class="bi bi-plus-lg"></i> Nueva Guardia
+              <i class="bi bi-people-fill me-1"></i> Nuevo Grupo
             </button>
           </div>
 
-          <div class="tabla-responsive">
-            <table class="tabla-datos">
-              <thead>
-                <tr>
-                  <th>Profesor</th>
-                  <th>Día</th>
-                  <th>Tramo</th>
-                  <th>Espacio</th>
-                  <th>Curso escolar</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="tabla-planificadas"></tbody>
-            </table>
-          </div>
+          <div id="contenedor-grupos"></div>
 
           <div class="contador-guardias" id="contador-planificadas">Mostrando 0 guardias</div>
         </div>
@@ -164,15 +150,15 @@
   </main>
 
 
-  <!-- Modal nueva guardia planificada -->
+  <!-- Modal nuevo grupo de guardia -->
   <div class="modal fade" id="modal-nueva-guardia" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content modal-contenido">
 
         <div class="modal-header modal-cabecera">
           <h5 class="modal-title modal-titulo">
-            <i class="bi bi-shield-plus me-2 modal-icono-titulo"></i>
-            Nueva Guardia Planificada
+            <i class="bi bi-people-fill me-2 modal-icono-titulo"></i>
+            Nuevo Grupo de Guardia
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
@@ -182,12 +168,6 @@
 
           <form id="form-guardia">
             <div class="row g-3 mb-3">
-              <div class="col-12 col-sm-6">
-                <label class="modal-label">Profesor <span class="campo-obligatorio">*</span></label>
-                <select id="modal-profesor" class="select-filtro campo-completo" required>
-                  <option value="">Seleccionar...</option>
-                </select>
-              </div>
               <div class="col-12 col-sm-6">
                 <label class="modal-label">Día de la semana <span class="campo-obligatorio">*</span></label>
                 <select id="modal-dia" class="select-filtro campo-completo" required>
@@ -199,9 +179,6 @@
                   <option value="5">Viernes</option>
                 </select>
               </div>
-            </div>
-
-            <div class="row g-3 mb-3">
               <div class="col-12 col-sm-6">
                 <label class="modal-label">Tramo horario <span class="campo-obligatorio">*</span></label>
                 <select id="modal-tramo" class="select-filtro campo-completo" required>
@@ -215,17 +192,28 @@
                   <option value="14:00-15:00">14:00 - 15:00</option>
                 </select>
               </div>
+            </div>
+
+            <div class="row g-3 mb-3">
               <div class="col-12 col-sm-6">
                 <label class="modal-label">Curso escolar <span class="campo-obligatorio">*</span></label>
                 <input type="text" id="modal-curso" class="select-filtro campo-completo" placeholder="Ej: 2025-2026" required>
               </div>
+              <div class="col-12 col-sm-6">
+                <label class="modal-label">Espacio <span class="label-opcional">(opcional)</span></label>
+                <select id="modal-espacio" class="select-filtro campo-completo">
+                  <option value="">Sin asignar</option>
+                </select>
+              </div>
             </div>
 
             <div class="mb-3">
-              <label class="modal-label">Espacio <span class="label-opcional">(opcional)</span></label>
-              <select id="modal-espacio" class="select-filtro campo-completo">
-                <option value="">Sin asignar</option>
-              </select>
+              <label class="modal-label">Profesores del grupo <span class="campo-obligatorio">*</span></label>
+              <div class="input-group mb-2">
+                <input type="text" id="modal-buscar-profesor" class="select-filtro campo-completo" placeholder="Buscar profesor...">
+              </div>
+              <div id="modal-lista-profesores" style="max-height:200px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;padding:8px;"></div>
+              <div id="modal-profesores-seleccionados" class="d-flex flex-wrap gap-2 mt-2"></div>
             </div>
           </form>
         </div>
@@ -233,7 +221,7 @@
         <div class="modal-footer modal-pie">
           <button type="button" class="btn-secundario" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" form="form-guardia" class="btn-primario" id="btn-guardar-guardia">
-            <i class="bi bi-check-lg"></i> Crear Guardia
+            <i class="bi bi-check-lg"></i> Crear Grupo
           </button>
         </div>
 
@@ -248,6 +236,8 @@
 
   <script>
     var _profesoresDisponibles = [];
+    var _todosLosProfesores = [];
+    var _profesoresSeleccionados = [];
 
     verificarSesion().then(function (usuario) {
       if (!usuario) return;
@@ -256,7 +246,11 @@
       cargarSelectsModal();
       recargar();
 
-      document.getElementById("form-guardia").addEventListener("submit", guardarGuardia);
+      document.getElementById("form-guardia").addEventListener("submit", guardarGrupo);
+
+      document.getElementById("modal-buscar-profesor").addEventListener("input", function () {
+        renderListaProfesores(this.value.toLowerCase());
+      });
     });
 
     function recargar() {
@@ -312,7 +306,8 @@
           var d = disponibles[j];
           var nombreDisp = (d.nombre || "") + " " + (d.apellidos || "");
           var idDisp = d.id_usuario || d.id;
-          opcionesSust += '<option value="' + idDisp + '">' + nombreDisp.trim() + '</option>';
+          var conteo = d.guardias_realizadas || 0;
+          opcionesSust += '<option value="' + idDisp + '">' + nombreDisp.trim() + ' (' + conteo + ' guardias)</option>';
         }
 
         var infoTarea = "";
@@ -353,8 +348,10 @@
       for (var i = 0; i < disponibles.length; i++) {
         var d = disponibles[i];
         var nombre = (d.nombre || "") + " " + (d.apellidos || "");
+        var conteo = d.guardias_realizadas || 0;
         html += '<span class="badge-estado badge-cubierta" style="padding:6px 12px;">' +
                   '<i class="bi bi-person-check me-1"></i>' + nombre.trim() +
+                  ' <strong>(' + conteo + ')</strong>' +
                 '</span>';
       }
       html += '</div>';
@@ -427,11 +424,10 @@
       });
     }
 
-    // ─── Guardias Planificadas ───────────────────────────
+    // ─── Guardias Planificadas (vista agrupada) ──────────
 
     function cargarPlanificadas() {
-      apiFetch('/api/v1/guardias/creadas?limit=20').then(function (data) {
-        var tbody = document.getElementById("tabla-planificadas");
+      apiFetch('/api/v1/guardias/creadas?limit=200').then(function (data) {
         var filas = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
         var pag = (data && data.datos && data.datos.paginacion) ? data.datos.paginacion : { total: 0 };
 
@@ -439,58 +435,96 @@
         document.getElementById("contador-planificadas").textContent =
           "Mostrando " + filas.length + " de " + pag.total + " guardias";
 
-        if (filas.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No hay guardias planificadas</td></tr>';
-          return;
-        }
-
-        var diasSemana = ["", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
-        var html = "";
-        for (var i = 0; i < filas.length; i++) {
-          var g = filas[i];
-          var profesor = g.profesor_nombre ? (g.profesor_nombre + " " + (g.profesor_apellidos || "")) : "—";
-          var dia = g.dia_semana ? diasSemana[g.dia_semana] : "—";
-          var espacio = g.espacio_nombre || "—";
-
-          html += '<tr>' +
-                    '<td class="celda-sm">' + profesor.trim() + '</td>' +
-                    '<td class="celda-sm">' + dia + '</td>' +
-                    '<td class="celda-sm">' + (g.tramo_horario || "—") + '</td>' +
-                    '<td class="celda-sm">' + espacio + '</td>' +
-                    '<td class="celda-sm">' + (g.curso_escolar || "—") + '</td>' +
-                    '<td>' +
-                      '<button class="btn-accion peligro" title="Eliminar" onclick="eliminarPlanificada(' + g.id_guardia_creada + ')"><i class="bi bi-trash"></i></button>' +
-                    '</td>' +
-                  '</tr>';
-        }
-        tbody.innerHTML = html;
+        renderGrupos(filas);
       }).catch(function () {
-        document.getElementById("tabla-planificadas").innerHTML =
-          '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No hay guardias planificadas</td></tr>';
+        document.getElementById("contenedor-grupos").innerHTML =
+          '<div class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No hay guardias planificadas</div>';
         document.getElementById("contador-planificadas").textContent = "Mostrando 0 guardias";
       });
     }
 
+    function renderGrupos(filas) {
+      var contenedor = document.getElementById("contenedor-grupos");
+
+      if (filas.length === 0) {
+        contenedor.innerHTML = '<div class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No hay grupos de guardia</div>';
+        return;
+      }
+
+      var diasSemana = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+      var grupos = {};
+
+      for (var i = 0; i < filas.length; i++) {
+        var g = filas[i];
+        var clave = (g.dia_semana || 0) + "_" + (g.tramo_horario || "");
+        if (!grupos[clave]) {
+          grupos[clave] = {
+            dia_semana: g.dia_semana,
+            tramo_horario: g.tramo_horario,
+            espacio: g.espacio_nombre || "—",
+            curso_escolar: g.curso_escolar || "—",
+            profesores: []
+          };
+        }
+        grupos[clave].profesores.push({
+          id: g.id_guardia_creada,
+          nombre: (g.profesor_nombre || "") + " " + (g.profesor_apellidos || "")
+        });
+      }
+
+      var claves = Object.keys(grupos).sort(function (a, b) {
+        var ga = grupos[a], gb = grupos[b];
+        if (ga.dia_semana !== gb.dia_semana) return ga.dia_semana - gb.dia_semana;
+        return (ga.tramo_horario || "").localeCompare(gb.tramo_horario || "");
+      });
+
+      var html = "";
+      for (var k = 0; k < claves.length; k++) {
+        var grupo = grupos[claves[k]];
+        var diaNombre = grupo.dia_semana ? diasSemana[grupo.dia_semana] : "—";
+
+        html += '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:12px;">' +
+                  '<div class="d-flex justify-content-between align-items-center mb-2">' +
+                    '<div>' +
+                      '<strong style="font-size:15px;"><i class="bi bi-calendar-event me-1"></i>' + diaNombre + ' — ' + (grupo.tramo_horario || "—") + '</strong>' +
+                      '<span style="margin-left:12px;font-size:13px;color:#64748b;">' + grupo.espacio + ' · ' + grupo.curso_escolar + '</span>' +
+                    '</div>' +
+                    '<span class="badge-estado badge-cubierta" style="padding:4px 10px;font-size:12px;">' +
+                      grupo.profesores.length + ' profesor' + (grupo.profesores.length !== 1 ? 'es' : '') +
+                    '</span>' +
+                  '</div>' +
+                  '<div class="d-flex flex-wrap gap-2">';
+
+        for (var p = 0; p < grupo.profesores.length; p++) {
+          var prof = grupo.profesores[p];
+          html += '<span class="badge-estado badge-en-proceso" style="padding:5px 10px;font-size:13px;">' +
+                    '<i class="bi bi-person me-1"></i>' + prof.nombre.trim() +
+                    ' <button class="btn-accion peligro" style="margin-left:6px;padding:0 4px;font-size:11px;border:none;background:none;color:#dc2626;cursor:pointer;" ' +
+                      'onclick="eliminarPlanificada(' + prof.id + ')" title="Quitar del grupo">' +
+                      '<i class="bi bi-x-lg"></i>' +
+                    '</button>' +
+                  '</span>';
+        }
+
+        html += '</div></div>';
+      }
+
+      contenedor.innerHTML = html;
+    }
+
     function eliminarPlanificada(id) {
-      if (!confirm("¿Eliminar esta guardia planificada?")) return;
+      if (!confirm("¿Quitar este profesor del grupo de guardia?")) return;
       apiFetch('/api/v1/guardias/creadas/' + id, { method: 'DELETE' }).then(function () {
         recargar();
       });
     }
 
-    // ─── Modal nueva guardia planificada ─────────────────
+    // ─── Modal nuevo grupo de guardia ────────────────────
 
     function cargarSelectsModal() {
       apiFetch('/api/v1/usuarios?rol=PROFESOR&activo=true&limit=100').then(function (data) {
-        var usuarios = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
-        var select = document.getElementById("modal-profesor");
-        for (var i = 0; i < usuarios.length; i++) {
-          var u = usuarios[i];
-          var opt = document.createElement("option");
-          opt.value = u.id_usuario;
-          opt.textContent = u.nombre + " " + u.apellidos;
-          select.appendChild(opt);
-        }
+        _todosLosProfesores = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
+        renderListaProfesores("");
       });
 
       apiFetch('/api/v1/espacios?limit=100').then(function (data) {
@@ -504,33 +538,111 @@
           select.appendChild(opt);
         }
       });
+
+      document.getElementById("modal-nueva-guardia").addEventListener("hidden.bs.modal", function () {
+        _profesoresSeleccionados = [];
+        renderListaProfesores("");
+        renderProfesoresSeleccionados();
+      });
     }
 
-    function guardarGuardia(event) {
+    function renderListaProfesores(filtro) {
+      var contenedor = document.getElementById("modal-lista-profesores");
+      var html = "";
+
+      for (var i = 0; i < _todosLosProfesores.length; i++) {
+        var u = _todosLosProfesores[i];
+        var nombre = u.nombre + " " + u.apellidos;
+        if (filtro && nombre.toLowerCase().indexOf(filtro) === -1) continue;
+
+        var seleccionado = _profesoresSeleccionados.indexOf(u.id_usuario) !== -1;
+        html += '<div style="padding:6px 8px;cursor:pointer;border-radius:6px;display:flex;align-items:center;gap:8px;' +
+                (seleccionado ? 'background:#e0f2fe;' : '') + '" ' +
+                'onclick="toggleProfesor(' + u.id_usuario + ')">' +
+                  '<input type="checkbox" ' + (seleccionado ? 'checked' : '') + ' style="pointer-events:none;">' +
+                  '<span style="font-size:14px;">' + nombre + '</span>' +
+                '</div>';
+      }
+
+      if (!html) {
+        html = '<div style="padding:8px;color:#94a3b8;font-size:13px;">No se encontraron profesores</div>';
+      }
+
+      contenedor.innerHTML = html;
+    }
+
+    function toggleProfesor(id) {
+      var idx = _profesoresSeleccionados.indexOf(id);
+      if (idx === -1) {
+        _profesoresSeleccionados.push(id);
+      } else {
+        _profesoresSeleccionados.splice(idx, 1);
+      }
+      var filtro = document.getElementById("modal-buscar-profesor").value.toLowerCase();
+      renderListaProfesores(filtro);
+      renderProfesoresSeleccionados();
+    }
+
+    function renderProfesoresSeleccionados() {
+      var contenedor = document.getElementById("modal-profesores-seleccionados");
+
+      if (_profesoresSeleccionados.length === 0) {
+        contenedor.innerHTML = '<span style="font-size:13px;color:#94a3b8;">Ningún profesor seleccionado</span>';
+        return;
+      }
+
+      var html = "";
+      for (var i = 0; i < _profesoresSeleccionados.length; i++) {
+        var id = _profesoresSeleccionados[i];
+        var nombre = "";
+        for (var j = 0; j < _todosLosProfesores.length; j++) {
+          if (_todosLosProfesores[j].id_usuario === id) {
+            nombre = _todosLosProfesores[j].nombre + " " + _todosLosProfesores[j].apellidos;
+            break;
+          }
+        }
+        html += '<span class="badge-estado badge-cubierta" style="padding:4px 10px;font-size:13px;">' +
+                  nombre +
+                  ' <button type="button" onclick="toggleProfesor(' + id + ')" style="border:none;background:none;cursor:pointer;color:#dc2626;padding:0 2px;font-size:12px;">' +
+                    '<i class="bi bi-x-lg"></i>' +
+                  '</button>' +
+                '</span>';
+      }
+      contenedor.innerHTML = html;
+    }
+
+    function guardarGrupo(event) {
       event.preventDefault();
       var errorDiv = document.getElementById("modal-error");
       errorDiv.style.display = "none";
 
+      if (_profesoresSeleccionados.length === 0) {
+        errorDiv.textContent = "Selecciona al menos un profesor para el grupo.";
+        errorDiv.style.display = "block";
+        return;
+      }
+
       var body = {
-        id_usuario: parseInt(document.getElementById("modal-profesor").value),
         dia_semana: parseInt(document.getElementById("modal-dia").value),
         tramo_horario: document.getElementById("modal-tramo").value,
-        curso_escolar: document.getElementById("modal-curso").value.trim()
+        curso_escolar: document.getElementById("modal-curso").value.trim(),
+        id_usuarios: _profesoresSeleccionados
       };
 
       var espacio = document.getElementById("modal-espacio").value;
       if (espacio) body.id_espacio = parseInt(espacio);
 
-      apiFetch('/api/v1/guardias/creadas', {
+      apiFetch('/api/v1/guardias/creadas/grupo', {
         method: 'POST',
         body: JSON.stringify(body)
       }).then(function (data) {
         if (data && data.ok) {
           bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-nueva-guardia")).hide();
           document.getElementById("form-guardia").reset();
+          _profesoresSeleccionados = [];
           recargar();
         } else {
-          errorDiv.textContent = (data && data.mensaje) || "Error al crear la guardia";
+          errorDiv.textContent = (data && data.mensaje) || "Error al crear el grupo";
           errorDiv.style.display = "block";
         }
       }).catch(function () {

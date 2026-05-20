@@ -5,7 +5,7 @@ const { registrarAccion } = require('../middleware/log.middleware');
 const {
   validar,
   crearGuardiaCreadaSchema, actualizarGuardiaCreadaSchema,
-  crearGuardiaAsignadaSchema
+  crearGrupoGuardiaSchema, crearGuardiaAsignadaSchema
 } = require('../validators/guardias.validator');
 const controller = require('../controllers/guardias.controller');
 
@@ -23,6 +23,12 @@ router.post('/creadas',
   validar(crearGuardiaCreadaSchema),
   registrarAccion('CREAR_GUARDIA', 'guardia_creada'),
   controller.crearCreada
+);
+router.post('/creadas/grupo',
+  requiereRol('EQUIPO_DIRECTIVO', 'ADMINISTRADOR'),
+  validar(crearGrupoGuardiaSchema),
+  registrarAccion('CREAR_GUARDIA', 'guardia_creada'),
+  controller.crearGrupo
 );
 router.put('/creadas/:id',
   requiereRol('EQUIPO_DIRECTIVO', 'ADMINISTRADOR'),

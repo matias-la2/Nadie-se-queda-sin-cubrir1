@@ -121,6 +121,33 @@ async function eliminarCreada(req, res, next) {
   }
 }
 
+async function crearGrupo(req, res, next) {
+  const conn = await pool.getConnection();
+  try {
+    const { dia_semana, tramo_horario, curso_escolar, id_espacio, id_usuarios } = req.body;
+
+    await conn.beginTransaction();
+
+    const ids = [];
+    for (const id_usuario of id_usuarios) {
+      const [result] = await conn.query(
+        `INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio)
+         VALUES (?, ?, ?, ?, ?)`,
+        [dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio || null]
+      );
+      ids.push(result.insertId);
+    }
+
+    await conn.commit();
+    return success(res, { ids, total: ids.length }, 201);
+  } catch (err) {
+    await conn.rollback();
+    next(err);
+  } finally {
+    conn.release();
+  }
+}
+
 // ─── GUARDIAS ASIGNADAS ────────────────────────────────
 
 async function listarAsignadas(req, res, next) {
@@ -397,21 +424,25 @@ async function guardiasHoy(req, res, next) {
     }
 
     const idsDisponibles = [...new Set(disponibles.map(d => d.id_usuario))];
-    const conteoMap = {};
+    const conteoGrupoMap = {};
     if (idsDisponibles.length > 0) {
       const [conteos] = await pool.query(
-        `SELECT id_profesor_sustituto, COUNT(*) AS total
+        `SELECT id_profesor_sustituto, WEEKDAY(fecha) + 1 AS dia_semana,
+                tramo_horario, COUNT(*) AS total
          FROM guardia_asignada
          WHERE fecha >= '2025-09-01' AND id_profesor_sustituto IN (?)
-         GROUP BY id_profesor_sustituto`,
+         GROUP BY id_profesor_sustituto, dia_semana, tramo_horario`,
         [idsDisponibles]
       );
       for (const row of conteos) {
-        conteoMap[row.id_profesor_sustituto] = row.total;
+        const clave = `${row.id_profesor_sustituto}_${row.dia_semana}_${row.tramo_horario}`;
+        conteoGrupoMap[clave] = row.total;
       }
     }
     for (const d of disponibles) {
-      d.guardias_realizadas = conteoMap[d.id_usuario] || 0;
+      const dia = d.dia_semana || (new Date().getDay() === 0 ? 7 : new Date().getDay());
+      const clave = `${d.id_usuario}_${dia}_${d.tramo_horario}`;
+      d.guardias_realizadas = conteoGrupoMap[clave] || 0;
     }
     disponibles.sort((a, b) => a.guardias_realizadas - b.guardias_realizadas);
 
@@ -436,7 +467,7 @@ async function guardiasHoy(req, res, next) {
 }
 
 module.exports = {
-  listarCreadas, obtenerCreada, crearCreada, actualizarCreada, eliminarCreada,
+  listarCreadas, obtenerCreada, crearCreada, crearGrupo, actualizarCreada, eliminarCreada,
   listarAsignadas, crearAsignada, eliminarAsignada,
   guardiasHoy
 };

@@ -11,6 +11,14 @@ const crearGuardiaCreadaSchema = z.object({
 
 const actualizarGuardiaCreadaSchema = crearGuardiaCreadaSchema.partial();
 
+const crearGrupoGuardiaSchema = z.object({
+  dia_semana: z.number().int().min(1).max(5, 'Día de la semana: 1 (Lun) a 5 (Vie)'),
+  tramo_horario: z.string().min(1, 'El tramo horario es obligatorio'),
+  curso_escolar: z.string().min(1, 'El curso escolar es obligatorio').max(10),
+  id_espacio: z.number().int().positive().nullish(),
+  id_usuarios: z.array(z.number().int().positive()).min(1, 'Debe incluir al menos un profesor')
+});
+
 const crearGuardiaAsignadaSchema = z.object({
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato: YYYY-MM-DD'),
   tramo_horario: z.string().min(1, 'El tramo horario es obligatorio'),
@@ -37,6 +45,6 @@ function validar(schema) {
 
 module.exports = {
   crearGuardiaCreadaSchema, actualizarGuardiaCreadaSchema,
-  crearGuardiaAsignadaSchema,
+  crearGrupoGuardiaSchema, crearGuardiaAsignadaSchema,
   validar
 };

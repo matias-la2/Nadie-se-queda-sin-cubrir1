@@ -62,6 +62,7 @@ async function obtenerUsuarioActual(req, res) {
       roles:      roles.map(r => r.nombre_rol)
     });
   } catch (err) {
+    console.error('[Auth] Error obtenerUsuarioActual:', err);
     return error(res, 'Error al obtener usuario', 500);
   }
 }

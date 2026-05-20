@@ -15,7 +15,7 @@ router.get('/google/callback',
   (req, res, next) => {
     passport.authenticate('google', { session: false }, (err, user, info) => {
       if (err) {
-        console.error('[Auth] Error OAuth:', err.message);
+        console.error('[Auth] Error OAuth:', err);
         return res.redirect('/?error=' + encodeURIComponent('Error de autenticación'));
       }
       if (!user) {
