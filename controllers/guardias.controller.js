@@ -382,11 +382,15 @@ async function eliminarAsignada(req, res, next) {
 async function responderGuardia(req, res, next) {
   const conn = await pool.getConnection();
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id);
     const { accion } = req.body;
     const idUsuario = req.usuario.id;
 
     console.log('[GUARDIA] responderGuardia id:', id, 'accion:', accion, 'usuario:', idUsuario);
+
+    if (isNaN(id)) {
+      return error(res, 'ID de guardia no válido', 400);
+    }
 
     if (!['ACEPTADA', 'RECHAZADA'].includes(accion)) {
       return error(res, 'Acción no válida. Usa ACEPTADA o RECHAZADA', 400);

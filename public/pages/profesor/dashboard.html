@@ -415,6 +415,15 @@
     }
 
     function responderGuardia(btn, idGuardia, accion) {
+      var id = parseInt(idGuardia);
+      if (isNaN(id)) {
+        var t = btn.closest('.tarjeta-guardia-pendiente');
+        if (t) t.insertAdjacentHTML('afterbegin',
+          '<div style="padding:8px 12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b;margin-bottom:8px;font-size:13px;">' +
+          '<i class="bi bi-exclamation-triangle me-1"></i>Error: ID de guardia no válido. Recarga la página.</div>');
+        return;
+      }
+
       var textoAccion = accion === 'ACEPTADA' ? 'aceptar' : 'rechazar';
       if (!confirm("¿Seguro que quieres " + textoAccion + " esta guardia?")) return;
 
@@ -424,7 +433,7 @@
       var textoOriginal = btn.innerHTML;
       btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Procesando...';
 
-      apiFetch('/api/v1/guardias/asignadas/' + idGuardia + '/responder', {
+      apiFetch('/api/v1/guardias/asignadas/' + id + '/responder', {
         method: 'PATCH',
         body: JSON.stringify({ accion: accion })
       }).then(function (data) {
