@@ -132,6 +132,31 @@
 
     </div>
 
+    <!-- Incidencias del centro -->
+    <div class="row g-3 mt-1">
+      <div class="col-12">
+        <div class="tarjeta">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="tarjeta-titulo mb-0">Incidencias del centro</h2>
+          </div>
+          <div class="tabla-responsive">
+            <table class="tabla-datos">
+              <thead>
+                <tr>
+                  <th>Incidencia</th>
+                  <th>Reportada por</th>
+                  <th>Tipo</th>
+                  <th>Estado</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-incidencias-centro-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 
 
@@ -140,8 +165,11 @@
   <script src="../../js/sidebar.js"></script>
 
   <script>
+    var _usuario = null;
+
     verificarSesion().then(function (usuario) {
       if (!usuario) return;
+      _usuario = usuario;
 
       crearSidebar("dashboard", "../../");
       document.getElementById("saludo").textContent = "Bienvenido/a, " + usuario.nombre;
@@ -247,7 +275,50 @@
           '<div class="sin-resultados" style="text-align:center;padding:24px;color:#64748b;">No tienes guardias hoy</div>';
       });
 
-      // Incidencias recientes
+      // Incidencias del centro (todas, abiertas y en proceso)
+      apiFetch('/api/v1/incidencias?vista_centro=true&limit=10').then(function (data) {
+        var tbody = document.getElementById("tabla-incidencias-centro-body");
+        var filas = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
+
+        if (filas.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="sin-resultados" style="text-align:center;padding:24px;color:#64748b;">' +
+            '<i class="bi bi-check-circle" style="font-size:28px;display:block;margin-bottom:8px;"></i>No hay incidencias abiertas en el centro</td></tr>';
+          return;
+        }
+
+        var html = "";
+        for (var i = 0; i < filas.length; i++) {
+          var inc = filas[i];
+          var fecha = formatearFecha(inc.fecha).substring(0, 5);
+          var creador = (inc.creador_nombre || "") + " " + (inc.creador_apellidos || "");
+
+          var claseBadge, textoEstado;
+          if (inc.estado === "ABIERTA") { claseBadge = "badge-pendiente"; textoEstado = "Pendiente"; }
+          else { claseBadge = "badge-en-proceso"; textoEstado = "En proceso"; }
+
+          var textoTipo;
+          if (inc.tipo === "MATERIAL") textoTipo = "Material";
+          else if (inc.tipo === "INFRAESTRUCTURA") textoTipo = "Infraestructura";
+          else if (inc.tipo === "SOFTWARE") textoTipo = "Software";
+          else textoTipo = inc.tipo || "—";
+
+          html += '<tr>' +
+                    '<td><div style="font-weight:500;font-size:13px;">' + inc.titulo + '</div>' +
+                      (inc.espacio_nombre ? '<div class="texto-secundario-celda">' + inc.espacio_nombre + '</div>' : '') +
+                    '</td>' +
+                    '<td style="font-size:13px;">' + creador.trim() + '</td>' +
+                    '<td><span class="badge-tipo">' + textoTipo + '</span></td>' +
+                    '<td><span class="badge-estado ' + claseBadge + '">' + textoEstado + '</span></td>' +
+                    '<td class="celda-fecha-gris">' + fecha + '</td>' +
+                  '</tr>';
+        }
+        tbody.innerHTML = html;
+      }).catch(function () {
+        document.getElementById("tabla-incidencias-centro-body").innerHTML =
+          '<tr><td colspan="5" class="sin-resultados" style="text-align:center;padding:24px;color:#64748b;">No se pudieron cargar las incidencias</td></tr>';
+      });
+
+      // Incidencias recientes (propias)
       apiFetch('/api/v1/incidencias?limit=3').then(function (data) {
         var tbody = document.getElementById("tabla-incidencias-body");
         var filas = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
@@ -313,7 +384,7 @@
           var tramo = g.tramo_horario || "—";
           var clase = g.clase_curso || "—";
 
-          html += '<div style="padding:14px;border:1px solid #fde68a;border-radius:10px;margin-bottom:10px;background:#fffbeb;">' +
+          html += '<div class="tarjeta-guardia-pendiente" style="padding:14px;border:1px solid #fde68a;border-radius:10px;margin-bottom:10px;background:#fffbeb;">' +
                     '<div class="d-flex justify-content-between align-items-start flex-wrap gap-2">' +
                       '<div>' +
                         '<div style="font-weight:600;font-size:15px;color:#92400e;"><i class="bi bi-shield-exclamation me-1"></i>Guardia asignada</div>' +
@@ -327,10 +398,10 @@
                         (clase !== "—" ? '<div style="font-size:13px;color:#78350f;margin-top:2px;"><i class="bi bi-mortarboard me-1"></i>Clase: ' + clase + '</div>' : '') +
                       '</div>' +
                       '<div class="d-flex gap-2">' +
-                        '<button class="btn btn-success btn-sm" onclick="responderGuardia(' + g.id_guardia_asignada + ', \'ACEPTADA\')" style="font-size:13px;padding:6px 16px;">' +
+                        '<button class="btn btn-success btn-sm" onclick="responderGuardia(this, ' + g.id_guardia_asignada + ', \'ACEPTADA\')" style="font-size:13px;padding:6px 16px;">' +
                           '<i class="bi bi-check-lg me-1"></i>Aceptar' +
                         '</button>' +
-                        '<button class="btn btn-danger btn-sm" onclick="responderGuardia(' + g.id_guardia_asignada + ', \'RECHAZADA\')" style="font-size:13px;padding:6px 16px;">' +
+                        '<button class="btn btn-danger btn-sm" onclick="responderGuardia(this, ' + g.id_guardia_asignada + ', \'RECHAZADA\')" style="font-size:13px;padding:6px 16px;">' +
                           '<i class="bi bi-x-lg me-1"></i>Rechazar' +
                         '</button>' +
                       '</div>' +
@@ -343,20 +414,61 @@
       });
     }
 
-    function responderGuardia(idGuardia, accion) {
+    function responderGuardia(btn, idGuardia, accion) {
       var textoAccion = accion === 'ACEPTADA' ? 'aceptar' : 'rechazar';
       if (!confirm("¿Seguro que quieres " + textoAccion + " esta guardia?")) return;
+
+      var tarjeta = btn.closest('.tarjeta-guardia-pendiente');
+      var botones = tarjeta ? tarjeta.querySelectorAll('button') : [];
+      for (var i = 0; i < botones.length; i++) botones[i].disabled = true;
+      var textoOriginal = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Procesando...';
 
       apiFetch('/api/v1/guardias/asignadas/' + idGuardia + '/responder', {
         method: 'PATCH',
         body: JSON.stringify({ accion: accion })
       }).then(function (data) {
         if (data && data.ok) {
-          window.location.reload();
+          var resultado = data.datos || {};
+          var msgHtml;
+
+          if (accion === 'ACEPTADA') {
+            var aulaTexto = '';
+            if (resultado.aula) aulaTexto = ' Debes acudir al ' + resultado.aula.nombre + ' (edificio ' + resultado.aula.edificio + ').';
+            var tareaTexto = resultado.hay_tarea ? ' Hay tarea para los alumnos.' : '';
+            msgHtml = '<div style="padding:14px;border:1px solid #86efac;border-radius:10px;background:#f0fdf4;color:#166534;margin-bottom:10px;">' +
+                        '<i class="bi bi-check-circle-fill me-2"></i>' +
+                        '<strong>Guardia aceptada correctamente.</strong>' + aulaTexto + tareaTexto +
+                      '</div>';
+          } else {
+            var info = '';
+            if (resultado.reasignado) {
+              info = ' Se notificará al siguiente profesor disponible.';
+            } else if (resultado.sin_cubrir) {
+              info = ' No quedan profesores disponibles. Se ha notificado al equipo directivo.';
+            }
+            msgHtml = '<div style="padding:14px;border:1px solid #93c5fd;border-radius:10px;background:#eff6ff;color:#1e40af;margin-bottom:10px;">' +
+                        '<i class="bi bi-info-circle-fill me-2"></i>' +
+                        '<strong>Guardia rechazada.</strong>' + info +
+                      '</div>';
+          }
+
+          if (tarjeta) tarjeta.outerHTML = msgHtml;
+          setTimeout(function () { if (_usuario) cargarGuardiasPendientes(_usuario); }, 2000);
         } else {
-          alert((data && data.mensaje) || "Error al responder");
+          btn.innerHTML = textoOriginal;
+          for (var i = 0; i < botones.length; i++) botones[i].disabled = false;
+          var errorDiv = '<div style="padding:8px 12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b;margin-bottom:8px;font-size:13px;">' +
+            '<i class="bi bi-exclamation-triangle me-1"></i>' + ((data && data.mensaje) || "Error al responder") + '</div>';
+          if (tarjeta) tarjeta.insertAdjacentHTML('afterbegin', errorDiv);
         }
-      }).catch(function () { alert("Error de conexión"); });
+      }).catch(function () {
+        btn.innerHTML = textoOriginal;
+        for (var i = 0; i < botones.length; i++) botones[i].disabled = false;
+        if (tarjeta) tarjeta.insertAdjacentHTML('afterbegin',
+          '<div style="padding:8px 12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b;margin-bottom:8px;font-size:13px;">' +
+          '<i class="bi bi-exclamation-triangle me-1"></i>Error de conexión</div>');
+      });
     }
   </script>
 

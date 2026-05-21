@@ -81,6 +81,21 @@
 
     </div>
 
+    <!-- Aviso guardias sin cubrir -->
+    <div class="row g-3 mb-4" id="seccion-sin-cubrir" style="display:none;">
+      <div class="col-12">
+        <div class="tarjeta" style="border-left:4px solid #ef4444;background:#fef2f2;">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="tarjeta-titulo mb-0" style="color:#991b1b;">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>Guardias sin cubrir
+            </h2>
+            <span class="badge-estado badge-pendiente" id="badge-sin-cubrir-count">0</span>
+          </div>
+          <div id="lista-sin-cubrir"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Fila inferior: incidencias recientes + coberturas -->
     <div class="row g-3">
 
@@ -186,6 +201,40 @@
       } else {
         document.getElementById("num-profesores").textContent = "—";
       }
+
+      // Guardias sin cubrir
+      apiFetch('/api/v1/ausencias?estado=SIN_CUBRIR&limit=10').then(function (data) {
+        var filas = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
+        if (filas.length === 0) return;
+
+        document.getElementById("seccion-sin-cubrir").style.display = "block";
+        document.getElementById("badge-sin-cubrir-count").textContent = filas.length + " sin cubrir";
+
+        var html = "";
+        for (var i = 0; i < filas.length; i++) {
+          var a = filas[i];
+          var fecha = formatearFecha(a.fecha);
+          var profesor = (a.profesor_nombre || "") + " " + (a.profesor_apellidos || "");
+
+          html += '<div style="padding:10px 12px;border:1px solid #fca5a5;border-radius:8px;margin-bottom:6px;background:white;">' +
+                    '<div class="d-flex justify-content-between align-items-center flex-wrap gap-2">' +
+                      '<div>' +
+                        '<div style="font-weight:600;font-size:14px;color:#991b1b;">' +
+                          '<i class="bi bi-person-x me-1"></i>' + profesor.trim() +
+                        '</div>' +
+                        '<div style="font-size:13px;color:#78350f;margin-top:2px;">' +
+                          '<i class="bi bi-calendar3 me-1"></i>' + fecha +
+                          ' <i class="bi bi-clock ms-2 me-1"></i>' + (a.tramo_horario || "") +
+                        '</div>' +
+                      '</div>' +
+                      '<a href="guardias.html" class="btn-secundario" style="font-size:12px;padding:4px 10px;">' +
+                        'Gestionar <i class="bi bi-arrow-right"></i>' +
+                      '</a>' +
+                    '</div>' +
+                  '</div>';
+        }
+        document.getElementById("lista-sin-cubrir").innerHTML = html;
+      }).catch(function () {});
 
       // Tabla incidencias recientes
       apiFetch('/api/v1/incidencias?limit=4').then(function (data) {

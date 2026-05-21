@@ -41,6 +41,7 @@
               <th>Tramo</th>
               <th>Espacio</th>
               <th>Edificio</th>
+              <th>Reservado por</th>
               <th>Motivo</th>
               <th>Acciones</th>
             </tr>
@@ -81,7 +82,7 @@
 
         if (filas.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="6" class="sin-resultados">' +
+            '<tr><td colspan="7" class="sin-resultados">' +
               '<i class="bi bi-calendar-x sin-resultados-icono"></i>' +
               'No tienes reservas. <a href="../../pages/compartido/nueva-reserva.html" class="enlace-nueva-reserva">Crea una nueva reserva</a>' +
             '</td></tr>';
@@ -105,11 +106,17 @@
                        '</button>';
           }
 
+          var reservadoPor = "";
+          if (r.profesor_nombre) {
+            reservadoPor = r.profesor_nombre + " " + (r.profesor_apellidos || "");
+          }
+
           html += '<tr>' +
                     '<td class="fecha-peso">' + fecha + '</td>' +
                     '<td>' + (r.tramo_horario || "—") + '</td>' +
                     '<td>' + (r.espacio_nombre || "—") + '</td>' +
                     '<td>' + (r.edificio_nombre || "—") + '</td>' +
+                    '<td>' + (reservadoPor || "—") + '</td>' +
                     '<td class="celda-motivo">' + (r.motivo || "—") + '</td>' +
                     '<td>' + acciones + '</td>' +
                   '</tr>';
@@ -117,7 +124,7 @@
         tbody.innerHTML = html;
       }).catch(function () {
         document.getElementById("tabla-body").innerHTML =
-          '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-calendar-x sin-resultados-icono"></i>No tienes reservas</td></tr>';
+          '<tr><td colspan="7" class="sin-resultados"><i class="bi bi-calendar-x sin-resultados-icono"></i>No tienes reservas</td></tr>';
         document.getElementById("contador-texto").textContent = "Mostrando 0 reservas";
       });
     }

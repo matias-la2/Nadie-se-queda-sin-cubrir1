@@ -88,7 +88,7 @@
           <option value="PROFESOR">Profesor</option>
           <option value="EQUIPO_DIRECTIVO">Equipo Directivo</option>
           <option value="ADMINISTRADOR">Administrador</option>
-          <option value="CONSERJE">Conserje</option>
+          <option value="CONSERJE">Mantenimiento</option>
         </select>
         <select class="select-filtro" id="filtro-estado">
           <option value="">Todos los estados</option>
@@ -157,7 +157,7 @@
           </div>
           <div class="mb-2">
             <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
-              <input type="checkbox" id="chk-conserje" value="CONSERJE"> Conserje
+              <input type="checkbox" id="chk-conserje" value="CONSERJE"> Mantenimiento
             </label>
           </div>
         </div>
@@ -247,7 +247,7 @@
             if (r === "PROFESOR")              { textoRol = "Profesor";         claseRol = "badge-cerrada"; }
             else if (r === "EQUIPO_DIRECTIVO") { textoRol = "Equipo Directivo"; claseRol = "badge-en-proceso"; }
             else if (r === "ADMINISTRADOR")    { textoRol = "Administrador";    claseRol = "badge-tipo"; }
-            else if (r === "CONSERJE")         { textoRol = "Conserje";         claseRol = "badge-pendiente"; }
+            else if (r === "CONSERJE")         { textoRol = "Mantenimiento";    claseRol = "badge-pendiente"; }
             else                               { textoRol = r;                  claseRol = "badge-cerrada"; }
             badgesRol += '<span class="badge-estado ' + claseRol + ' badge-rol">' + textoRol + '</span>';
           }

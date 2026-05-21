@@ -151,7 +151,7 @@ function obtenerRolPrincipal(roles) {
   var etiquetas = {
     "ADMINISTRADOR": "Administrador",
     "EQUIPO_DIRECTIVO": "Equipo directivo",
-    "CONSERJE": "Conserje",
+    "CONSERJE": "Mantenimiento",
     "PROFESOR": "Profesor"
   };
   for (var i = 0; i < prioridad.length; i++) {

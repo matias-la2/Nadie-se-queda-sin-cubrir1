@@ -36,9 +36,13 @@ async function listar(req, res, next) {
     const rolesUsuario = req.usuario.roles;
     const esProfesor = rolesUsuario.length === 1 && rolesUsuario[0] === 'PROFESOR';
 
-    if (esProfesor) {
+    if (esProfesor && req.query.vista_centro !== 'true') {
       where.push('i.id_usuario_creador = ?');
       params.push(req.usuario.id);
+    }
+
+    if (req.query.vista_centro === 'true' && !req.query.estado) {
+      where.push("i.estado IN ('ABIERTA', 'EN_PROCESO')");
     }
 
     const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';

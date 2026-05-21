@@ -386,6 +386,8 @@ async function responderGuardia(req, res, next) {
     const { accion } = req.body;
     const idUsuario = req.usuario.id;
 
+    console.log('[GUARDIA] responderGuardia id:', id, 'accion:', accion, 'usuario:', idUsuario);
+
     if (!['ACEPTADA', 'RECHAZADA'].includes(accion)) {
       return error(res, 'Acción no válida. Usa ACEPTADA o RECHAZADA', 400);
     }
@@ -452,6 +454,7 @@ async function responderGuardia(req, res, next) {
       );
       const idsExcluir = profesoresRechazaron.map(r => r.id_profesor_sustituto);
       idsExcluir.push(guardia.id_ausente);
+      console.log('[GUARDIA] Rechazada. Excluidos:', idsExcluir, '| Buscando siguiente candidato...');
 
       const resultado = await asignarAutomaticamente(
         conn, guardia.id_ausencia, guardia.fecha, guardia.tramo_horario,
@@ -459,7 +462,7 @@ async function responderGuardia(req, res, next) {
       );
 
       if (resultado) {
-        reasignado = { id_usuario: resultado.id_usuario, nombre: resultado.nombre };
+        reasignado = { id_usuario: resultado.id_usuario, nombre: resultado.nombre, unico_disponible: resultado.unico_disponible };
       } else {
         await conn.query(
           'UPDATE ausencia SET estado = ? WHERE id_ausencia = ?',
@@ -500,11 +503,35 @@ async function responderGuardia(req, res, next) {
       }
     }
 
-    await conn.commit();
+    const [espaciosResp] = await conn.query(
+      `SELECT es.nombre AS espacio_nombre, ed.nombre AS edificio_nombre
+       FROM ausencia_espacio ae
+       JOIN espacio es ON ae.id_espacio = es.id_espacio
+       JOIN edificio ed ON es.id_edificio = ed.id_edificio
+       WHERE ae.id_ausencia = ?`,
+      [guardia.id_ausencia]
+    );
 
-    const respuesta = { mensaje: accion === 'ACEPTADA' ? 'Guardia aceptada' : 'Guardia rechazada' };
-    if (reasignado) {
-      respuesta.reasignado_a = reasignado.nombre;
+    await conn.commit();
+    console.log('[GUARDIA] Commit OK. Accion:', accion, reasignado ? '| Reasignado a: ' + reasignado.nombre : (accion === 'RECHAZADA' && !reasignado ? '| SIN_CUBRIR' : ''));
+
+    const respuesta = { mensaje: accion === 'ACEPTADA' ? 'Guardia aceptada correctamente' : 'Guardia rechazada' };
+    if (accion === 'ACEPTADA') {
+      respuesta.aula = espaciosResp.length > 0 ? {
+        nombre: espaciosResp[0].espacio_nombre,
+        edificio: espaciosResp[0].edificio_nombre
+      } : null;
+      respuesta.hay_tarea = !!guardia.hay_tarea;
+      respuesta.descripcion_tarea = guardia.descripcion_tarea || null;
+    }
+    if (accion === 'RECHAZADA') {
+      if (reasignado) {
+        respuesta.reasignado = true;
+        respuesta.reasignado_a = reasignado.nombre;
+        respuesta.unico_disponible = reasignado.unico_disponible || false;
+      } else {
+        respuesta.sin_cubrir = true;
+      }
     }
     return success(res, respuesta);
   } catch (err) {
@@ -547,10 +574,13 @@ async function asignarAutomaticamente(conn, idAusencia, fecha, tramoHorario, idP
   }
 
   if (candidatos.length === 0) {
+    console.log('[GUARDIA] Sin candidatos disponibles para ausencia', idAusencia);
     return null;
   }
 
+  const unicoDisponible = candidatos.length === 1;
   const elegido = candidatos[0];
+  console.log('[GUARDIA] Candidatos:', candidatos.length, '| Elegido:', elegido.profesor_nombre, elegido.profesor_apellidos, '| Único:', unicoDisponible);
 
   const [result] = await conn.query(
     `INSERT INTO guardia_asignada
@@ -567,10 +597,18 @@ async function asignarAutomaticamente(conn, idAusencia, fecha, tramoHorario, idP
   const nombreAusente = `${ausente.nombre} ${ausente.apellidos}`;
   const fechaFormateada = formatearFechaSQL(fecha);
 
-  let mensaje = `Se te ha asignado una guardia para cubrir la ausencia de ${nombreAusente} el ${fechaFormateada} en el tramo ${tramoHorario}.`;
-  if (espacioNombre) mensaje += ` Debes cubrir en el ${espacioNombre}${edificioNombre ? ' (' + edificioNombre + ')' : ''}.`;
-  if (hayTarea) mensaje += ' Hay tarea para los alumnos.';
-  mensaje += ' Por favor, acepta o rechaza la asignación.';
+  let mensaje;
+  if (unicoDisponible) {
+    mensaje = `Eres el único profesor disponible para cubrir la ausencia de ${nombreAusente} el ${fechaFormateada} (${tramoHorario}).`;
+    if (espacioNombre) mensaje += ` Debes cubrir en el ${espacioNombre}${edificioNombre ? ' (' + edificioNombre + ')' : ''}.`;
+    if (hayTarea) mensaje += ' Hay tarea para los alumnos.';
+    mensaje += ' Por favor, acepta la asignación.';
+  } else {
+    mensaje = `Se te ha asignado una guardia para cubrir la ausencia de ${nombreAusente} el ${fechaFormateada} en el tramo ${tramoHorario}.`;
+    if (espacioNombre) mensaje += ` Debes cubrir en el ${espacioNombre}${edificioNombre ? ' (' + edificioNombre + ')' : ''}.`;
+    if (hayTarea) mensaje += ' Hay tarea para los alumnos.';
+    mensaje += ' Por favor, acepta o rechaza la asignación.';
+  }
 
   await conn.query(
     `INSERT INTO notificacion (id_usuario, tipo, mensaje, referencia_id, referencia_tipo)
@@ -595,7 +633,8 @@ async function asignarAutomaticamente(conn, idAusencia, fecha, tramoHorario, idP
     id_guardia_asignada: idGuardiaAsignada,
     id_usuario: elegido.id_usuario,
     nombre: `${elegido.profesor_nombre} ${elegido.profesor_apellidos}`,
-    guardias_realizadas: elegido.guardias_realizadas
+    guardias_realizadas: elegido.guardias_realizadas,
+    unico_disponible: unicoDisponible
   };
 }
 
@@ -631,8 +670,7 @@ async function buscarCandidatos(conn, diaSemanaDB, fecha, tramoHorario, excluido
   }
 
   sql += ` GROUP BY gc.id_usuario, u.nombre, u.apellidos, conteo.total
-   ORDER BY guardias_realizadas ASC, RAND()
-   LIMIT 1`;
+   ORDER BY guardias_realizadas ASC, RAND()`;
 
   const [rows] = await conn.query(sql, params);
   return rows;
