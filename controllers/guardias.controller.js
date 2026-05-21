@@ -458,7 +458,15 @@ async function responderGuardia(req, res, next) {
       );
       const idsExcluir = profesoresRechazaron.map(r => r.id_profesor_sustituto);
       idsExcluir.push(guardia.id_ausente);
-      console.log('[GUARDIA] Rechazada. Excluidos:', idsExcluir, '| Buscando siguiente candidato...');
+      console.log('[GUARDIA] Rechazada. Excluidos:', idsExcluir, '| Params para reasignar:', {
+        id_ausencia: guardia.id_ausencia,
+        fecha: guardia.fecha,
+        fechaTipo: typeof guardia.fecha,
+        fechaEsDate: guardia.fecha instanceof Date,
+        tramo_horario: guardia.tramo_horario,
+        id_ausente: guardia.id_ausente,
+        hay_tarea: guardia.hay_tarea
+      });
 
       const resultado = await asignarAutomaticamente(
         conn, guardia.id_ausencia, guardia.fecha, guardia.tramo_horario,
@@ -551,9 +559,22 @@ async function responderGuardia(req, res, next) {
 async function asignarAutomaticamente(conn, idAusencia, fecha, tramoHorario, idProfesorAusente, hayTarea, idsExcluir) {
   const fechaStr = fechaAString(fecha);
   const partesFecha = fechaStr.split('-');
-  const fechaLocal = new Date(parseInt(partesFecha[0]), parseInt(partesFecha[1]) - 1, parseInt(partesFecha[2]));
+  const anio = parseInt(partesFecha[0]);
+  const mes = parseInt(partesFecha[1]);
+  const dia = parseInt(partesFecha[2]);
+
+  console.log('[ASIGNAR] fechaStr:', fechaStr, '| partes:', anio, mes, dia);
+
+  if (isNaN(anio) || isNaN(mes) || isNaN(dia)) {
+    console.error('[ASIGNAR] ERROR: fecha produjo NaN. fecha original:', fecha, 'tipo:', typeof fecha, 'fechaStr:', fechaStr);
+    return null;
+  }
+
+  const fechaLocal = new Date(anio, mes - 1, dia);
   const diaSemana = fechaLocal.getDay();
   const diaSemanaDB = diaSemana === 0 ? 7 : diaSemana;
+
+  console.log('[ASIGNAR] diaSemana:', diaSemana, '| diaSemanaDB:', diaSemanaDB, '| idAusencia:', idAusencia, '| tramoHorario:', tramoHorario, '| idAusente:', idProfesorAusente);
 
   const excluidos = Array.isArray(idsExcluir) && idsExcluir.length > 0
     ? idsExcluir

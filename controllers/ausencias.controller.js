@@ -188,18 +188,37 @@ async function cambiarEstado(req, res, next) {
 }
 
 async function eliminar(req, res, next) {
+  const conn = await pool.getConnection();
   try {
-    const [result] = await pool.query(
+    await conn.beginTransaction();
+
+    const [[ausencia]] = await conn.query(
+      'SELECT id_ausencia FROM ausencia WHERE id_ausencia = ?',
+      [req.params.id]
+    );
+    if (!ausencia) {
+      await conn.rollback();
+      conn.release();
+      return error(res, 'Ausencia no encontrada', 404);
+    }
+
+    await conn.query(
+      'DELETE FROM guardia_asignada WHERE id_ausencia = ?',
+      [req.params.id]
+    );
+
+    await conn.query(
       'DELETE FROM ausencia WHERE id_ausencia = ?',
       [req.params.id]
     );
-    if (result.affectedRows === 0) return error(res, 'Ausencia no encontrada', 404);
+
+    await conn.commit();
     return success(res, { mensaje: 'Ausencia eliminada correctamente' });
   } catch (err) {
-    if (err.code === 'ER_ROW_IS_REFERENCED_2') {
-      return error(res, 'No se puede eliminar: tiene guardias asignadas', 409);
-    }
+    await conn.rollback();
     next(err);
+  } finally {
+    conn.release();
   }
 }
 
