@@ -165,6 +165,8 @@
           else { claseBadge = "badge-en-proceso"; textoEstado = "En proceso"; }
 
           var espacio = inc.espacio_nombre || "";
+          var mapasTipo = { "MATERIAL": "Material", "HARDWARE": "Hardware", "SOFTWARE": "Software", "OTROS": "Otros", "ELECTRICIDAD": "Material", "FONTANERIA": "Material", "INFRAESTRUCTURA": "Material" };
+          var textoTipo = mapasTipo[inc.tipo] || inc.tipo || "—";
 
           var sigEstado = inc.estado === "ABIERTA" ? "EN_PROCESO" : "RESUELTA";
           var textoBoton = inc.estado === "ABIERTA" ? "Iniciar" : "Resolver";
@@ -175,7 +177,7 @@
                     '<td><div class="inc-titulo">' + inc.titulo + '</div>' +
                       (espacio ? '<div class="texto-secundario-celda">' + espacio + '</div>' : '') +
                     '</td>' +
-                    '<td><span class="badge-tipo">' + (inc.tipo || "—") + '</span></td>' +
+                    '<td><span class="badge-tipo">' + textoTipo + '</span></td>' +
                     '<td><span class="badge-estado ' + claseBadge + '">' + textoEstado + '</span></td>' +
                     '<td class="celda-fecha-gris">' + fecha + '</td>' +
                     '<td>' +

@@ -107,7 +107,9 @@ async function crear(req, res, next) {
     await conn.beginTransaction();
 
     const { tramo_horario, fecha, comentario, hay_tarea, descripcion_tarea, id_profesor, espacios } = req.body;
-    const profesorId = id_profesor || req.usuario.id;
+    const roles = req.usuario.roles || [];
+    const esDirectivoOAdmin = roles.includes('EQUIPO_DIRECTIVO') || roles.includes('ADMINISTRADOR');
+    const profesorId = (id_profesor && esDirectivoOAdmin) ? id_profesor : req.usuario.id;
     const archivoTarea = req.file ? 'uploads/tareas/' + req.file.filename : null;
 
     const [result] = await conn.query(
@@ -204,6 +206,11 @@ async function eliminar(req, res, next) {
 
     await conn.query(
       'DELETE FROM guardia_asignada WHERE id_ausencia = ?',
+      [req.params.id]
+    );
+
+    await conn.query(
+      'DELETE FROM ausencia_espacio WHERE id_ausencia = ?',
       [req.params.id]
     );
 

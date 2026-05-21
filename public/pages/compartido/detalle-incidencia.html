@@ -177,7 +177,7 @@
 
         document.getElementById("inc-descripcion").textContent = inc.descripcion || "Sin descripción.";
 
-        var textosTipo = { "MATERIAL": "Material", "INFRAESTRUCTURA": "Infraestructura", "SOFTWARE": "Software" };
+        var textosTipo = { "MATERIAL": "Material", "HARDWARE": "Hardware", "SOFTWARE": "Software", "OTROS": "Otros", "ELECTRICIDAD": "Material", "FONTANERIA": "Material", "INFRAESTRUCTURA": "Material" };
         document.getElementById("badge-tipo").textContent = textosTipo[inc.tipo] || inc.tipo;
 
         var badgeEstado = document.getElementById("badge-estado");

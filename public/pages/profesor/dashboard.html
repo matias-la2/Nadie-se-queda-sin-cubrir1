@@ -296,11 +296,8 @@
           if (inc.estado === "ABIERTA") { claseBadge = "badge-pendiente"; textoEstado = "Pendiente"; }
           else { claseBadge = "badge-en-proceso"; textoEstado = "En proceso"; }
 
-          var textoTipo;
-          if (inc.tipo === "MATERIAL") textoTipo = "Material";
-          else if (inc.tipo === "INFRAESTRUCTURA") textoTipo = "Infraestructura";
-          else if (inc.tipo === "SOFTWARE") textoTipo = "Software";
-          else textoTipo = inc.tipo || "—";
+          var mapasTipo = { "MATERIAL": "Material", "HARDWARE": "Hardware", "SOFTWARE": "Software", "OTROS": "Otros", "ELECTRICIDAD": "Material", "FONTANERIA": "Material", "INFRAESTRUCTURA": "Material" };
+          var textoTipo = mapasTipo[inc.tipo] || inc.tipo || "—";
 
           html += '<tr>' +
                     '<td><div style="font-weight:500;font-size:13px;">' + inc.titulo + '</div>' +

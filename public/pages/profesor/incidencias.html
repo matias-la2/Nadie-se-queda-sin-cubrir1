@@ -44,8 +44,9 @@
         <select class="select-filtro" id="filtro-tipo">
           <option value="">Todos los tipos</option>
           <option value="MATERIAL">Material</option>
-          <option value="INFRAESTRUCTURA">Infraestructura</option>
+          <option value="HARDWARE">Hardware</option>
           <option value="SOFTWARE">Software</option>
+          <option value="OTROS">Otros</option>
         </select>
       </div>
 
@@ -128,11 +129,8 @@
           else if (inc.estado === "RESUELTA") { claseBadge = "badge-resuelta"; textoEstado = "Resuelta"; }
           else { claseBadge = "badge-cerrada"; textoEstado = "Cerrada"; }
 
-          var textoTipo;
-          if (inc.tipo === "MATERIAL") textoTipo = "Material";
-          else if (inc.tipo === "INFRAESTRUCTURA") textoTipo = "Infraestructura";
-          else if (inc.tipo === "SOFTWARE") textoTipo = "Software";
-          else textoTipo = inc.tipo;
+          var mapasTipo = { "MATERIAL": "Material", "HARDWARE": "Hardware", "SOFTWARE": "Software", "OTROS": "Otros", "ELECTRICIDAD": "Material", "FONTANERIA": "Material", "INFRAESTRUCTURA": "Material" };
+          var textoTipo = mapasTipo[inc.tipo] || inc.tipo;
 
           var fecha = formatearFecha(inc.fecha);
           var espacio = inc.espacio_nombre || "—";

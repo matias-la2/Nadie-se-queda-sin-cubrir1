@@ -557,18 +557,18 @@ async function responderGuardia(req, res, next) {
 // ─── ASIGNACION AUTOMATICA ─────────────────────────────
 
 async function asignarAutomaticamente(conn, idAusencia, fecha, tramoHorario, idProfesorAusente, hayTarea, idsExcluir) {
+  console.log('[ASIGNAR] Params:', { idAusencia, fecha, fechaTipo: typeof fecha, tramoHorario, idProfesorAusente, hayTarea, idsExcluir });
+
   const fechaStr = fechaAString(fecha);
+  if (!fechaStr) {
+    console.error('[ASIGNAR] ERROR: fecha inválida. fecha original:', fecha, 'tipo:', typeof fecha);
+    return null;
+  }
+
   const partesFecha = fechaStr.split('-');
   const anio = parseInt(partesFecha[0]);
   const mes = parseInt(partesFecha[1]);
   const dia = parseInt(partesFecha[2]);
-
-  console.log('[ASIGNAR] fechaStr:', fechaStr, '| partes:', anio, mes, dia);
-
-  if (isNaN(anio) || isNaN(mes) || isNaN(dia)) {
-    console.error('[ASIGNAR] ERROR: fecha produjo NaN. fecha original:', fecha, 'tipo:', typeof fecha, 'fechaStr:', fechaStr);
-    return null;
-  }
 
   const fechaLocal = new Date(anio, mes - 1, dia);
   const diaSemana = fechaLocal.getDay();
@@ -703,16 +703,20 @@ async function buscarCandidatos(conn, diaSemanaDB, fecha, tramoHorario, excluido
 }
 
 function fechaAString(fecha) {
-  if (fecha instanceof Date) {
-    return fecha.getFullYear() + '-' +
-      String(fecha.getMonth() + 1).padStart(2, '0') + '-' +
-      String(fecha.getDate()).padStart(2, '0');
+  if (fecha instanceof Date && !isNaN(fecha.getTime())) {
+    return fecha.getUTCFullYear() + '-' +
+      String(fecha.getUTCMonth() + 1).padStart(2, '0') + '-' +
+      String(fecha.getUTCDate()).padStart(2, '0');
   }
-  return String(fecha).substring(0, 10);
+  const str = String(fecha || '').substring(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  console.error('[GUARDIA] fechaAString: formato inesperado. fecha:', fecha, 'tipo:', typeof fecha);
+  return null;
 }
 
 function formatearFechaSQL(fecha) {
   const str = fechaAString(fecha);
+  if (!str) return String(fecha);
   const partes = str.split('-');
   if (partes.length < 3) return str;
   return partes[2] + '/' + partes[1] + '/' + partes[0];

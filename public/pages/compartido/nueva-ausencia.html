@@ -41,6 +41,16 @@
 
           <form id="form-ausencia" onsubmit="enviarFormulario(event)">
 
+            <!-- Selector de profesor (solo directivos/admin) -->
+            <div class="campo-grupo" id="grupo-profesor" style="display:none;">
+              <label for="campo-profesor">
+                Profesor <span class="obligatorio">*</span>
+              </label>
+              <select id="campo-profesor">
+                <option value="">Seleccionar profesor...</option>
+              </select>
+            </div>
+
             <!-- Fecha y tramo -->
             <div class="row g-3">
               <div class="col-12 col-sm-6">
@@ -172,10 +182,14 @@
   <script src="../../js/sidebar.js"></script>
 
   <script>
+    var _esDirectivoOAdmin = false;
+
     verificarSesion().then(function (usuario) {
       if (!usuario) return;
 
       crearSidebar("ausencias", "../../");
+
+      _esDirectivoOAdmin = tieneRol("EQUIPO_DIRECTIVO") || tieneRol("ADMINISTRADOR");
 
       var hoy = new Date();
       document.getElementById("campo-fecha").value =
@@ -184,10 +198,37 @@
         String(hoy.getDate()).padStart(2, "0");
 
       cargarEspacios();
+
+      if (_esDirectivoOAdmin) {
+        document.getElementById("grupo-profesor").style.display = "";
+        cargarProfesores();
+      }
     });
 
     var _espaciosData = [];
     var _espaciosSeleccionados = [];
+
+    function cargarProfesores() {
+      apiFetch('/api/v1/usuarios/profesores?limit=500').then(function (data) {
+        var profesores = [];
+        if (data && data.datos) {
+          profesores = Array.isArray(data.datos) ? data.datos : (data.datos.registros || []);
+        }
+        var select = document.getElementById("campo-profesor");
+        profesores.sort(function (a, b) {
+          var na = (a.apellidos || "") + " " + (a.nombre || "");
+          var nb = (b.apellidos || "") + " " + (b.nombre || "");
+          return na.localeCompare(nb);
+        });
+        for (var i = 0; i < profesores.length; i++) {
+          var p = profesores[i];
+          var opt = document.createElement("option");
+          opt.value = p.id_usuario;
+          opt.textContent = p.apellidos + ", " + p.nombre;
+          select.appendChild(opt);
+        }
+      }).catch(function () {});
+    }
 
     function cargarEspacios() {
       apiFetch('/api/v1/espacios?limit=200&curso_escolar=2025-2026').then(function (data) {
@@ -324,6 +365,9 @@
       var hayTarea = document.getElementById("campo-hay-tarea").checked;
       var tarea = document.getElementById("campo-tarea").value.trim();
 
+      var profesorSeleccionado = _esDirectivoOAdmin ? document.getElementById("campo-profesor").value : "";
+
+      if (_esDirectivoOAdmin && !profesorSeleccionado) { mostrarError("Debes seleccionar un profesor."); return; }
       if (!fecha) { mostrarError("La fecha es obligatoria."); return; }
       if (!tramo) { mostrarError("Debes seleccionar un tramo horario."); return; }
       if (hayTarea && !tarea) { mostrarError("Has marcado que hay tarea. Por favor, descríbela."); return; }
@@ -335,6 +379,7 @@
       formData.append('fecha', fecha);
       formData.append('tramo_horario', tramo);
       formData.append('hay_tarea', hayTarea ? 'true' : 'false');
+      if (profesorSeleccionado) formData.append('id_profesor', profesorSeleccionado);
       if (comentario) formData.append('comentario', comentario);
       if (hayTarea && tarea) formData.append('descripcion_tarea', tarea);
       if (espaciosIds.length > 0) formData.append('espacios', JSON.stringify(espaciosIds));
@@ -354,7 +399,7 @@
         esFormData: true
       }).then(function (data) {
         if (data && data.ok) {
-          if (tieneRol("ADMINISTRADOR")) {
+          if (tieneRol("ADMINISTRADOR") || tieneRol("EQUIPO_DIRECTIVO")) {
             window.location.href = "../../pages/admin/ausencias.html";
           } else {
             window.location.href = "../../pages/profesor/ausencias.html";
