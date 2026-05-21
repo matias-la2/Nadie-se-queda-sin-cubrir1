@@ -549,7 +549,8 @@ async function responderGuardia(req, res, next) {
 // ─── ASIGNACION AUTOMATICA ─────────────────────────────
 
 async function asignarAutomaticamente(conn, idAusencia, fecha, tramoHorario, idProfesorAusente, hayTarea, idsExcluir) {
-  const partesFecha = String(fecha).substring(0, 10).split('-');
+  const fechaStr = fechaAString(fecha);
+  const partesFecha = fechaStr.split('-');
   const fechaLocal = new Date(parseInt(partesFecha[0]), parseInt(partesFecha[1]) - 1, parseInt(partesFecha[2]));
   const diaSemana = fechaLocal.getDay();
   const diaSemanaDB = diaSemana === 0 ? 7 : diaSemana;
@@ -680,8 +681,17 @@ async function buscarCandidatos(conn, diaSemanaDB, fecha, tramoHorario, excluido
   return rows;
 }
 
+function fechaAString(fecha) {
+  if (fecha instanceof Date) {
+    return fecha.getFullYear() + '-' +
+      String(fecha.getMonth() + 1).padStart(2, '0') + '-' +
+      String(fecha.getDate()).padStart(2, '0');
+  }
+  return String(fecha).substring(0, 10);
+}
+
 function formatearFechaSQL(fecha) {
-  const str = String(fecha).substring(0, 10);
+  const str = fechaAString(fecha);
   const partes = str.split('-');
   if (partes.length < 3) return str;
   return partes[2] + '/' + partes[1] + '/' + partes[0];
