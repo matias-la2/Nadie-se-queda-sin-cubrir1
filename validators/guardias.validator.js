@@ -6,7 +6,8 @@ const crearGuardiaCreadaSchema = z.object({
   tramo_horario: z.string().min(1, 'El tramo horario es obligatorio'),
   curso_escolar: z.string().min(1, 'El curso escolar es obligatorio').max(10),
   id_usuario: z.number().int().positive('El usuario es obligatorio'),
-  id_espacio: z.number().int().positive().nullish()
+  id_espacio: z.number().int().positive().nullish(),
+  id_edificio: z.number().int().positive().nullish()
 });
 
 const actualizarGuardiaCreadaSchema = crearGuardiaCreadaSchema.partial();
@@ -15,7 +16,7 @@ const crearGrupoGuardiaSchema = z.object({
   dia_semana: z.number().int().min(1).max(5, 'Día de la semana: 1 (Lun) a 5 (Vie)'),
   tramo_horario: z.string().min(1, 'El tramo horario es obligatorio'),
   curso_escolar: z.string().min(1, 'El curso escolar es obligatorio').max(10),
-  id_espacio: z.number().int().positive().nullish(),
+  id_edificio: z.number().int().positive('El edificio es obligatorio'),
   id_usuarios: z.array(z.number().int().positive()).min(1, 'Debe incluir al menos un profesor')
 });
 
@@ -46,20 +47,20 @@ function validar(schema) {
 const guardarHorarioSchema = z.object({
   id_usuario: z.number().int().positive('El usuario es obligatorio'),
   curso_escolar: z.string().min(1).max(10),
+  id_edificio: z.number().int().positive('El edificio es obligatorio'),
   guardias: z.array(z.object({
     dia_semana: z.number().int().min(1).max(5),
-    tramo_horario: z.string().min(1),
-    id_espacio: z.number().int().positive().nullish()
+    tramo_horario: z.string().min(1)
   }))
 });
 
 const importarCSVSchema = z.object({
   curso_escolar: z.string().min(1).max(10),
+  id_edificio: z.number().int().positive('El edificio es obligatorio'),
   guardias: z.array(z.object({
     correo: z.string().email('Correo inválido'),
     dia_semana: z.coerce.number().int().min(1).max(5),
-    tramo_horario: z.string().min(1),
-    id_espacio: z.coerce.number().int().positive().nullish()
+    tramo_horario: z.string().min(1)
   })).min(1, 'Debe incluir al menos una guardia')
 });
 

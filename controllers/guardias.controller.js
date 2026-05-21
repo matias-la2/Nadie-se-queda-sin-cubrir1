@@ -138,10 +138,10 @@ async function eliminarCreada(req, res, next) {
 async function crearGrupo(req, res, next) {
   const conn = await pool.getConnection();
   try {
-    const { dia_semana, tramo_horario, curso_escolar, id_espacio, id_edificio, id_usuarios } = req.body;
+    const { dia_semana, tramo_horario, curso_escolar, id_edificio, id_usuarios } = req.body;
 
-    let espacioFinal = id_espacio || null;
-    if (!espacioFinal && id_edificio) {
+    let espacioFinal = null;
+    if (id_edificio) {
       const [espRows] = await conn.query(
         'SELECT id_espacio FROM espacio WHERE id_edificio = ? LIMIT 1',
         [id_edificio]
@@ -218,12 +218,22 @@ async function listarAsignadas(req, res, next) {
               us.nombre AS sustituto_nombre, us.apellidos AS sustituto_apellidos,
               ua.nombre AS ausente_nombre, ua.apellidos AS ausente_apellidos,
               c.curso AS clase_curso,
-              a.tramo_horario AS ausencia_tramo
+              a.tramo_horario AS ausencia_tramo,
+              ae_info.aula_nombre, ae_info.aula_edificio
        FROM guardia_asignada ga
        JOIN usuario us ON ga.id_profesor_sustituto = us.id_usuario
        JOIN ausencia a ON ga.id_ausencia = a.id_ausencia
        JOIN usuario ua ON a.id_profesor = ua.id_usuario
        LEFT JOIN clase c ON ga.id_clase = c.id_clase
+       LEFT JOIN (
+         SELECT ae.id_ausencia,
+                GROUP_CONCAT(DISTINCT es.nombre SEPARATOR ', ') AS aula_nombre,
+                GROUP_CONCAT(DISTINCT ed.nombre SEPARATOR ', ') AS aula_edificio
+         FROM ausencia_espacio ae
+         JOIN espacio es ON ae.id_espacio = es.id_espacio
+         JOIN edificio ed ON es.id_edificio = ed.id_edificio
+         GROUP BY ae.id_ausencia
+       ) ae_info ON a.id_ausencia = ae_info.id_ausencia
        ${whereSql}
        ORDER BY ga.fecha DESC, ga.tramo_horario
        LIMIT ? OFFSET ?`,
@@ -291,10 +301,24 @@ async function crearAsignada(req, res, next) {
       [id_ausencia]
     );
 
-    let mensaje = `Se te ha asignado una guardia el ${fecha} en el tramo ${tramo_horario}. Por favor, acepta o rechaza la asignación.`;
+    const [espaciosAus] = await conn.query(
+      `SELECT es.nombre AS espacio_nombre, ed.nombre AS edificio_nombre
+       FROM ausencia_espacio ae
+       JOIN espacio es ON ae.id_espacio = es.id_espacio
+       JOIN edificio ed ON es.id_edificio = ed.id_edificio
+       WHERE ae.id_ausencia = ?`,
+      [id_ausencia]
+    );
+    const aulaInfo = espaciosAus.length > 0
+      ? `${espaciosAus[0].espacio_nombre} (${espaciosAus[0].edificio_nombre})`
+      : null;
+
+    let mensaje = `Se te ha asignado una guardia el ${fecha} en el tramo ${tramo_horario}.`;
+    if (aulaInfo) mensaje += ` Debes cubrir en el ${aulaInfo}.`;
     if (ausencia.hay_tarea) {
       mensaje += ' Hay tarea para los alumnos.';
     }
+    mensaje += ' Por favor, acepta o rechaza la asignación.';
 
     await conn.query(
       `INSERT INTO notificacion (id_usuario, tipo, mensaje, referencia_id, referencia_tipo)
@@ -312,20 +336,8 @@ async function crearAsignada(req, res, next) {
         [id_profesor_sustituto]
       );
 
-      const [espaciosAus] = await pool.query(
-        `SELECT es.nombre AS espacio_nombre, ed.nombre AS edificio_nombre
-         FROM ausencia_espacio ae
-         JOIN espacio es ON ae.id_espacio = es.id_espacio
-         JOIN edificio ed ON es.id_edificio = ed.id_edificio
-         WHERE ae.id_ausencia = ?`,
-        [id_ausencia]
-      );
-      const aulaInfo = espaciosAus.length > 0
-        ? `${espaciosAus[0].espacio_nombre} (${espaciosAus[0].edificio_nombre})`
-        : null;
-
       let cuerpo = `Has sido asignado/a para cubrir la ausencia de ${ausencia.ausente_nombre} ${ausencia.ausente_apellidos} el ${fechaF} en el tramo ${tramo_horario}.`;
-      if (aulaInfo) cuerpo += ` Aula: ${aulaInfo}.`;
+      if (aulaInfo) cuerpo += ` Debes cubrir en el ${aulaInfo}.`;
       if (ausencia.hay_tarea && ausencia.descripcion_tarea) {
         cuerpo += ` Tarea para los alumnos: ${ausencia.descripcion_tarea}`;
       }
@@ -556,7 +568,7 @@ async function asignarAutomaticamente(conn, idAusencia, fecha, tramoHorario, idP
   const fechaFormateada = formatearFechaSQL(fecha);
 
   let mensaje = `Se te ha asignado una guardia para cubrir la ausencia de ${nombreAusente} el ${fechaFormateada} en el tramo ${tramoHorario}.`;
-  if (espacioNombre) mensaje += ` Aula: ${espacioNombre}${edificioNombre ? ' (' + edificioNombre + ')' : ''}.`;
+  if (espacioNombre) mensaje += ` Debes cubrir en el ${espacioNombre}${edificioNombre ? ' (' + edificioNombre + ')' : ''}.`;
   if (hayTarea) mensaje += ' Hay tarea para los alumnos.';
   mensaje += ' Por favor, acepta o rechaza la asignación.';
 
@@ -753,12 +765,22 @@ async function guardiasHoy(req, res, next) {
               us.nombre AS sustituto_nombre, us.apellidos AS sustituto_apellidos,
               ua.nombre AS ausente_nombre, ua.apellidos AS ausente_apellidos,
               c.curso AS clase_curso,
-              a.hay_tarea, a.descripcion_tarea, a.archivo_tarea
+              a.hay_tarea, a.descripcion_tarea, a.archivo_tarea,
+              ae_info.aula_nombre, ae_info.aula_edificio
        FROM guardia_asignada ga
        JOIN usuario us ON ga.id_profesor_sustituto = us.id_usuario
        JOIN ausencia a ON ga.id_ausencia = a.id_ausencia
        JOIN usuario ua ON a.id_profesor = ua.id_usuario
        LEFT JOIN clase c ON ga.id_clase = c.id_clase
+       LEFT JOIN (
+         SELECT ae.id_ausencia,
+                GROUP_CONCAT(DISTINCT es.nombre SEPARATOR ', ') AS aula_nombre,
+                GROUP_CONCAT(DISTINCT ed.nombre SEPARATOR ', ') AS aula_edificio
+         FROM ausencia_espacio ae
+         JOIN espacio es ON ae.id_espacio = es.id_espacio
+         JOIN edificio ed ON es.id_edificio = ed.id_edificio
+         GROUP BY ae.id_ausencia
+       ) ae_info ON a.id_ausencia = ae_info.id_ausencia
        WHERE ga.fecha = CURDATE()
        AND ga.estado IN ('PENDIENTE', 'ACEPTADA')`
     );
@@ -944,24 +966,24 @@ async function importarExcel(req, res, next) {
       validos.push({ ...g, id_usuario: idUsuario });
     }
 
-    await conn.beginTransaction();
-
-    const { id_edificio } = req.body;
-    let espacioDefault = null;
-    if (id_edificio) {
+    const espacioPorEdificio = {};
+    for (const e of edificiosDB) {
       const [espRows] = await conn.query(
         'SELECT id_espacio FROM espacio WHERE id_edificio = ? LIMIT 1',
-        [id_edificio]
+        [e.id_edificio]
       );
-      if (espRows.length > 0) espacioDefault = espRows[0].id_espacio;
+      if (espRows.length > 0) espacioPorEdificio[e.id_edificio] = espRows[0].id_espacio;
     }
+
+    await conn.beginTransaction();
 
     const ids = [];
     for (const g of validos) {
+      const espacioRef = g.id_edificio ? (espacioPorEdificio[g.id_edificio] || null) : null;
       const [result] = await conn.query(
         `INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio)
          VALUES (?, ?, ?, ?, ?)`,
-        [g.dia_semana, g.tramo_horario, curso_escolar, g.id_usuario, espacioDefault]
+        [g.dia_semana, g.tramo_horario, curso_escolar, g.id_usuario, espacioRef]
       );
       ids.push(result.insertId);
     }
@@ -991,7 +1013,7 @@ async function importarExcel(req, res, next) {
 async function importarCSV(req, res, next) {
   const conn = await pool.getConnection();
   try {
-    const { curso_escolar, guardias } = req.body;
+    const { curso_escolar, id_edificio, guardias } = req.body;
 
     const correos = [...new Set(guardias.map(g => g.correo))];
     const [usuarios] = await conn.query(
@@ -1021,25 +1043,23 @@ async function importarCSV(req, res, next) {
       validos.push({ ...g, id_usuario: idUsuario });
     }
 
-    const { id_edificio } = req.body;
-    let espacioDefaultCSV = null;
+    let espacioRef = null;
     if (id_edificio) {
       const [espRows] = await conn.query(
         'SELECT id_espacio FROM espacio WHERE id_edificio = ? LIMIT 1',
         [id_edificio]
       );
-      if (espRows.length > 0) espacioDefaultCSV = espRows[0].id_espacio;
+      if (espRows.length > 0) espacioRef = espRows[0].id_espacio;
     }
 
     await conn.beginTransaction();
 
     const ids = [];
     for (const g of validos) {
-      const espacioFinal = g.id_espacio || espacioDefaultCSV;
       const [result] = await conn.query(
         `INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio)
          VALUES (?, ?, ?, ?, ?)`,
-        [g.dia_semana, g.tramo_horario, curso_escolar, g.id_usuario, espacioFinal]
+        [g.dia_semana, g.tramo_horario, curso_escolar, g.id_usuario, espacioRef]
       );
       ids.push(result.insertId);
     }
