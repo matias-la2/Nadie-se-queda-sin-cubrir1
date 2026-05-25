@@ -164,9 +164,14 @@
         <div class="tarjeta">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="tarjeta-titulo mb-0">Bloqueos de espacios</h2>
-            <button class="btn-primario" data-bs-toggle="modal" data-bs-target="#modal-nuevo-bloqueo">
-              <i class="bi bi-plus-lg"></i> Nuevo Bloqueo
-            </button>
+            <div class="d-flex gap-2">
+              <button class="btn-secundario" data-bs-toggle="modal" data-bs-target="#modal-importar-bloqueos" style="white-space:nowrap;">
+                <i class="bi bi-upload"></i> Importar Bloqueos
+              </button>
+              <button class="btn-primario" data-bs-toggle="modal" data-bs-target="#modal-nuevo-bloqueo">
+                <i class="bi bi-plus-lg"></i> Nuevo Bloqueo
+              </button>
+            </div>
           </div>
 
           <div class="tabla-responsive">
@@ -331,6 +336,74 @@
         <div class="modal-footer modal-pie">
           <button type="button" class="btn-secundario" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" form="form-bloqueo" class="btn-primario"><i class="bi bi-check-lg"></i> Crear Bloqueo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modal importar bloqueos -->
+  <div class="modal fade" id="modal-importar-bloqueos" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content modal-contenido">
+        <div class="modal-header modal-cabecera">
+          <h5 class="modal-title modal-titulo"><i class="bi bi-upload me-2 modal-icono-titulo"></i>Importar Bloqueos</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body modal-cuerpo">
+          <div id="modal-import-error" class="modal-error"></div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-4">
+              <label class="modal-label">Curso escolar</label>
+              <input type="text" id="import-curso" class="select-filtro campo-completo" readonly>
+            </div>
+            <div class="col-4">
+              <label class="modal-label">Fecha desde</label>
+              <input type="date" id="import-fecha-desde" class="select-filtro campo-completo" readonly>
+            </div>
+            <div class="col-4">
+              <label class="modal-label">Fecha hasta</label>
+              <input type="date" id="import-fecha-hasta" class="select-filtro campo-completo" readonly>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="modal-label">Datos tabulados (copiar desde Excel)</label>
+            <textarea id="import-textarea" class="select-filtro campo-completo" rows="8" placeholder="ID_ESPACIO&#9;DIA_SEMANA&#9;TRAMO&#9;MOTIVO&#10;76&#9;1&#9;2a hora (09:10-10:10)&#9;Clase 1ºA&#10;77&#9;2&#9;1a hora (08:15-09:10)&#9;Clase 1ºC" style="font-family:monospace;font-size:12px;resize:vertical;"></textarea>
+            <small style="color:#64748b;">Columnas separadas por tabulador. DIA_SEMANA: 1=Lun, 2=Mar, 3=Mié, 4=Jue, 5=Vie (vacío = todos).</small>
+          </div>
+
+          <div class="mb-3">
+            <button type="button" class="btn-primario" onclick="previsualizarImportacion()" style="font-size:13px;padding:6px 14px;">
+              <i class="bi bi-eye"></i> Vista previa
+            </button>
+          </div>
+
+          <div id="import-preview" style="display:none;">
+            <div class="tabla-responsive" style="max-height:250px;overflow-y:auto;">
+              <table class="tabla-datos">
+                <thead>
+                  <tr><th>#</th><th>ID Espacio</th><th>Día</th><th>Tramo</th><th>Motivo</th><th>Estado</th></tr>
+                </thead>
+                <tbody id="import-preview-tbody"></tbody>
+              </table>
+            </div>
+            <div id="import-resumen" style="margin-top:10px;font-size:13px;"></div>
+          </div>
+
+          <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" id="import-eliminar-anteriores">
+            <label class="form-check-label" for="import-eliminar-anteriores" style="font-size:13px;">
+              Eliminar bloqueos del curso anterior antes de importar
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer modal-pie">
+          <button type="button" class="btn-secundario" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn-primario" id="btn-confirmar-importacion" onclick="confirmarImportacion()" disabled>
+            <i class="bi bi-check-lg"></i> Confirmar importación
+          </button>
         </div>
       </div>
     </div>
@@ -650,6 +723,183 @@
       if (!confirm("Eliminar este bloqueo?")) return;
       apiFetch('/api/v1/espacios/bloqueos/' + id, { method: 'DELETE' }).then(function () {
         cargarBloqueos();
+      });
+    }
+
+    // ─── Importar Bloqueos ───────────────────────────────
+
+    var _importBloqueosParsed = [];
+
+    (function initImportModal() {
+      var modalEl = document.getElementById("modal-importar-bloqueos");
+      if (modalEl) {
+        modalEl.addEventListener("show.bs.modal", function () {
+          var ahora = new Date();
+          var anio = ahora.getFullYear();
+          var curso, desde, hasta;
+          if (ahora.getMonth() >= 8) {
+            curso = anio + "-" + (anio + 1);
+            desde = anio + "-09-01";
+            hasta = (anio + 1) + "-06-30";
+          } else {
+            curso = (anio - 1) + "-" + anio;
+            desde = (anio - 1) + "-09-01";
+            hasta = anio + "-06-30";
+          }
+          document.getElementById("import-curso").value = curso;
+          document.getElementById("import-fecha-desde").value = desde;
+          document.getElementById("import-fecha-hasta").value = hasta;
+          document.getElementById("import-textarea").value = "";
+          document.getElementById("import-preview").style.display = "none";
+          document.getElementById("import-preview-tbody").innerHTML = "";
+          document.getElementById("import-resumen").innerHTML = "";
+          document.getElementById("modal-import-error").style.display = "none";
+          document.getElementById("btn-confirmar-importacion").disabled = true;
+          document.getElementById("import-eliminar-anteriores").checked = false;
+          _importBloqueosParsed = [];
+        });
+      }
+    })();
+
+    function previsualizarImportacion() {
+      var errorDiv = document.getElementById("modal-import-error");
+      errorDiv.style.display = "none";
+      _importBloqueosParsed = [];
+
+      var texto = document.getElementById("import-textarea").value.trim();
+      if (!texto) {
+        errorDiv.textContent = "El textarea está vacío.";
+        errorDiv.style.display = "block";
+        return;
+      }
+
+      var desde = document.getElementById("import-fecha-desde").value;
+      var hasta = document.getElementById("import-fecha-hasta").value;
+      var lineas = texto.split("\n");
+      var tramosValidos = [
+        "1a hora (08:15-09:10)", "2a hora (09:10-10:10)", "3a hora (10:10-11:05)",
+        "Recreo (11:05-11:30)", "4a hora (11:30-12:25)", "5a hora (12:25-13:20)", "6a hora (13:20-14:15)"
+      ];
+      var diasNombre = ["", "Lun", "Mar", "Mié", "Jue", "Vie"];
+
+      var filas = [];
+      var errores = 0;
+      var inicio = 0;
+
+      if (lineas.length > 0) {
+        var primeraFila = lineas[0].split("\t");
+        if (primeraFila[0] && isNaN(parseInt(primeraFila[0]))) {
+          inicio = 1;
+        }
+      }
+
+      for (var i = inicio; i < lineas.length; i++) {
+        var linea = lineas[i].trim();
+        if (!linea) continue;
+        var cols = linea.split("\t");
+        var idEsp = parseInt(cols[0]);
+        var diaSem = cols[1] ? parseInt(cols[1]) : null;
+        var tramo = (cols[2] || "").trim();
+        var motivo = (cols[3] || "").trim();
+
+        var errorMsg = "";
+        if (isNaN(idEsp) || idEsp <= 0) errorMsg = "ID inválido";
+        else if (diaSem !== null && (isNaN(diaSem) || diaSem < 1 || diaSem > 5)) errorMsg = "Día inválido (1-5)";
+        else if (!tramo || tramosValidos.indexOf(tramo) === -1) errorMsg = "Tramo no reconocido";
+
+        filas.push({
+          id_espacio: idEsp,
+          dia_semana: diaSem,
+          tramo_horario: tramo,
+          motivo: motivo || null,
+          fecha_desde: desde,
+          fecha_hasta: hasta,
+          error: errorMsg
+        });
+        if (errorMsg) errores++;
+      }
+
+      var tbody = document.getElementById("import-preview-tbody");
+      var html = "";
+      for (var j = 0; j < filas.length; j++) {
+        var f = filas[j];
+        var diaTexto = f.dia_semana ? diasNombre[f.dia_semana] : "Todos";
+        var estadoHtml = f.error
+          ? '<span style="color:#dc2626;font-size:12px;"><i class="bi bi-x-circle"></i> ' + f.error + '</span>'
+          : '<span style="color:#16a34a;font-size:12px;"><i class="bi bi-check-circle"></i> OK</span>';
+        html += '<tr>' +
+                  '<td class="celda-sm">' + (j + 1) + '</td>' +
+                  '<td class="celda-sm">' + (isNaN(f.id_espacio) ? "—" : f.id_espacio) + '</td>' +
+                  '<td class="celda-sm">' + diaTexto + '</td>' +
+                  '<td class="celda-sm">' + (f.tramo_horario || "—") + '</td>' +
+                  '<td class="celda-sm">' + (f.motivo || "—") + '</td>' +
+                  '<td class="celda-sm">' + estadoHtml + '</td>' +
+                '</tr>';
+      }
+      tbody.innerHTML = html;
+
+      var resumen = document.getElementById("import-resumen");
+      resumen.innerHTML = '<strong>' + filas.length + '</strong> filas detectadas. ' +
+        (errores > 0 ? '<span style="color:#dc2626;">' + errores + ' con errores.</span>' : '<span style="color:#16a34a;">Sin errores.</span>');
+
+      document.getElementById("import-preview").style.display = "block";
+
+      if (errores === 0 && filas.length > 0) {
+        _importBloqueosParsed = filas;
+        document.getElementById("btn-confirmar-importacion").disabled = false;
+      } else {
+        _importBloqueosParsed = [];
+        document.getElementById("btn-confirmar-importacion").disabled = true;
+      }
+    }
+
+    function confirmarImportacion() {
+      if (_importBloqueosParsed.length === 0) return;
+
+      var errorDiv = document.getElementById("modal-import-error");
+      errorDiv.style.display = "none";
+
+      var eliminarAnteriores = document.getElementById("import-eliminar-anteriores").checked;
+      var ahora = new Date();
+      var anio = ahora.getFullYear();
+      var fechaDesdeAnterior, fechaHastaAnterior;
+
+      if (ahora.getMonth() >= 8) {
+        fechaDesdeAnterior = (anio - 1) + "-09-01";
+        fechaHastaAnterior = anio + "-06-30";
+      } else {
+        fechaDesdeAnterior = (anio - 2) + "-09-01";
+        fechaHastaAnterior = (anio - 1) + "-06-30";
+      }
+
+      var body = {
+        bloqueos: _importBloqueosParsed,
+        eliminar_anteriores: eliminarAnteriores,
+        fecha_desde_anterior: fechaDesdeAnterior,
+        fecha_hasta_anterior: fechaHastaAnterior
+      };
+
+      document.getElementById("btn-confirmar-importacion").disabled = true;
+      document.getElementById("btn-confirmar-importacion").innerHTML = '<i class="bi bi-hourglass-split"></i> Importando...';
+
+      apiFetch('/api/v1/espacios/bloqueos/importar', {
+        method: 'POST',
+        body: JSON.stringify(body)
+      }).then(function (data) {
+        if (data && data.ok) {
+          bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-importar-bloqueos")).hide();
+          cargarBloqueos();
+          alert("Importación completada: " + data.datos.creados + " bloqueos creados.");
+        } else {
+          errorDiv.textContent = (data && data.mensaje) || "Error al importar bloqueos";
+          errorDiv.style.display = "block";
+        }
+      }).catch(function () {
+        errorDiv.textContent = "Error de conexión";
+        errorDiv.style.display = "block";
+      }).finally(function () {
+        document.getElementById("btn-confirmar-importacion").disabled = false;
+        document.getElementById("btn-confirmar-importacion").innerHTML = '<i class="bi bi-check-lg"></i> Confirmar importación';
       });
     }
   </script>

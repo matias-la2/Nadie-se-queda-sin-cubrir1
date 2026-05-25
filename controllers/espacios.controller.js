@@ -358,6 +358,40 @@ async function eliminarBloqueo(req, res, next) {
   }
 }
 
+// ─── IMPORTAR BLOQUEOS ────────────────────────────────
+
+async function importarBloqueos(req, res, next) {
+  const conn = await pool.getConnection();
+  try {
+    const { bloqueos, eliminar_anteriores, fecha_desde_anterior, fecha_hasta_anterior } = req.body;
+    await conn.beginTransaction();
+
+    if (eliminar_anteriores && fecha_desde_anterior && fecha_hasta_anterior) {
+      await conn.query(
+        'DELETE FROM bloqueo_espacio WHERE fecha_desde >= ? AND (fecha_hasta IS NULL OR fecha_hasta <= ?)',
+        [fecha_desde_anterior, fecha_hasta_anterior]
+      );
+    }
+
+    const ids = [];
+    for (const b of bloqueos) {
+      const [result] = await conn.query(
+        'INSERT INTO bloqueo_espacio (id_espacio, dia_semana, tramo_horario, fecha_desde, fecha_hasta, motivo, id_usuario_creador) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [b.id_espacio, b.dia_semana || null, b.tramo_horario, b.fecha_desde, b.fecha_hasta || null, b.motivo || null, req.usuario.id]
+      );
+      ids.push(result.insertId);
+    }
+
+    await conn.commit();
+    return success(res, { creados: ids.length }, 201);
+  } catch (err) {
+    await conn.rollback();
+    next(err);
+  } finally {
+    conn.release();
+  }
+}
+
 // ─── DISPONIBILIDAD ───────────────────────────────────
 
 async function obtenerDisponibilidad(req, res, next) {
@@ -422,6 +456,6 @@ module.exports = {
   listarEdificios, obtenerEdificio, crearEdificio, actualizarEdificio, eliminarEdificio,
   listarEspacios, obtenerEspacio, crearEspacio, actualizarEspacio, eliminarEspacio,
   listarNombresCurso, guardarNombreCurso, eliminarNombreCurso,
-  listarBloqueos, crearBloqueo, eliminarBloqueo,
+  listarBloqueos, crearBloqueo, eliminarBloqueo, importarBloqueos,
   obtenerDisponibilidad
 };

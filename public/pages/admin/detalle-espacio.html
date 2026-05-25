@@ -74,11 +74,66 @@
 
           <!-- Bloqueos del espacio -->
           <div class="tarjeta mt-3">
-            <h2 class="tarjeta-titulo mb-3"><i class="bi bi-lock me-2"></i>Bloqueos</h2>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h2 class="tarjeta-titulo mb-0"><i class="bi bi-lock me-2"></i>Bloqueos</h2>
+              <button class="btn-primario" onclick="toggleFormBloqueo()" id="btn-toggle-bloqueo" style="font-size:12px;padding:5px 12px;">
+                <i class="bi bi-plus-lg"></i> Nuevo Bloqueo
+              </button>
+            </div>
+
+            <!-- Formulario inline de nuevo bloqueo -->
+            <div id="form-nuevo-bloqueo" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;margin-bottom:14px;">
+              <div class="row g-2 mb-2">
+                <div class="col-6">
+                  <label style="font-size:12px;color:#64748b;">Dia de la semana</label>
+                  <select class="select-filtro" id="bloqueo-dia" style="width:100%;">
+                    <option value="">Todos los dias</option>
+                    <option value="1">Lunes</option>
+                    <option value="2">Martes</option>
+                    <option value="3">Miercoles</option>
+                    <option value="4">Jueves</option>
+                    <option value="5">Viernes</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label style="font-size:12px;color:#64748b;">Tramo horario *</label>
+                  <select class="select-filtro" id="bloqueo-tramo" style="width:100%;" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="1a hora (08:15-09:10)">1a hora (08:15-09:10)</option>
+                    <option value="2a hora (09:10-10:10)">2a hora (09:10-10:10)</option>
+                    <option value="3a hora (10:10-11:05)">3a hora (10:10-11:05)</option>
+                    <option value="Recreo (11:05-11:30)">Recreo (11:05-11:30)</option>
+                    <option value="4a hora (11:30-12:25)">4a hora (11:30-12:25)</option>
+                    <option value="5a hora (12:25-13:20)">5a hora (12:25-13:20)</option>
+                    <option value="6a hora (13:20-14:15)">6a hora (13:20-14:15)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="row g-2 mb-2">
+                <div class="col-6">
+                  <label style="font-size:12px;color:#64748b;">Fecha desde *</label>
+                  <input type="date" class="select-filtro" id="bloqueo-desde" style="width:100%;" required>
+                </div>
+                <div class="col-6">
+                  <label style="font-size:12px;color:#64748b;">Fecha hasta (vacio = indefinido)</label>
+                  <input type="date" class="select-filtro" id="bloqueo-hasta" style="width:100%;">
+                </div>
+              </div>
+              <div class="mb-2">
+                <label style="font-size:12px;color:#64748b;">Motivo</label>
+                <input type="text" class="select-filtro" id="bloqueo-motivo" placeholder="Ej: Clase fija 2o Bach" style="width:100%;">
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn-primario" onclick="crearBloqueo()" style="font-size:12px;padding:6px 14px;">
+                  <i class="bi bi-check-lg"></i> Crear bloqueo
+                </button>
+                <button class="btn-secundario" onclick="toggleFormBloqueo()" style="font-size:12px;padding:6px 14px;">Cancelar</button>
+              </div>
+            </div>
             <div class="tabla-responsive">
               <table class="tabla-datos">
                 <thead>
-                  <tr><th>Día</th><th>Tramo</th><th>Desde</th><th>Hasta</th><th>Motivo</th></tr>
+                  <tr><th>Día</th><th>Tramo</th><th>Desde</th><th>Hasta</th><th>Motivo</th><th>Acciones</th></tr>
                 </thead>
                 <tbody id="tabla-bloqueos"></tbody>
               </table>
@@ -121,6 +176,23 @@
             </button>
           </div>
 
+          <div class="tarjeta mb-3">
+            <div class="panel-titulo-sm">Nombre de curso</div>
+            <p class="panel-ayuda">Asigna el grupo que ocupa este espacio en cada curso escolar.</p>
+            <div class="mb-2">
+              <label style="font-size:12px;color:#64748b;">Curso escolar</label>
+              <input type="text" class="select-filtro" id="input-curso-escolar" value="" style="width:100%;">
+            </div>
+            <div class="mb-2">
+              <label style="font-size:12px;color:#64748b;">Nombre del grupo</label>
+              <input type="text" class="select-filtro" id="input-nombre-curso" placeholder="Ej: 1ºA, 3ºB..." style="width:100%;">
+            </div>
+            <button class="btn-primario btn-guardar-estado" onclick="guardarNombreCurso()">
+              <i class="bi bi-check-lg"></i> Guardar nombre
+            </button>
+            <div id="nombre-curso-actual" style="margin-top:10px;"></div>
+          </div>
+
           <div class="tarjeta tarjeta-referencia">
             <div class="referencia-label">Referencia</div>
             <div id="esp-referencia" class="referencia-codigo"></div>
@@ -153,6 +225,18 @@
       return "Mantenimiento";
     }
 
+    function calcularCursoActual() {
+      var ahora = new Date();
+      var anio = ahora.getFullYear();
+      if (ahora.getMonth() >= 8) {
+        return anio + "-" + (anio + 1);
+      } else {
+        return (anio - 1) + "-" + anio;
+      }
+    }
+
+    var _cursoEscolar = calcularCursoActual();
+
     verificarSesion().then(function (usuario) {
       if (!usuario) return;
       crearSidebar("aulas", "../../");
@@ -162,9 +246,12 @@
         return;
       }
 
+      document.getElementById("input-curso-escolar").value = _cursoEscolar;
+
       cargarEspacio();
       cargarBloqueos();
       cargarReservas();
+      cargarNombreCurso();
     });
 
     function cargarEspacio() {
@@ -207,7 +294,7 @@
         var tbody = document.getElementById("tabla-bloqueos");
 
         if (bloqueos.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" class="sin-resultados">Sin bloqueos</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" class="sin-resultados">Sin bloqueos</td></tr>';
           return;
         }
 
@@ -221,11 +308,12 @@
                     '<td class="celda-sm">' + (b.fecha_desde ? b.fecha_desde.substring(0, 10) : "—") + '</td>' +
                     '<td class="celda-sm">' + (b.fecha_hasta ? b.fecha_hasta.substring(0, 10) : "Indefinido") + '</td>' +
                     '<td class="celda-sm">' + (b.motivo || "—") + '</td>' +
+                    '<td class="celda-sm"><button class="btn-accion peligro" title="Eliminar" onclick="eliminarBloqueo(' + b.id_bloqueo + ')"><i class="bi bi-trash"></i></button></td>' +
                   '</tr>';
         }
         tbody.innerHTML = html;
       }).catch(function () {
-        document.getElementById("tabla-bloqueos").innerHTML = '<tr><td colspan="5" class="sin-resultados">Error al cargar</td></tr>';
+        document.getElementById("tabla-bloqueos").innerHTML = '<tr><td colspan="6" class="sin-resultados">Error al cargar</td></tr>';
       });
     }
 
@@ -270,6 +358,126 @@
           cargarEspacio();
         } else {
           alert((data && data.mensaje) || "Error al actualizar estado");
+        }
+      }).catch(function () {
+        alert("Error de conexión");
+      });
+    }
+
+    function toggleFormBloqueo() {
+      var form = document.getElementById("form-nuevo-bloqueo");
+      form.style.display = form.style.display === "none" ? "block" : "none";
+    }
+
+    function crearBloqueo() {
+      var tramo = document.getElementById("bloqueo-tramo").value;
+      var desde = document.getElementById("bloqueo-desde").value;
+      if (!tramo || !desde) {
+        alert("El tramo horario y la fecha desde son obligatorios.");
+        return;
+      }
+
+      var body = {
+        id_espacio: parseInt(_espacioId),
+        dia_semana: document.getElementById("bloqueo-dia").value ? parseInt(document.getElementById("bloqueo-dia").value) : null,
+        tramo_horario: tramo,
+        fecha_desde: desde,
+        fecha_hasta: document.getElementById("bloqueo-hasta").value || null,
+        motivo: document.getElementById("bloqueo-motivo").value || null
+      };
+
+      apiFetch('/api/v1/espacios/bloqueos', {
+        method: 'POST',
+        body: JSON.stringify(body)
+      }).then(function (data) {
+        if (data && data.ok) {
+          toggleFormBloqueo();
+          document.getElementById("bloqueo-dia").value = "";
+          document.getElementById("bloqueo-tramo").value = "";
+          document.getElementById("bloqueo-desde").value = "";
+          document.getElementById("bloqueo-hasta").value = "";
+          document.getElementById("bloqueo-motivo").value = "";
+          cargarBloqueos();
+        } else {
+          alert((data && data.mensaje) || "Error al crear bloqueo");
+        }
+      }).catch(function () {
+        alert("Error de conexión");
+      });
+    }
+
+    function eliminarBloqueo(id) {
+      if (!confirm("¿Eliminar este bloqueo?")) return;
+
+      apiFetch('/api/v1/espacios/bloqueos/' + id, {
+        method: 'DELETE'
+      }).then(function (data) {
+        if (data && data.ok) {
+          cargarBloqueos();
+        } else {
+          alert((data && data.mensaje) || "Error al eliminar bloqueo");
+        }
+      }).catch(function () {
+        alert("Error de conexión");
+      });
+    }
+
+    function cargarNombreCurso() {
+      var curso = document.getElementById("input-curso-escolar").value.trim();
+      if (!curso) return;
+
+      apiFetch('/api/v1/espacios/nombres-curso/' + _espacioId + '?curso_escolar=' + encodeURIComponent(curso)).then(function (data) {
+        var contenedor = document.getElementById("nombre-curso-actual");
+        if (data && data.ok && data.datos && data.datos.nombre_curso) {
+          contenedor.innerHTML =
+            '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:10px;display:flex;align-items:center;justify-content:space-between;">' +
+              '<span style="font-size:13px;color:#166534;"><strong>' + data.datos.nombre_curso + '</strong> (' + curso + ')</span>' +
+              '<button class="btn-accion peligro" title="Eliminar" onclick="eliminarNombreCurso()" style="margin-left:8px;"><i class="bi bi-trash"></i></button>' +
+            '</div>';
+          document.getElementById("input-nombre-curso").value = data.datos.nombre_curso;
+        } else {
+          contenedor.innerHTML = '<small style="color:#94a3b8;">Sin nombre asignado para ' + curso + '</small>';
+          document.getElementById("input-nombre-curso").value = "";
+        }
+      }).catch(function () {
+        document.getElementById("nombre-curso-actual").innerHTML = '<small style="color:#94a3b8;">Sin nombre asignado</small>';
+      });
+    }
+
+    function guardarNombreCurso() {
+      var curso = document.getElementById("input-curso-escolar").value.trim();
+      var nombre = document.getElementById("input-nombre-curso").value.trim();
+      if (!curso || !nombre) {
+        alert("Debes indicar el curso escolar y el nombre del grupo.");
+        return;
+      }
+
+      apiFetch('/api/v1/espacios/nombres-curso/' + _espacioId, {
+        method: 'PUT',
+        body: JSON.stringify({ curso_escolar: curso, nombre_curso: nombre })
+      }).then(function (data) {
+        if (data && data.ok) {
+          cargarNombreCurso();
+        } else {
+          alert((data && data.mensaje) || "Error al guardar nombre de curso");
+        }
+      }).catch(function () {
+        alert("Error de conexión");
+      });
+    }
+
+    function eliminarNombreCurso() {
+      var curso = document.getElementById("input-curso-escolar").value.trim();
+      if (!confirm("¿Eliminar el nombre de curso para " + curso + "?")) return;
+
+      apiFetch('/api/v1/espacios/nombres-curso/' + _espacioId + '?curso_escolar=' + encodeURIComponent(curso), {
+        method: 'DELETE'
+      }).then(function (data) {
+        if (data && data.ok) {
+          document.getElementById("input-nombre-curso").value = "";
+          cargarNombreCurso();
+        } else {
+          alert((data && data.mensaje) || "Error al eliminar nombre de curso");
         }
       }).catch(function () {
         alert("Error de conexión");

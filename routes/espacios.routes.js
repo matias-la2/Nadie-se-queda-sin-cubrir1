@@ -50,6 +50,11 @@ router.delete('/nombres-curso/:id',
 
 // ─── Bloqueos ──────────────────────────────────────────
 router.get('/bloqueos', controller.listarBloqueos);
+router.post('/bloqueos/importar',
+  requiereRol('EQUIPO_DIRECTIVO', 'ADMINISTRADOR'),
+  registrarAccion('IMPORTAR_BLOQUEOS', 'bloqueo_espacio'),
+  controller.importarBloqueos
+);
 router.post('/bloqueos',
   requiereRol('ADMINISTRADOR', 'EQUIPO_DIRECTIVO'),
   validar(crearBloqueoSchema),
