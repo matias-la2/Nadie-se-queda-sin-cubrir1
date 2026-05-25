@@ -16,11 +16,15 @@
     .manual-paso { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
     .manual-paso strong { color: #1152d4; }
     .manual-nota { background: #eff6ff; border-left: 4px solid #1152d4; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 13px; color: #1e40af; }
+    .manual-nota.advertencia { background: #fffbeb; border-left-color: #f59e0b; color: #92400e; }
     .manual-indice { list-style: none; padding: 0; }
     .manual-indice li { margin-bottom: 6px; }
     .manual-indice a { color: #1152d4; text-decoration: none; font-weight: 500; font-size: 14px; }
     .manual-indice a:hover { text-decoration: underline; }
     .manual-indice a i { margin-right: 6px; }
+    .manual-faq { margin-top: 8px; }
+    .manual-faq dt { font-weight: 600; color: #1e293b; margin-bottom: 4px; font-size: 14px; }
+    .manual-faq dd { color: #475569; margin-bottom: 14px; margin-left: 0; font-size: 13px; padding-left: 16px; border-left: 2px solid #e2e8f0; }
   </style>
 </head>
 
@@ -45,6 +49,7 @@
         <li><a href="#ausencias"><i class="bi bi-chevron-right"></i>4. Mis Ausencias</a></li>
         <li><a href="#incidencias"><i class="bi bi-chevron-right"></i>5. Incidencias</a></li>
         <li><a href="#reservas"><i class="bi bi-chevron-right"></i>6. Reservas de Espacios</a></li>
+        <li><a href="#faq"><i class="bi bi-chevron-right"></i>7. Preguntas frecuentes</a></li>
       </ul>
     </div>
 
@@ -52,52 +57,110 @@
     <div class="tarjeta manual-seccion" id="inicio">
       <h3><i class="bi bi-door-open"></i>1. Inicio y acceso a la plataforma</h3>
       <div class="manual-paso">
-        <strong>Acceder:</strong> Entra en la plataforma a traves de tu navegador web. Inicia sesion con tu cuenta de Google corporativa del centro (@iesrioarba.com).
+        <strong>Paso 1 — Acceder por primera vez:</strong> Abre el navegador y ve a la URL de la plataforma. Pulsa el boton <i class="bi bi-google"></i> "Iniciar sesion con Google" y utiliza tu cuenta corporativa del centro (@iesrioarba.com). La primera vez que entras, tu cuenta se crea automaticamente en el sistema. El administrador te asignara el rol de profesor.
       </div>
       <div class="manual-paso">
-        <strong>Menu lateral:</strong> Una vez dentro, veras un menu a la izquierda (sidebar) con las secciones disponibles: Dashboard, Mis Guardias, Mis Ausencias, Incidencias y Reservas.
+        <strong>Paso 2 — Menu lateral:</strong> Una vez dentro, veras un menu a la izquierda (sidebar) con las secciones disponibles:
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><i class="bi bi-house me-1"></i><strong>Dashboard:</strong> Tu pagina de inicio con el resumen del dia.</li>
+          <li><i class="bi bi-shield-check me-1"></i><strong>Mis Guardias:</strong> Calendario y gestion de tus guardias.</li>
+          <li><i class="bi bi-calendar-x me-1"></i><strong>Mis Ausencias:</strong> Registro de tus ausencias.</li>
+          <li><i class="bi bi-exclamation-triangle me-1"></i><strong>Incidencias:</strong> Reportar y seguir incidencias.</li>
+          <li><i class="bi bi-calendar-check me-1"></i><strong>Reservas:</strong> Reservar aulas y espacios.</li>
+        </ul>
       </div>
       <div class="manual-paso">
-        <strong>Tu perfil:</strong> En la parte inferior del menu aparece tu nombre, rol y avatar. Desde ahi puedes cerrar sesion.
+        <strong>Paso 3 — Tu perfil:</strong> En la parte inferior del menu aparece tu nombre, foto de Google y rol. Desde ahi puedes cerrar sesion.
       </div>
       <div class="manual-nota">
         <i class="bi bi-info-circle me-1"></i> En dispositivos moviles, el menu se oculta automaticamente. Pulsa el boton <strong>&#9776;</strong> (hamburguesa) en la esquina superior izquierda para abrirlo.
+      </div>
+      <div class="manual-nota advertencia">
+        <i class="bi bi-exclamation-triangle me-1"></i> <strong>Si no puedes acceder:</strong> Contacta con el administrador del centro. Posibles causas: tu cuenta no esta activada, no tienes rol asignado o no has iniciado sesion por primera vez con Google.
       </div>
     </div>
 
     <!-- 2. Dashboard -->
     <div class="tarjeta manual-seccion" id="dashboard">
       <h3><i class="bi bi-house"></i>2. Dashboard (Panel principal)</h3>
-      <p style="margin-bottom:12px;">Tu pagina de inicio muestra un resumen de toda tu actividad:</p>
+      <p style="margin-bottom:12px;">Tu pagina de inicio muestra un resumen de toda tu actividad del dia:</p>
       <div class="manual-paso">
-        <strong>Tarjetas resumen:</strong> En la parte superior veras contadores con: tus guardias de hoy, total de incidencias, reservas activas y ausencias registradas.
+        <strong>Tarjetas resumen:</strong> En la parte superior veras 4 contadores:
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><i class="bi bi-shield-check me-1"></i><strong>Guardias hoy:</strong> Numero de guardias que tienes asignadas para hoy.</li>
+          <li><i class="bi bi-exclamation-triangle me-1"></i><strong>Mis incidencias:</strong> Total de incidencias que has reportado.</li>
+          <li><i class="bi bi-calendar-check me-1"></i><strong>Mis reservas:</strong> Reservas de espacios activas.</li>
+          <li><i class="bi bi-calendar-x me-1"></i><strong>Mis ausencias:</strong> Ausencias registradas.</li>
+        </ul>
       </div>
       <div class="manual-paso">
-        <strong>Guardias pendientes:</strong> Si tienes guardias asignadas pendientes de aceptar o rechazar, aparecera una seccion destacada con botones <strong>Aceptar</strong> y <strong>Rechazar</strong> para cada una.
+        <strong>Guardias pendientes de respuesta:</strong> Si te han asignado una guardia de sustitucion, aparecera una seccion destacada en amarillo. Para cada guardia veras la fecha, tramo horario, nombre del profesor ausente y el aula.
       </div>
       <div class="manual-paso">
-        <strong>Guardias de hoy:</strong> Veras las guardias que debes cubrir hoy con la informacion del aula, tramo horario, profesor ausente y si hay tarea asignada para los alumnos.
+        <strong>Procedimiento — Aceptar o rechazar una guardia:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Lee la informacion de la guardia: fecha, hora, profesor ausente y aula.</li>
+          <li>Pulsa <strong><i class="bi bi-check-lg"></i> Aceptar</strong> si puedes cubrirla:
+            <ul>
+              <li>Se te mostrara el aula a la que debes acudir.</li>
+              <li>Si hay tarea para los alumnos, se indicara en el mensaje.</li>
+              <li>La ausencia pasara a estado "Cubierta".</li>
+            </ul>
+          </li>
+          <li>Pulsa <strong><i class="bi bi-x-lg"></i> Rechazar</strong> si no puedes:
+            <ul>
+              <li>El sistema buscara automaticamente otro profesor disponible.</li>
+              <li>Si eres el ultimo profesor disponible, la ausencia quedara como "Sin cubrir" y se notificara al equipo directivo.</li>
+            </ul>
+          </li>
+        </ol>
       </div>
       <div class="manual-paso">
-        <strong>Incidencias recientes:</strong> Una tabla muestra tus ultimas incidencias con su estado (Pendiente, En proceso, Resuelta, Cerrada).
+        <strong>Guardias de hoy:</strong> Debajo veras las guardias que debes cubrir hoy con informacion completa: aula, tramo, profesor ausente y si hay tarea asignada con posibilidad de descargar el archivo adjunto.
+      </div>
+      <div class="manual-paso">
+        <strong>Incidencias recientes:</strong> Una tabla muestra tus ultimas incidencias reportadas con su estado actual:
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><span style="background:#fef2f2;color:#ef4444;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Pendiente</span> — Aun no se ha empezado a trabajar en ella.</li>
+          <li><span style="background:#fffbeb;color:#b45309;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">En proceso</span> — Mantenimiento esta trabajando en ella.</li>
+          <li><span style="background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Resuelta</span> — Ya esta solucionada.</li>
+          <li><span style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Cerrada</span> — Archivada definitivamente.</li>
+        </ul>
       </div>
     </div>
 
     <!-- 3. Guardias -->
     <div class="tarjeta manual-seccion" id="guardias">
       <h3><i class="bi bi-shield-check"></i>3. Mis Guardias</h3>
-      <p style="margin-bottom:12px;">Aqui consultas y gestionas tu actividad de guardias:</p>
       <div class="manual-paso">
-        <strong>Calendario semanal:</strong> Un cuadrante visual de Lunes a Viernes con los 7 tramos horarios. Las celdas con guardia aparecen con un badge de color segun el edificio (azul para ESO, verde para Bachillerato).
+        <strong>Tipos de guardia:</strong> Es importante distinguir dos conceptos:
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><strong>Guardias planificadas (horario fijo):</strong> Son los tramos semanales que tienes asignados en el cuadrante de guardias del curso. Por ejemplo: "Lunes 2a hora, Miercoles 4a hora". Las define el administrador o equipo directivo.</li>
+          <li><strong>Guardias asignadas (sustituciones):</strong> Son las guardias concretas que se te asignan cuando un companero falta. Pueden ser automaticas (el sistema te elige) o manuales (el admin te selecciona).</li>
+        </ul>
       </div>
       <div class="manual-paso">
-        <strong>Guardias planificadas:</strong> Una tabla lista tus guardias fijas del curso con dia de la semana, tramo horario, edificio y curso escolar.
+        <strong>Calendario semanal:</strong> Un cuadrante visual de Lunes a Viernes con los 7 tramos horarios. Las celdas donde tienes guardia planificada aparecen con un badge de color segun el edificio:
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><span style="background:#2563EB;color:#fff;padding:2px 10px;border-radius:8px;font-size:11px;font-weight:600;">ESO</span> — Azul</li>
+          <li><span style="background:#059669;color:#fff;padding:2px 10px;border-radius:8px;font-size:11px;font-weight:600;">Bachillerato</span> — Verde</li>
+          <li><span style="background:#6366F1;color:#fff;padding:2px 10px;border-radius:8px;font-size:11px;font-weight:600;">Otro</span> — Violeta</li>
+        </ul>
       </div>
       <div class="manual-paso">
-        <strong>Guardias pendientes de respuesta:</strong> Cuando te asignan una guardia de sustitucion, aparece aqui con los datos del profesor ausente, el aula y los botones <strong>Aceptar</strong> / <strong>Rechazar</strong>. Al aceptar, recibiras la informacion del aula y si hay tarea. Al rechazar, se notificara al siguiente profesor disponible.
+        <strong>Tabla de guardias planificadas:</strong> Lista tus guardias fijas del curso con dia de la semana, tramo horario, edificio y curso escolar. Esta informacion la gestiona el administrador.
       </div>
       <div class="manual-paso">
-        <strong>Guardias asignadas:</strong> Historial de todas las guardias que se te han asignado como sustituto con su fecha, tipo (Automatica/Manual) y estado (Pendiente, Aceptada, Rechazada).
+        <strong>Guardias pendientes de respuesta:</strong> Cuando se te asigna una sustitucion, aparece aqui con los datos completos y los botones Aceptar/Rechazar. El procedimiento es el mismo que en el Dashboard (ver <a href="#dashboard">seccion 2</a>).
+      </div>
+      <div class="manual-paso">
+        <strong>Historial de guardias asignadas:</strong> Tabla con todas las sustituciones que se te han asignado durante el curso: fecha, tramo, profesor ausente, aula, tipo de asignacion (Automatica/Manual) y estado (Pendiente, Aceptada, Rechazada).
+      </div>
+      <div class="manual-nota">
+        <i class="bi bi-info-circle me-1"></i> <strong>Notificaciones por email:</strong> Cuando se te asigna una guardia, recibes un email automatico a tu correo de Google con los datos de la sustitucion. Tambien se muestra en tu Dashboard. Si no recibes emails, verifica tu carpeta de Spam.
+      </div>
+      <div class="manual-nota advertencia">
+        <i class="bi bi-exclamation-triangle me-1"></i> <strong>Si rechazas y eres el unico disponible:</strong> El sistema notificara al equipo directivo de que la ausencia no tiene cobertura. Un administrador podra asignar manualmente a otro profesor, incluso de otro edificio si es necesario.
       </div>
     </div>
 
@@ -105,16 +168,38 @@
     <div class="tarjeta manual-seccion" id="ausencias">
       <h3><i class="bi bi-calendar-x"></i>4. Mis Ausencias</h3>
       <div class="manual-paso">
-        <strong>Registrar ausencia:</strong> Pulsa el boton <strong>"Registrar ausencia"</strong>. Rellena: fecha, tramo horario, espacio(s) donde impartes clase, y opcionalmente un comentario. Puedes marcar la casilla <strong>"Dejar tarea"</strong> para escribir instrucciones y adjuntar un archivo (PDF, Word, Excel o imagen, max. 10 MB).
+        <strong>Procedimiento — Registrar una ausencia paso a paso:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Pulsa el boton <strong>"Registrar ausencia"</strong> en la parte superior de la pagina.</li>
+          <li>Selecciona la <strong>fecha</strong> de tu ausencia.</li>
+          <li>Selecciona el <strong>tramo horario</strong> en el que no podras asistir.</li>
+          <li>Selecciona los <strong>espacios</strong> (aulas) donde impartes clase en ese tramo. Puedes seleccionar varios si das clase en mas de un aula.</li>
+          <li>Opcionalmente, escribe un <strong>comentario</strong> explicando el motivo.</li>
+          <li>Si quieres dejar <strong>tarea para los alumnos</strong>:
+            <ul>
+              <li>Marca la casilla "Dejar tarea".</li>
+              <li>Escribe las instrucciones en el campo de texto.</li>
+              <li>Opcionalmente, adjunta un archivo (PDF, Word, Excel, PowerPoint o imagen, maximo 10 MB). El profesor sustituto podra descargarlo.</li>
+            </ul>
+          </li>
+          <li>Pulsa <strong>Guardar</strong>.</li>
+        </ol>
       </div>
       <div class="manual-paso">
-        <strong>Filtrar por estado:</strong> Usa el desplegable para ver solo las ausencias Pendientes, Cubiertas o Sin cubrir.
+        <strong>Que pasa despues de registrar tu ausencia:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>El sistema busca automaticamente un profesor sustituto entre los que tienen guardia planificada para ese dia y tramo.</li>
+          <li>Si encuentra uno, le envia una notificacion para que acepte o rechace.</li>
+          <li>Si el profesor acepta: tu ausencia pasa a estado <strong>Cubierta</strong> y recibiras confirmacion.</li>
+          <li>Si rechaza: el sistema busca al siguiente profesor disponible automaticamente.</li>
+          <li>Si no hay nadie disponible: tu ausencia pasa a <strong>Sin cubrir</strong> y el equipo directivo es notificado para gestionarlo manualmente.</li>
+        </ol>
       </div>
       <div class="manual-paso">
-        <strong>Tabla de ausencias:</strong> Muestra cada ausencia con fecha, tramo, espacio, estado y si tiene tarea asignada.
+        <strong>Consultar tus ausencias:</strong> La tabla muestra todas tus ausencias con fecha, tramo, espacio, estado y si tiene tarea asignada. Usa el desplegable de filtro para ver solo las Pendientes, Cubiertas o Sin cubrir.
       </div>
       <div class="manual-nota">
-        <i class="bi bi-lightbulb me-1"></i> Registra tus ausencias con la mayor antelacion posible para que el sistema pueda asignar sustitutos automaticamente.
+        <i class="bi bi-lightbulb me-1"></i> <strong>Consejo:</strong> Registra tus ausencias con la mayor antelacion posible. Cuanto antes lo hagas, mas probabilidades hay de que el sistema encuentre un sustituto automaticamente. Puedes registrar ausencias para la proxima semana o incluso para el proximo mes.
       </div>
     </div>
 
@@ -122,13 +207,33 @@
     <div class="tarjeta manual-seccion" id="incidencias">
       <h3><i class="bi bi-exclamation-triangle"></i>5. Incidencias</h3>
       <div class="manual-paso">
-        <strong>Crear incidencia:</strong> Pulsa <strong>"Nueva incidencia"</strong>. Rellena el titulo descriptivo, selecciona el espacio afectado (agrupados por edificio), elige el tipo (Material, Hardware, Software u Otros), la fecha se rellena automaticamente y opcionalmente una descripcion detallada.
+        <strong>Procedimiento — Crear una incidencia (ejemplo practico):</strong>
+        <p style="font-size:13px;margin:8px 0;">Imagina que el proyector del Aula 101 no enciende:</p>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Pulsa <strong>"Nueva incidencia"</strong>.</li>
+          <li><strong>Titulo:</strong> Escribe un resumen claro, por ejemplo: "Proyector no enciende".</li>
+          <li><strong>Espacio:</strong> Selecciona "Aula 101" del desplegable (agrupados por edificio).</li>
+          <li><strong>Tipo:</strong> Selecciona "Hardware" (es un equipo electronico).</li>
+          <li><strong>Fecha:</strong> Se rellena automaticamente con la fecha de hoy.</li>
+          <li><strong>Descripcion:</strong> Opcionalmente, anade detalles: "Al pulsar el boton de encendido no reacciona. La luz de standby tampoco se enciende. Probado con dos cables diferentes."</li>
+          <li>Pulsa <strong>"Crear Incidencia"</strong>.</li>
+        </ol>
       </div>
       <div class="manual-paso">
-        <strong>Filtros:</strong> Filtra por estado (Pendiente, En proceso, Resuelta, Cerrada) y por tipo para localizar incidencias rapidamente.
+        <strong>Que pasa con tu incidencia:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Se crea con estado <strong>Pendiente</strong>.</li>
+          <li>El personal de mantenimiento la ve en su panel y la atiende.</li>
+          <li>Cuando empiece a trabajar en ella, la cambiara a <strong>En proceso</strong>.</li>
+          <li>Cuando termine, la marcara como <strong>Resuelta</strong>.</li>
+          <li>El equipo directivo o administrador la <strong>Cerrara</strong> definitivamente.</li>
+        </ol>
       </div>
       <div class="manual-paso">
-        <strong>Ver detalle:</strong> Pulsa el icono del ojo (<i class="bi bi-eye"></i>) para acceder a la ficha completa de una incidencia con toda su informacion y estado actual.
+        <strong>Filtros y seguimiento:</strong> Filtra por estado (Pendiente, En proceso, Resuelta, Cerrada) y por tipo (Material, Hardware, Software, Otros). Pulsa el icono del ojo (<i class="bi bi-eye"></i>) para ver el detalle completo de una incidencia, incluyendo quien la creo, la fecha y el estado actual.
+      </div>
+      <div class="manual-nota">
+        <i class="bi bi-info-circle me-1"></i> <strong>Tipos de incidencia:</strong> <strong>Material</strong> = mobiliario, pizarras, persianas, cerraduras. <strong>Hardware</strong> = ordenadores, proyectores, impresoras. <strong>Software</strong> = programas, red, accesos a plataformas. <strong>Otros</strong> = cualquier otra cosa.
       </div>
     </div>
 
@@ -136,17 +241,57 @@
     <div class="tarjeta manual-seccion" id="reservas">
       <h3><i class="bi bi-calendar-check"></i>6. Reservas de Espacios</h3>
       <div class="manual-paso">
-        <strong>Nueva reserva:</strong> Pulsa <strong>"Nueva Reserva"</strong>. Selecciona la fecha y el espacio: el sistema cargara automaticamente la disponibilidad de cada tramo. Los tramos disponibles se muestran con <strong>&#10004; Disponible</strong>, los bloqueados con <strong>&#128274;</strong> y los ya reservados con <strong>&#128204; Reservado por [nombre]</strong>.
+        <strong>Procedimiento — Reservar un espacio paso a paso:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Pulsa <strong>"Nueva Reserva"</strong> en la pagina de Reservas.</li>
+          <li>Selecciona la <strong>fecha</strong> (solo fechas futuras a partir de hoy).</li>
+          <li>Selecciona el <strong>espacio</strong> del desplegable (agrupados por edificio). Solo aparecen los espacios con estado "Disponible".</li>
+          <li>Al seleccionar fecha y espacio, se carga automaticamente la disponibilidad de los 7 tramos:
+            <ul>
+              <li><strong>&#10004; Disponible:</strong> El tramo esta libre. Puedes seleccionarlo.</li>
+              <li><strong>&#128274; Bloqueado</strong> (aparece el motivo, ej: "Clase fija 2o ESO"): Hay una clase programada u otro bloqueo. <strong>No se puede reservar.</strong></li>
+              <li><strong>&#128204; Reservado por [nombre del profesor]:</strong> Otro profesor ya tiene reserva. <strong>No se puede reservar.</strong></li>
+            </ul>
+          </li>
+          <li>Debajo del selector de tramo veras un resumen: "X tramo(s) libre(s), Y ocupado(s)".</li>
+          <li>Selecciona un tramo libre.</li>
+          <li>Opcionalmente, indica el <strong>motivo</strong> de la reserva (ej: "Examen de recuperacion").</li>
+          <li>Pulsa <strong>"Confirmar Reserva"</strong>.</li>
+        </ol>
       </div>
       <div class="manual-paso">
-        <strong>Seleccionar tramo:</strong> Solo puedes elegir tramos libres (los ocupados aparecen deshabilitados). Opcionalmente indica el motivo de la reserva.
-      </div>
-      <div class="manual-paso">
-        <strong>Mis reservas:</strong> La tabla muestra todas tus reservas con fecha, tramo, espacio, edificio y motivo. Puedes eliminar reservas futuras pulsando el icono de papelera (<i class="bi bi-trash"></i>).
+        <strong>Gestionar tus reservas:</strong> La tabla de "Mis Reservas" muestra todas tus reservas con fecha, tramo, espacio, edificio y motivo. Para las reservas futuras, puedes cancelarlas pulsando el icono de papelera (<i class="bi bi-trash"></i>). Se pedira confirmacion antes de eliminar.
       </div>
       <div class="manual-nota">
-        <i class="bi bi-info-circle me-1"></i> Solo se muestran los espacios con estado "Disponible". Si no ves un espacio, puede estar en mantenimiento o no disponible.
+        <i class="bi bi-info-circle me-1"></i> Solo se muestran los espacios con estado "Disponible". Si no ves un espacio que esperabas, puede estar "En mantenimiento" o "No disponible". Consulta con el administrador.
       </div>
+      <div class="manual-nota advertencia">
+        <i class="bi bi-exclamation-triangle me-1"></i> No puedes reservar un tramo bloqueado o ya reservado por otro profesor. Si necesitas ese espacio en ese horario especifico, contacta con el profesor que lo tiene reservado o con el equipo directivo.
+      </div>
+    </div>
+
+    <!-- 7. FAQ -->
+    <div class="tarjeta manual-seccion" id="faq">
+      <h3><i class="bi bi-question-circle"></i>7. Preguntas frecuentes</h3>
+      <dl class="manual-faq">
+        <dt><i class="bi bi-shield-exclamation me-2"></i>"Me han asignado una guardia pero no puedo ese dia"</dt>
+        <dd>Rechaza la guardia pulsando el boton "Rechazar". El sistema buscara automaticamente otro profesor disponible. No te preocupes: rechazar una guardia es un mecanismo normal del sistema, no tiene penalizacion. Solo se notifica al equipo directivo si no queda ningun profesor mas disponible.</dd>
+
+        <dt><i class="bi bi-calendar-plus me-2"></i>"Quiero registrar una ausencia para la semana que viene"</dt>
+        <dd>Si, puedes registrar ausencias con antelacion. De hecho, es recomendable: cuanto antes registres la ausencia, mas tiempo tiene el sistema para encontrar sustituto. Ve a "Mis Ausencias", pulsa "Registrar ausencia" y selecciona la fecha futura.</dd>
+
+        <dt><i class="bi bi-door-closed me-2"></i>"No veo un espacio que quiero reservar"</dt>
+        <dd>Solo aparecen los espacios con estado "Disponible". Si un espacio esta "En mantenimiento" o "No disponible", no se muestra en el formulario de reserva. Contacta con el administrador si crees que deberia estar disponible.</dd>
+
+        <dt><i class="bi bi-geo-alt me-2"></i>"He aceptado una guardia, ¿donde tengo que ir?"</dt>
+        <dd>Al aceptar la guardia, el sistema te muestra el aula y el edificio al que debes acudir. Tambien se indica si hay tarea para los alumnos (con posibilidad de descargar archivo adjunto). Esta informacion aparece tanto en el mensaje de confirmacion como en la seccion "Guardias de hoy" de tu Dashboard.</dd>
+
+        <dt><i class="bi bi-envelope me-2"></i>"No me llegan las notificaciones de guardia al email"</dt>
+        <dd>Las notificaciones se envian al correo de Google con el que iniciaste sesion. Revisa tu carpeta de Spam o Correo no deseado. Las notificaciones tambien aparecen siempre en tu Dashboard dentro de la plataforma, asi que puedes consultarlas aunque no recibas el email.</dd>
+
+        <dt><i class="bi bi-x-circle me-2"></i>"He registrado una ausencia por error, ¿puedo cancelarla?"</dt>
+        <dd>Contacta con el administrador o equipo directivo para que la elimine desde la seccion de gestion de Ausencias. Si ya se ha asignado un sustituto, la eliminacion tambien cancelara la asignacion.</dd>
+      </dl>
     </div>
 
     <div style="text-align:center;padding:20px 0;color:#94a3b8;font-size:13px;">

@@ -16,11 +16,15 @@
     .manual-paso { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
     .manual-paso strong { color: #1152d4; }
     .manual-nota { background: #eff6ff; border-left: 4px solid #1152d4; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 13px; color: #1e40af; }
+    .manual-nota.advertencia { background: #fffbeb; border-left-color: #f59e0b; color: #92400e; }
     .manual-indice { list-style: none; padding: 0; }
     .manual-indice li { margin-bottom: 6px; }
     .manual-indice a { color: #1152d4; text-decoration: none; font-weight: 500; font-size: 14px; }
     .manual-indice a:hover { text-decoration: underline; }
     .manual-indice a i { margin-right: 6px; }
+    .manual-faq { margin-top: 8px; }
+    .manual-faq dt { font-weight: 600; color: #1e293b; margin-bottom: 4px; font-size: 14px; }
+    .manual-faq dd { color: #475569; margin-bottom: 14px; margin-left: 0; font-size: 13px; padding-left: 16px; border-left: 2px solid #e2e8f0; }
   </style>
 </head>
 
@@ -43,6 +47,7 @@
         <li><a href="#dashboard"><i class="bi bi-chevron-right"></i>2. Dashboard de Mantenimiento</a></li>
         <li><a href="#incidencias"><i class="bi bi-chevron-right"></i>3. Gestion de Incidencias</a></li>
         <li><a href="#detalle"><i class="bi bi-chevron-right"></i>4. Detalle de una Incidencia</a></li>
+        <li><a href="#faq"><i class="bi bi-chevron-right"></i>5. Preguntas frecuentes</a></li>
       </ul>
     </div>
 
@@ -50,13 +55,20 @@
     <div class="tarjeta manual-seccion" id="inicio">
       <h3><i class="bi bi-door-open"></i>1. Inicio y acceso</h3>
       <div class="manual-paso">
-        <strong>Acceso:</strong> Inicia sesion con tu cuenta de Google corporativa. Como personal de mantenimiento, tienes acceso a las secciones de incidencias y al dashboard de mantenimiento.
+        <strong>Paso 1 — Acceder:</strong> Abre el navegador y ve a la URL de la plataforma. Pulsa el boton <i class="bi bi-google"></i> "Iniciar sesion con Google" y utiliza tu cuenta corporativa del centro.
       </div>
       <div class="manual-paso">
-        <strong>Menu lateral:</strong> Tu sidebar muestra dos opciones: <strong>Dashboard</strong> y <strong>Incidencias</strong>. Es un menu simplificado enfocado en tu trabajo diario.
+        <strong>Paso 2 — Menu lateral:</strong> Tu sidebar es simplificado y esta enfocado en tu trabajo diario:
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><i class="bi bi-house me-1"></i><strong>Dashboard:</strong> Tu pagina de inicio con resumen de incidencias y reservas.</li>
+          <li><i class="bi bi-exclamation-triangle me-1"></i><strong>Incidencias:</strong> Listado completo de todas las incidencias del centro.</li>
+        </ul>
       </div>
       <div class="manual-paso">
-        <strong>Tu perfil:</strong> En la parte inferior del menu aparece tu nombre con el rol "Mantenimiento" y el boton para cerrar sesion.
+        <strong>Paso 3 — Tu perfil:</strong> En la parte inferior del menu aparece tu nombre con el rol "Mantenimiento" y el boton para cerrar sesion.
+      </div>
+      <div class="manual-nota">
+        <i class="bi bi-info-circle me-1"></i> Como personal de mantenimiento, tu funcion principal es <strong>gestionar y resolver las incidencias</strong> que reportan los profesores y el equipo directivo. No tienes acceso a guardias, ausencias ni reservas.
       </div>
     </div>
 
@@ -64,17 +76,32 @@
     <div class="tarjeta manual-seccion" id="dashboard">
       <h3><i class="bi bi-house"></i>2. Dashboard de Mantenimiento</h3>
       <div class="manual-paso">
-        <strong>Tarjetas resumen:</strong> En la parte superior veras contadores de: incidencias pendientes, incidencias en proceso, resueltas hoy y reservas del dia.
-      </div>
-      <div class="manual-paso">
-        <strong>Tabla de incidencias:</strong> Muestra las incidencias activas con su tipo, estado y fecha. Desde aqui puedes actuar directamente:
+        <strong>Tarjetas resumen:</strong> En la parte superior veras 4 contadores:
         <ul style="margin:8px 0 0 16px;font-size:13px;">
-          <li>Pulsa <strong>"Iniciar"</strong> en una incidencia Pendiente para pasarla a En proceso.</li>
-          <li>Pulsa <strong>"Resolver"</strong> en una incidencia En proceso para marcarla como Resuelta.</li>
+          <li><span style="background:#fef2f2;color:#ef4444;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Pendientes</span> — Incidencias nuevas que nadie ha empezado a atender. <strong>Tu prioridad numero 1.</strong></li>
+          <li><span style="background:#fffbeb;color:#b45309;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">En proceso</span> — Incidencias en las que ya estas trabajando.</li>
+          <li><span style="background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Resueltas hoy</span> — Incidencias que has completado hoy.</li>
+          <li><i class="bi bi-calendar-check me-1"></i><strong>Reservas hoy:</strong> Espacios reservados para hoy (informativo, para saber que aulas estan en uso).</li>
         </ul>
       </div>
       <div class="manual-paso">
-        <strong>Reservas de hoy:</strong> Una lista de las reservas de espacios del dia con informacion del espacio, tramo horario, profesor que reservo y motivo. Util para saber que aulas estan en uso.
+        <strong>Flujo de trabajo diario recomendado:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li><strong>Al empezar el dia:</strong> Revisa el Dashboard. Mira cuantas incidencias pendientes hay.</li>
+          <li><strong>Prioriza:</strong> Atiende primero las incidencias <strong>Pendientes</strong> (las mas antiguas primero). Cuando empieces a trabajar en una, pulsa <strong>"Iniciar"</strong> para que los profesores sepan que se esta atendiendo.</li>
+          <li><strong>Continua lo en curso:</strong> Revisa las incidencias <strong>En proceso</strong> que dejaste a medias. Cuando termines una, pulsa <strong>"Resolver"</strong>.</li>
+          <li><strong>Consulta las reservas:</strong> Revisa la lista de reservas del dia para saber que aulas estan ocupadas por si necesitas acceder a alguna.</li>
+        </ol>
+      </div>
+      <div class="manual-paso">
+        <strong>Tabla de incidencias del Dashboard:</strong> Muestra las incidencias activas con botones de accion directa:
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Boton <strong>"Iniciar"</strong> (<i class="bi bi-play-circle"></i>) — Aparece en las Pendientes. Pulsalo cuando empieces a trabajar en ella.</li>
+          <li>Boton <strong>"Resolver"</strong> (<i class="bi bi-check-circle"></i>) — Aparece en las que estan En proceso. Pulsalo cuando hayas terminado.</li>
+        </ul>
+      </div>
+      <div class="manual-paso">
+        <strong>Reservas de hoy:</strong> Lista informativa con las reservas del dia: espacio, tramo horario, profesor que reservo y motivo. Util para saber que aulas no debes interrumpir.
       </div>
     </div>
 
@@ -82,18 +109,37 @@
     <div class="tarjeta manual-seccion" id="incidencias">
       <h3><i class="bi bi-exclamation-triangle"></i>3. Gestion de Incidencias</h3>
       <div class="manual-paso">
-        <strong>Listado completo:</strong> Tabla con todas las incidencias del centro. Filtra por estado (Pendiente, En proceso, Resuelta, Cerrada) y por tipo (Material, Hardware, Software, Otros).
+        <strong>Listado completo:</strong> Esta pagina muestra TODAS las incidencias del centro, no solo las activas. Puedes filtrar y buscar para encontrar cualquier incidencia.
       </div>
       <div class="manual-paso">
-        <strong>Acciones rapidas:</strong> Desde la tabla puedes:
+        <strong>Filtros disponibles:</strong>
         <ul style="margin:8px 0 0 16px;font-size:13px;">
-          <li><i class="bi bi-eye me-1"></i><strong>Ver detalle:</strong> Pulsa el ojo para acceder a la ficha completa de la incidencia.</li>
-          <li><i class="bi bi-play-circle me-1"></i><strong>Iniciar:</strong> Cambia una incidencia Pendiente a En proceso (indica que has comenzado a trabajar en ella).</li>
-          <li><i class="bi bi-check-circle me-1"></i><strong>Resolver:</strong> Marca como Resuelta cuando hayas terminado la reparacion o solucion.</li>
+          <li><strong>Por estado:</strong> Todos, Pendiente, En proceso, Resuelta, Cerrada.</li>
+          <li><strong>Por tipo:</strong> Todos, Material, Hardware, Software, Otros.</li>
         </ul>
       </div>
-      <div class="manual-nota">
-        <i class="bi bi-info-circle me-1"></i> No puedes crear incidencias nuevas. Los profesores y el equipo directivo son quienes las registran. Tu tarea es gestionarlas y resolverlas.
+      <div class="manual-paso">
+        <strong>Tipos de incidencia — que significa cada uno:</strong>
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><strong>Material:</strong> Mobiliario, pizarras, persianas, cerraduras, puertas, ventanas, iluminacion general.</li>
+          <li><strong>Hardware:</strong> Ordenadores, proyectores, impresoras, pantallas, altavoces, cableado de red.</li>
+          <li><strong>Software:</strong> Programas que no funcionan, problemas de red/wifi, accesos a plataformas digitales.</li>
+          <li><strong>Otros:</strong> Cualquier incidencia que no encaje en las categorias anteriores (limpieza, climatizacion, etc.).</li>
+        </ul>
+      </div>
+      <div class="manual-paso">
+        <strong>Procedimiento — Gestionar una incidencia de principio a fin:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li><strong>Localizar:</strong> Filtra por estado "Pendiente" para ver las que necesitan atencion. Las mas antiguas suelen ser las mas urgentes.</li>
+          <li><strong>Revisar:</strong> Pulsa el icono del ojo (<i class="bi bi-eye"></i>) para leer el detalle completo: titulo, descripcion, espacio afectado y quien la reporto.</li>
+          <li><strong>Iniciar:</strong> Cuando vayas a empezar a trabajar en ella, pulsa el boton <strong><i class="bi bi-play-circle"></i> Iniciar</strong> (o desde el detalle, pulsa "Pasar a En proceso"). Esto avisa a los profesores de que se esta atendiendo.</li>
+          <li><strong>Trabajar:</strong> Realiza la reparacion o solucion necesaria.</li>
+          <li><strong>Resolver:</strong> Cuando hayas terminado, pulsa el boton <strong><i class="bi bi-check-circle"></i> Resolver</strong> (o desde el detalle, "Marcar como Resuelta"). La incidencia queda como solucionada.</li>
+          <li>El equipo directivo o administrador verificara y la cerrara definitivamente.</li>
+        </ol>
+      </div>
+      <div class="manual-nota advertencia">
+        <i class="bi bi-exclamation-triangle me-1"></i> <strong>Importante:</strong> No puedes crear incidencias nuevas. Los profesores y el equipo directivo son quienes las reportan. Tu responsabilidad es <strong>gestionarlas y resolverlas</strong>.
       </div>
     </div>
 
@@ -101,19 +147,62 @@
     <div class="tarjeta manual-seccion" id="detalle">
       <h3><i class="bi bi-file-earmark-text"></i>4. Detalle de una Incidencia</h3>
       <div class="manual-paso">
-        <strong>Informacion completa:</strong> Al pulsar en una incidencia, veras: titulo, descripcion detallada, espacio afectado, quien la creo, fecha de creacion y codigo de referencia (INC-####).
-      </div>
-      <div class="manual-paso">
-        <strong>Panel de estado:</strong> En el lateral derecho aparece el estado actual con botones para avanzar al siguiente paso:
+        <strong>Informacion disponible:</strong> Al pulsar en una incidencia veras:
         <ul style="margin:8px 0 0 16px;font-size:13px;">
-          <li><strong>Pendiente</strong> &#8594; Boton "Pasar a En proceso"</li>
-          <li><strong>En proceso</strong> &#8594; Boton "Marcar como Resuelta"</li>
-          <li><strong>Resuelta</strong> &#8594; Boton "Cerrar incidencia"</li>
+          <li><strong>Titulo y tipo:</strong> En la cabecera, con badges de estado y tipo.</li>
+          <li><strong>Fecha de creacion:</strong> Cuando se reporto.</li>
+          <li><strong>Espacio afectado:</strong> El aula o sala donde esta el problema.</li>
+          <li><strong>Creador:</strong> Nombre del profesor o directivo que la reporto. <strong>Si necesitas mas informacion, contacta con esta persona.</strong></li>
+          <li><strong>Descripcion:</strong> Texto libre con los detalles del problema.</li>
+          <li><strong>Codigo de referencia:</strong> INC-#### (identificador unico).</li>
         </ul>
       </div>
-      <div class="manual-nota">
-        <i class="bi bi-lightbulb me-1"></i> <strong>Consejo:</strong> Cuando empieces a trabajar en una incidencia, cambiala a "En proceso" para que el profesorado sepa que ya se esta atendiendo.
+      <div class="manual-paso">
+        <strong>Panel de estado (lateral derecho):</strong> Muestra el estado actual y los botones para avanzar:
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><strong>Si esta Pendiente:</strong> Boton "Pasar a En proceso" → indica que empiezas a trabajar.</li>
+          <li><strong>Si esta En proceso:</strong> Boton "Marcar como Resuelta" → indica que has terminado.</li>
+          <li><strong>Si esta Resuelta:</strong> Boton "Cerrar incidencia" → normalmente lo hace el directivo o admin.</li>
+        </ul>
       </div>
+      <div class="manual-paso">
+        <strong>Ejemplo practico — Incidencia completa:</strong>
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:12px;margin-top:8px;font-size:13px;">
+          <div style="font-weight:600;margin-bottom:4px;">&#128295; Persiana rota en Aula 203</div>
+          <div style="color:#64748b;font-size:12px;margin-bottom:8px;">Tipo: Material | Creado por: Maria Lopez | Espacio: Aula 203 (ESO) | Ref: INC-0047</div>
+          <div style="margin-bottom:8px;"><strong>Descripcion:</strong> "La persiana de la ventana izquierda no sube. Parece que la cinta esta rota por la mitad. Los alumnos no pueden ver la pizarra por el reflejo del sol."</div>
+          <div style="font-size:12px;">
+            <strong>Tu flujo:</strong>
+            <ol style="margin:4px 0 0 16px;">
+              <li>Lees el detalle → entiendes que necesitas cinta de persiana nueva.</li>
+              <li>Pulsas "Pasar a En proceso" → el profesor sabe que lo estas atendiendo.</li>
+              <li>Vas al Aula 203, cambias la cinta.</li>
+              <li>Pulsas "Marcar como Resuelta" → listo.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+      <div class="manual-nota">
+        <i class="bi bi-lightbulb me-1"></i> <strong>Consejo:</strong> Cuando empieces a trabajar en una incidencia, cambiala a "En proceso" cuanto antes. Esto da tranquilidad al profesorado de que su problema esta siendo atendido, incluso si la reparacion tarda un rato.
+      </div>
+    </div>
+
+    <!-- 5. FAQ -->
+    <div class="tarjeta manual-seccion" id="faq">
+      <h3><i class="bi bi-question-circle"></i>5. Preguntas frecuentes</h3>
+      <dl class="manual-faq">
+        <dt><i class="bi bi-tools me-2"></i>"Hay una incidencia que no puedo resolver (necesita un tecnico externo)"</dt>
+        <dd>Dejala en estado <strong>"En proceso"</strong> para indicar que la has revisado. Comunica al equipo directivo (en persona o por email) que se necesita intervencion externa. Ellos gestionaran la contratacion del servicio tecnico. Cuando el tecnico la repare, tu marcas la incidencia como "Resuelta".</dd>
+
+        <dt><i class="bi bi-arrow-counterclockwise me-2"></i>"He marcado una incidencia como resuelta pero el profesor dice que sigue mal"</dt>
+        <dd>El equipo directivo o administrador puede cambiar el estado de la incidencia desde su panel (puede volver a ponerla "En proceso" o "Pendiente"). Revisa de nuevo el problema y cuando lo soluciones definitivamente, marcala como "Resuelta" otra vez.</dd>
+
+        <dt><i class="bi bi-chat-left-text me-2"></i>"No entiendo la descripcion de una incidencia"</dt>
+        <dd>En el detalle de la incidencia aparece el nombre del creador. Contacta directamente con esa persona para que te explique el problema con mas detalle. El nombre aparece en el campo "Creador" de la ficha de la incidencia.</dd>
+
+        <dt><i class="bi bi-sort-down me-2"></i>"Tengo muchas incidencias pendientes, ¿como priorizo?"</dt>
+        <dd>Como criterio general: 1) Las mas antiguas primero (llevan mas tiempo esperando). 2) Las de tipo "Hardware" y "Material" suelen ser mas urgentes porque afectan al desarrollo de las clases. 3) Si hay varias del mismo espacio, resuelvelas juntas para optimizar desplazamientos.</dd>
+      </dl>
     </div>
 
     <div style="text-align:center;padding:20px 0;color:#94a3b8;font-size:13px;">

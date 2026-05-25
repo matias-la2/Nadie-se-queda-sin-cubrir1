@@ -16,11 +16,15 @@
     .manual-paso { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
     .manual-paso strong { color: #1152d4; }
     .manual-nota { background: #eff6ff; border-left: 4px solid #1152d4; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 13px; color: #1e40af; }
+    .manual-nota.advertencia { background: #fffbeb; border-left-color: #f59e0b; color: #92400e; }
     .manual-indice { list-style: none; padding: 0; }
     .manual-indice li { margin-bottom: 6px; }
     .manual-indice a { color: #1152d4; text-decoration: none; font-weight: 500; font-size: 14px; }
     .manual-indice a:hover { text-decoration: underline; }
     .manual-indice a i { margin-right: 6px; }
+    .manual-faq { margin-top: 8px; }
+    .manual-faq dt { font-weight: 600; color: #1e293b; margin-bottom: 4px; font-size: 14px; }
+    .manual-faq dd { color: #475569; margin-bottom: 14px; margin-left: 0; font-size: 13px; padding-left: 16px; border-left: 2px solid #e2e8f0; }
   </style>
 </head>
 
@@ -48,6 +52,7 @@
         <li><a href="#aulas"><i class="bi bi-chevron-right"></i>7. Aulas y Espacios</a></li>
         <li><a href="#reservas"><i class="bi bi-chevron-right"></i>8. Reservas</a></li>
         <li><a href="#logs"><i class="bi bi-chevron-right"></i>9. Log de Actividad</a></li>
+        <li><a href="#faq"><i class="bi bi-chevron-right"></i>10. Preguntas frecuentes</a></li>
       </ul>
     </div>
 
@@ -55,10 +60,35 @@
     <div class="tarjeta manual-seccion" id="inicio">
       <h3><i class="bi bi-door-open"></i>1. Inicio y navegacion</h3>
       <div class="manual-paso">
-        <strong>Acceso:</strong> Inicia sesion con tu cuenta de Google corporativa. Como administrador, tienes acceso completo a todas las secciones de la plataforma.
+        <strong>Paso 1 — Acceder:</strong> Abre el navegador y ve a la URL de la plataforma. Pulsa el boton <i class="bi bi-google"></i> "Iniciar sesion con Google" y utiliza tu cuenta corporativa del centro.
       </div>
       <div class="manual-paso">
-        <strong>Menu lateral:</strong> El sidebar muestra dos bloques: <strong>Menu Principal</strong> (Dashboard, Incidencias, Reservas) y <strong>Administracion</strong> (Usuarios, Guardias, Ausencias, Aulas y Espacios, Log de actividad).
+        <strong>Paso 2 — Navegacion:</strong> Como administrador, tu menu lateral tiene dos bloques:
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><strong>Menu Principal:</strong> Dashboard, Incidencias, Reservas — tu uso diario.</li>
+          <li><strong>Administracion:</strong> Usuarios, Guardias, Ausencias, Aulas y Espacios, Log de actividad — gestion completa del sistema.</li>
+        </ul>
+      </div>
+      <div class="manual-paso">
+        <strong>Diferencia entre roles:</strong>
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><strong>ADMINISTRADOR:</strong> Control total. Gestiona usuarios, roles, log de actividad y toda la configuracion del sistema.</li>
+          <li><strong>EQUIPO_DIRECTIVO:</strong> Gestiona guardias, ausencias, incidencias y espacios, pero NO puede asignar roles ni ver el log.</li>
+          <li><strong>PROFESOR:</strong> Solo ve su propia informacion: sus guardias, ausencias, incidencias y reservas.</li>
+          <li><strong>CONSERJE (Mantenimiento):</strong> Solo gestiona incidencias de mantenimiento. No ve guardias, ausencias ni reservas.</li>
+        </ul>
+      </div>
+      <div class="manual-paso">
+        <strong>Si un profesor no puede acceder:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Ve a <strong>Usuarios</strong> y busca su nombre o correo.</li>
+          <li>Verifica que su estado sea <strong>Activo</strong> (badge verde). Si esta inactivo, activalo.</li>
+          <li>Verifica que tenga al menos un rol asignado. Si no tiene rol, pulsale el engranaje y asignale PROFESOR.</li>
+          <li>Si el usuario no aparece en la lista, es que aun no ha iniciado sesion por primera vez — pidele que lo haga.</li>
+        </ol>
+      </div>
+      <div class="manual-nota">
+        <i class="bi bi-info-circle me-1"></i> En dispositivos moviles, el menu se oculta. Pulsa el boton <strong>&#9776;</strong> en la esquina superior izquierda para desplegarlo.
       </div>
     </div>
 
@@ -66,16 +96,38 @@
     <div class="tarjeta manual-seccion" id="dashboard">
       <h3><i class="bi bi-house"></i>2. Dashboard administrativo</h3>
       <div class="manual-paso">
-        <strong>Resumen general:</strong> Tarjetas con contadores de: incidencias activas, ausencias del dia, aulas reservadas y profesores activos.
+        <strong>Tarjetas de resumen:</strong> En la parte superior veras 4 contadores:
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><i class="bi bi-exclamation-triangle me-1"></i><strong>Incidencias activas:</strong> Total de incidencias que no estan cerradas.</li>
+          <li><i class="bi bi-calendar-x me-1"></i><strong>Ausencias hoy:</strong> Numero de profesores ausentes hoy.</li>
+          <li><i class="bi bi-door-open me-1"></i><strong>Aulas reservadas:</strong> Espacios con reserva para hoy.</li>
+          <li><i class="bi bi-people me-1"></i><strong>Profesores activos:</strong> Total de profesores con cuenta activa.</li>
+        </ul>
       </div>
       <div class="manual-paso">
-        <strong>Alerta de guardias sin cubrir:</strong> Si hay ausencias del dia sin sustituto asignado, aparece una alerta destacada con un boton para ir directamente a la gestion de guardias.
+        <strong>Colores de los badges de estado:</strong>
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><span style="background:#fef2f2;color:#ef4444;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Pendiente / Sin cubrir</span> — Rojo: requiere atencion inmediata.</li>
+          <li><span style="background:#fffbeb;color:#b45309;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">En proceso</span> — Amarillo: se esta trabajando en ello.</li>
+          <li><span style="background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Resuelta / Cubierta</span> — Verde: completado correctamente.</li>
+          <li><span style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Cerrada</span> — Gris: archivado, sin accion necesaria.</li>
+        </ul>
       </div>
       <div class="manual-paso">
-        <strong>Incidencias recientes:</strong> Tabla con las ultimas incidencias donde puedes cambiar el estado directamente desde un desplegable en linea.
+        <strong>Procedimiento: Que hacer cuando hay guardias sin cubrir:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Observa la alerta roja en el Dashboard que indica cuantas guardias estan sin cubrir.</li>
+          <li>Pulsa el boton <strong>"Gestionar"</strong> o ve directamente a la seccion de <strong>Guardias</strong> en el menu.</li>
+          <li>En la pestana "Guardias de hoy", veras las ausencias sin cubrir con un selector de profesor.</li>
+          <li>Selecciona un profesor del desplegable y pulsa <strong>"Asignar"</strong>.</li>
+          <li>Si no hay profesores disponibles con guardia hoy, las ausencias de otros dias muestran la lista completa de profesores activos (ver <a href="#guardias">seccion 4</a> para mas detalles).</li>
+        </ol>
       </div>
       <div class="manual-paso">
-        <strong>Cobertura de hoy:</strong> Lista de las guardias del dia con el estado de cada una, profesor sustituto y profesor ausente.
+        <strong>Incidencias recientes:</strong> La tabla muestra las ultimas incidencias con un desplegable para cambiar el estado directamente. Haz clic en una incidencia para ver su detalle completo.
+      </div>
+      <div class="manual-paso">
+        <strong>Cobertura de hoy:</strong> Lista visual de las guardias del dia: quien sustituye a quien, en que aula y tramo. Los badges indican si la asignacion fue automatica o manual.
       </div>
     </div>
 
@@ -83,40 +135,114 @@
     <div class="tarjeta manual-seccion" id="usuarios">
       <h3><i class="bi bi-people-fill"></i>3. Gestion de Usuarios</h3>
       <div class="manual-paso">
-        <strong>Vista general:</strong> Tarjetas resumen con usuarios activos, inactivos y totales. Tabla con todos los usuarios del sistema.
+        <strong>Vista general:</strong> Tarjetas resumen con usuarios activos, inactivos y totales. La tabla lista todos los usuarios con su avatar, nombre, correo, roles (como badges de color) y estado.
       </div>
       <div class="manual-paso">
-        <strong>Buscar y filtrar:</strong> Usa la barra de busqueda para encontrar usuarios por nombre o correo. Filtra por rol (Profesor, Equipo Directivo, Administrador, Mantenimiento) y por estado (Activo/Inactivo).
+        <strong>Procedimiento — Dar de alta a un nuevo profesor:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>El nuevo profesor debe iniciar sesion con su cuenta de Google corporativa (@iesrioarba.com). Esto crea automaticamente su usuario en el sistema.</li>
+          <li>Ve a <strong>Usuarios</strong> y busca su nombre. Aparecera en la lista sin rol asignado.</li>
+          <li>Pulsa el icono de engranaje (<i class="bi bi-gear"></i>) en su fila.</li>
+          <li>En el modal, marca la casilla <strong>PROFESOR</strong> y pulsa Guardar.</li>
+          <li>Ve a la seccion de <strong>Guardias &gt; Planificadas</strong> y asignale su horario de guardias (ver <a href="#guardias">seccion 4</a>).</li>
+        </ol>
       </div>
       <div class="manual-paso">
-        <strong>Editar roles:</strong> Pulsa el icono de engranaje (<i class="bi bi-gear"></i>) en un usuario para abrir el modal de edicion de roles. Marca o desmarca los roles necesarios (debe tener al menos uno).
+        <strong>Procedimiento — Desactivar un usuario que se va del centro:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Ve a <strong>Usuarios</strong> y busca al profesor.</li>
+          <li>Pulsa el icono de persona (<i class="bi bi-person-slash"></i>) en su fila.</li>
+          <li>Confirma la desactivacion en el dialogo.</li>
+          <li>El usuario ya no podra acceder, pero sus datos historicos (guardias realizadas, ausencias, incidencias) se mantienen en el sistema.</li>
+        </ol>
+      </div>
+      <div class="manual-nota advertencia">
+        <i class="bi bi-exclamation-triangle me-1"></i> <strong>Atencion:</strong> Al desactivar un usuario, sus guardias planificadas seguiran en el cuadrante pero el sistema no le asignara nuevas sustituciones. Considera eliminar manualmente sus guardias planificadas si ya no volvera.
       </div>
       <div class="manual-paso">
-        <strong>Activar/Desactivar:</strong> Pulsa el icono de persona (<i class="bi bi-person-slash"></i> / <i class="bi bi-person-check"></i>) para cambiar el estado del usuario. Se pedira confirmacion antes de aplicar el cambio.
+        <strong>Implicaciones de cada rol:</strong>
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><strong>PROFESOR:</strong> Ve su dashboard, guardias, ausencias, incidencias y reservas personales. Puede registrar ausencias propias y crear incidencias.</li>
+          <li><strong>EQUIPO_DIRECTIVO:</strong> Ve el dashboard administrativo. Puede gestionar guardias, ausencias de otros profesores, incidencias y espacios. NO puede gestionar roles ni ver el log de actividad.</li>
+          <li><strong>ADMINISTRADOR:</strong> Acceso total a todas las funciones, incluyendo gestion de usuarios, roles y log de auditoria.</li>
+          <li><strong>CONSERJE:</strong> Solo ve incidencias de mantenimiento. Puede avanzar su estado (Iniciar, Resolver). No tiene acceso a guardias, ausencias ni reservas.</li>
+        </ul>
       </div>
       <div class="manual-nota">
-        <i class="bi bi-exclamation-triangle me-1"></i> Al desactivar un usuario, este no podra acceder a la plataforma pero sus datos se mantienen en el sistema.
+        <i class="bi bi-info-circle me-1"></i> Un usuario puede tener multiples roles simultaneamente. Por ejemplo, un miembro del equipo directivo normalmente tiene los roles PROFESOR + EQUIPO_DIRECTIVO.
       </div>
     </div>
 
     <!-- 4. Guardias -->
     <div class="tarjeta manual-seccion" id="guardias">
       <h3><i class="bi bi-shield-check"></i>4. Gestion de Guardias</h3>
-      <p style="margin-bottom:12px;">La pagina de guardias tiene tres pestanas:</p>
+      <p style="margin-bottom:12px;">La gestion de guardias es una de las funciones mas criticas del sistema. Tiene tres pestanas:</p>
 
       <div class="manual-paso">
-        <strong>Pestana "Guardias de hoy":</strong> Muestra las ausencias del dia sin cubrir con un desplegable para seleccionar sustituto y boton <strong>Asignar</strong>. Tambien lista los profesores disponibles con el numero de guardias que ya han cubierto, y las guardias ya asignadas hoy.
-      </div>
-      <div class="manual-paso">
-        <strong>Pestana "Guardias planificadas":</strong> Gestiona el cuadrante de guardias del curso. Puedes:
+        <strong>4.1 — Pestana "Guardias de hoy":</strong> Muestra tres bloques:
         <ul style="margin:8px 0 0 16px;font-size:13px;">
-          <li><strong>Crear grupo:</strong> Asigna profesores a un dia/tramo/edificio concreto.</li>
-          <li><strong>Asignar horario:</strong> Selecciona un profesor y marca los tramos de su horario de guardias en un grid semanal.</li>
-          <li><strong>Importar CSV/Excel:</strong> Carga masiva de guardias desde archivos. El sistema valida el formato y muestra una vista previa antes de confirmar.</li>
+          <li><strong>Ausencias sin cubrir:</strong> Listado de todas las ausencias (de hoy y de otros dias) que aun no tienen sustituto. Para cada una hay un selector de profesor y un boton Asignar.</li>
+          <li><strong>Profesores disponibles:</strong> Badges con los profesores que tienen guardia creada para hoy y aun no han sido asignados. El numero entre parentesis indica cuantas guardias han realizado este curso.</li>
+          <li><strong>Guardias asignadas hoy:</strong> Tabla con las guardias ya asignadas, su estado (Pendiente/Aceptada) y tipo (Auto/Manual).</li>
         </ul>
       </div>
       <div class="manual-paso">
-        <strong>Pestana "Vista por tramo":</strong> Un grid visual que muestra todos los profesores asignados a cada tramo horario, filtrable por edificio y curso escolar. Util para ver la cobertura general del centro.
+        <strong>Procedimiento — Asignar una guardia manualmente:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>En la pestana "Guardias de hoy", localiza la ausencia sin cubrir.</li>
+          <li>Observa la fecha que aparece en azul junto al nombre del profesor ausente — puede ser de hoy o de otro dia.</li>
+          <li>En el desplegable de sustitutos:
+            <ul>
+              <li>Para ausencias de <strong>hoy</strong>: se muestran los profesores con guardia creada para hoy (los mas adecuados, ordenados por menos guardias realizadas).</li>
+              <li>Para ausencias de <strong>otros dias</strong>: se muestran <strong>todos los profesores activos</strong> del centro, para que puedas elegir a cualquiera.</li>
+            </ul>
+          </li>
+          <li>Selecciona un profesor y pulsa <strong><i class="bi bi-person-plus"></i> Asignar</strong>.</li>
+          <li>El profesor recibira una notificacion por email y en su Dashboard para aceptar o rechazar.</li>
+        </ol>
+      </div>
+      <div class="manual-nota">
+        <i class="bi bi-info-circle me-1"></i> En casos extraordinarios (no hay nadie del edificio correcto), puedes asignar manualmente un profesor de otro edificio. La restriccion de edificio solo aplica en asignaciones automaticas.
+      </div>
+      <div class="manual-paso">
+        <strong>Como funciona la asignacion automatica:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Cuando se registra una ausencia, el sistema busca profesores con <strong>guardia_creada</strong> para ese dia de la semana y tramo horario.</li>
+          <li>Filtra los del mismo edificio que la ausencia.</li>
+          <li>Ordena por numero de guardias ya realizadas este curso (equidad).</li>
+          <li>Asigna al profesor con menos guardias realizadas.</li>
+          <li>Si el profesor <strong>rechaza</strong>: el sistema automaticamente pasa al siguiente candidato disponible.</li>
+          <li>Si <strong>no queda nadie</strong>: la ausencia pasa a estado <strong>SIN_CUBRIR</strong>, se notifica al equipo directivo por email y aparece en el Dashboard para gestion manual.</li>
+        </ol>
+      </div>
+      <div class="manual-paso">
+        <strong>4.2 — Pestana "Guardias planificadas":</strong> Gestiona el cuadrante de guardias del curso completo.
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><strong>Crear grupo:</strong> Asigna varios profesores a un mismo dia/tramo/edificio. Util para configurar que 3-4 profesores tengan guardia cada lunes a 1a hora.</li>
+          <li><strong>Asignar horario:</strong> Selecciona un profesor y marca en un grid semanal interactivo todos los tramos donde tiene guardia. Muestra un contador de tramos seleccionados.</li>
+          <li><strong>Importar CSV/Excel:</strong> Carga masiva (ver procedimiento abajo).</li>
+        </ul>
+      </div>
+      <div class="manual-paso">
+        <strong>Procedimiento — Importar guardias desde Excel:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Prepara un archivo Excel (.xlsx) con las columnas: <strong>Profesor</strong> (nombre completo o correo), <strong>Dia</strong> (1=Lunes a 5=Viernes), <strong>Tramo</strong> (formato "08:15-09:10").</li>
+          <li>Selecciona el curso escolar (ej: "2025-2026") y el edificio.</li>
+          <li>Pulsa "Importar Excel" y selecciona el archivo.</li>
+          <li>El sistema muestra una <strong>vista previa</strong> con validacion:
+            <ul>
+              <li><span style="color:#16a34a;"><i class="bi bi-check-circle"></i></span> Fila valida: profesor encontrado en el sistema.</li>
+              <li><span style="color:#f59e0b;"><i class="bi bi-exclamation-triangle"></i></span> Advertencia: profesor no encontrado — esa fila se omitira.</li>
+            </ul>
+          </li>
+          <li>Revisa la vista previa y confirma la importacion.</li>
+        </ol>
+      </div>
+      <div class="manual-paso">
+        <strong>4.3 — Pestana "Vista por tramo":</strong> Un grid visual que muestra TODOS los profesores asignados a cada tramo horario del cuadrante. Filtra por edificio y curso escolar para ver la cobertura de un edificio concreto. Util para detectar tramos con poca cobertura.
+      </div>
+      <div class="manual-nota advertencia">
+        <i class="bi bi-exclamation-triangle me-1"></i> Si cambias el horario de guardias a mitad de curso, los contadores de "guardias realizadas" se mantienen del curso actual. Las nuevas asignaciones usaran el cuadrante actualizado.
       </div>
     </div>
 
@@ -124,16 +250,38 @@
     <div class="tarjeta manual-seccion" id="ausencias">
       <h3><i class="bi bi-calendar-x"></i>5. Gestion de Ausencias</h3>
       <div class="manual-paso">
-        <strong>Registrar ausencia:</strong> Pulsa <strong>"Registrar ausencia"</strong> para crear una ausencia de cualquier profesor. Selecciona el profesor, fecha, tramo, espacio(s) y opcionalmente adjunta tarea.
+        <strong>Procedimiento — Registrar una ausencia de un profesor:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Pulsa <strong>"Registrar ausencia"</strong>.</li>
+          <li>Selecciona el <strong>profesor</strong> en el desplegable (como admin, puedes registrar ausencias de cualquier profesor).</li>
+          <li>Indica la <strong>fecha</strong> y el <strong>tramo horario</strong>.</li>
+          <li>Selecciona los <strong>espacios</strong> donde el profesor imparte clase en ese tramo (puede ser mas de uno).</li>
+          <li>Opcionalmente, escribe un <strong>comentario</strong> y marca "Dejar tarea" si hay instrucciones para los alumnos.</li>
+          <li>Pulsa <strong>Guardar</strong>.</li>
+        </ol>
       </div>
       <div class="manual-paso">
-        <strong>Tarjetas resumen:</strong> Contadores de ausencias Pendientes, Cubiertas, Sin cubrir y Total.
+        <strong>Que pasa despues de registrar una ausencia:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>El sistema busca automaticamente un profesor sustituto (ver <a href="#guardias">seccion 4 — asignacion automatica</a>).</li>
+          <li>Si encuentra candidato: la ausencia queda en estado <strong>PENDIENTE</strong> mientras el profesor decide.</li>
+          <li>Si el profesor acepta: pasa a <strong>CUBIERTA</strong>.</li>
+          <li>Si no hay candidatos disponibles: pasa directamente a <strong>SIN_CUBRIR</strong> y requiere gestion manual desde la pestana de Guardias.</li>
+        </ol>
       </div>
       <div class="manual-paso">
-        <strong>Filtros:</strong> Filtra por estado y por rango de fechas (desde/hasta).
+        <strong>Estados de una ausencia:</strong>
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><strong>PENDIENTE:</strong> Se ha encontrado un candidato y se espera su respuesta (aceptar/rechazar).</li>
+          <li><strong>CUBIERTA:</strong> Un profesor ha aceptado la sustitucion. Todo en orden.</li>
+          <li><strong>SIN_CUBRIR:</strong> No hay sustituto disponible. Requiere intervencion manual del administrador o equipo directivo.</li>
+        </ul>
       </div>
       <div class="manual-paso">
-        <strong>Cambiar estado:</strong> Usa el desplegable en linea de la tabla para cambiar el estado de una ausencia. Tambien puedes eliminar ausencias con el boton de papelera.
+        <strong>Filtros y gestion:</strong> Filtra por estado y rango de fechas. Usa el desplegable en linea para cambiar manualmente el estado de una ausencia. Puedes eliminar ausencias con el boton de papelera (se pedira confirmacion).
+      </div>
+      <div class="manual-nota">
+        <i class="bi bi-lightbulb me-1"></i> Revisa periodicamente las ausencias con estado SIN_CUBRIR. Si llevan varios dias sin gestion, asigna manualmente un sustituto desde la pagina de Guardias.
       </div>
     </div>
 
@@ -141,31 +289,66 @@
     <div class="tarjeta manual-seccion" id="incidencias">
       <h3><i class="bi bi-exclamation-triangle"></i>6. Gestion de Incidencias</h3>
       <div class="manual-paso">
-        <strong>Panel completo:</strong> Tarjetas resumen con Pendientes, En proceso, Resueltas y Total. Busca por titulo, espacio o creador. Filtra por estado y tipo.
+        <strong>Flujo de vida de una incidencia:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li><strong>Creacion:</strong> Un profesor o miembro del equipo directivo crea la incidencia indicando el espacio afectado, tipo y descripcion.</li>
+          <li><strong>PENDIENTE (Abierta):</strong> La incidencia espera a ser atendida por mantenimiento.</li>
+          <li><strong>EN_PROCESO:</strong> El personal de mantenimiento ha comenzado a trabajar en ella.</li>
+          <li><strong>RESUELTA:</strong> Mantenimiento ha completado la reparacion/solucion.</li>
+          <li><strong>CERRADA:</strong> El administrador o directivo confirma que todo esta correcto y archiva la incidencia.</li>
+        </ol>
       </div>
       <div class="manual-paso">
-        <strong>Cambiar estado en linea:</strong> Desde la propia tabla, usa el desplegable de estado para cambiar una incidencia entre Pendiente, En proceso, Resuelta y Cerrada.
+        <strong>Quien interviene en cada paso:</strong>
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><strong>Crear:</strong> Profesores y equipo directivo.</li>
+          <li><strong>Avanzar estado (Iniciar, Resolver):</strong> Personal de mantenimiento (conserje) desde su panel.</li>
+          <li><strong>Cambiar estado libremente / Cerrar / Eliminar:</strong> Administrador y equipo directivo.</li>
+        </ul>
       </div>
       <div class="manual-paso">
-        <strong>Ver detalle:</strong> Pulsa el ojo (<i class="bi bi-eye"></i>) para ver toda la informacion. Desde el detalle puedes avanzar el estado paso a paso.
+        <strong>Gestion desde la tabla:</strong> Busca por titulo, espacio o nombre del creador. Filtra por estado y tipo. Cambia el estado con el desplegable en linea. Pulsa el ojo (<i class="bi bi-eye"></i>) para ver el detalle completo o la papelera (<i class="bi bi-trash"></i>) para eliminar.
       </div>
-      <div class="manual-paso">
-        <strong>Eliminar:</strong> Pulsa la papelera (<i class="bi bi-trash"></i>) para eliminar una incidencia. Se pedira confirmacion.
+      <div class="manual-nota">
+        <i class="bi bi-info-circle me-1"></i> Los tipos de incidencia son: <strong>Material</strong> (mobiliario, pizarras, persianas...), <strong>Hardware</strong> (ordenadores, proyectores, impresoras...), <strong>Software</strong> (programas, red, accesos...) y <strong>Otros</strong>.
       </div>
     </div>
 
     <!-- 7. Aulas -->
     <div class="tarjeta manual-seccion" id="aulas">
       <h3><i class="bi bi-door-open"></i>7. Aulas y Espacios</h3>
-      <p style="margin-bottom:12px;">Tres pestanas para gestionar la infraestructura del centro:</p>
       <div class="manual-paso">
-        <strong>Espacios:</strong> Lista de todas las aulas y salas. Filtra por edificio, estado o curso escolar. Puedes anadir nuevos espacios con ID opcional, nombre, edificio, planta, capacidad y estado (Disponible, No disponible, En mantenimiento). Pulsa el ojo para ver el detalle de un espacio.
+        <strong>Procedimiento — Crear un nuevo espacio:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Ve a <strong>Aulas y Espacios</strong> y selecciona la pestana "Espacios".</li>
+          <li>Pulsa <strong>"Anadir espacio"</strong>.</li>
+          <li>Rellena: nombre (ej: "Laboratorio de Fisica"), edificio (seleccionar de la lista), planta (opcional), capacidad (opcional).</li>
+          <li>El estado por defecto es "Disponible". Cambialo a "No disponible" o "En mantenimiento" si no debe aparecer en las reservas.</li>
+          <li>Opcionalmente, asigna un ID fijo (si no, se genera automaticamente).</li>
+          <li>Pulsa Guardar.</li>
+        </ol>
       </div>
       <div class="manual-paso">
-        <strong>Edificios:</strong> Gestiona los edificios del centro. Anade nuevos edificios con nombre y numero de plantas.
+        <strong>Procedimiento — Crear un bloqueo (ejemplo practico):</strong>
+        <p style="font-size:13px;margin:8px 0;">Quieres bloquear el Laboratorio de Quimica todos los martes de 10:10 a 11:05 porque hay clase fija de 2o Bachillerato:</p>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Ve a la pestana <strong>"Bloqueos"</strong>.</li>
+          <li>Pulsa <strong>"Anadir bloqueo"</strong>.</li>
+          <li>Espacio: selecciona "Laboratorio de Quimica".</li>
+          <li>Dia de la semana: selecciona "Martes".</li>
+          <li>Tramo horario: selecciona "3a hora (10:10-11:05)".</li>
+          <li>Fecha desde: primer dia de curso (ej: 2025-09-15).</li>
+          <li>Fecha hasta: ultimo dia de curso (ej: 2026-06-20). Si lo dejas vacio, el bloqueo es indefinido.</li>
+          <li>Motivo: "Clase fija 2o Bach Quimica".</li>
+          <li>Pulsa Guardar.</li>
+        </ol>
+        <p style="font-size:13px;margin-top:8px;">A partir de ahora, cuando un profesor intente reservar ese laboratorio un martes en ese tramo, vera el tramo como <strong>"&#128274; Clase fija 2o Bach Quimica"</strong> y no podra seleccionarlo.</p>
       </div>
       <div class="manual-paso">
-        <strong>Bloqueos:</strong> Crea bloqueos para impedir que se reserven ciertos espacios en tramos concretos. Indica el espacio, dia (opcional para bloqueo permanente), tramo, fechas de inicio/fin y motivo. Los tramos bloqueados apareceran como no disponibles en las reservas.
+        <strong>Edificios:</strong> Gestiona los edificios del centro desde la segunda pestana. Cada edificio tiene nombre y numero de plantas. Los espacios se asocian a edificios para organizar la vista.
+      </div>
+      <div class="manual-nota">
+        <i class="bi bi-info-circle me-1"></i> Si un espacio esta "En mantenimiento", no aparecera en el formulario de reservas de los profesores pero sus bloqueos se mantienen. Cambialo a "Disponible" cuando termine la obra.
       </div>
     </div>
 
@@ -173,10 +356,26 @@
     <div class="tarjeta manual-seccion" id="reservas">
       <h3><i class="bi bi-calendar-check"></i>8. Reservas</h3>
       <div class="manual-paso">
-        <strong>Crear reserva:</strong> Igual que los profesores: selecciona fecha y espacio, el sistema muestra la disponibilidad de cada tramo en tiempo real. Solo los tramos libres son seleccionables.
+        <strong>Que ve el admin vs que ve el profesor:</strong>
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><strong>Profesor:</strong> Ve solo sus propias reservas. Puede crear nuevas y eliminar las futuras.</li>
+          <li><strong>Administrador:</strong> Ve TODAS las reservas del centro (de todos los profesores). Puede crear reservas propias y eliminar cualquier reserva futura.</li>
+        </ul>
       </div>
       <div class="manual-paso">
-        <strong>Ver reservas:</strong> La tabla muestra todas las reservas del centro con fecha, tramo, espacio, edificio, quien la reservo y motivo. Puedes eliminar reservas futuras.
+        <strong>Crear una reserva:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Pulsa <strong>"Nueva Reserva"</strong>.</li>
+          <li>Selecciona la fecha y el espacio.</li>
+          <li>El sistema carga automaticamente la disponibilidad de cada tramo:
+            <ul>
+              <li><strong>&#10004; Disponible:</strong> Puedes seleccionarlo.</li>
+              <li><strong>&#128274; Bloqueado:</strong> Hay clase fija u otro bloqueo. No seleccionable.</li>
+              <li><strong>&#128204; Reservado por [nombre]:</strong> Otro profesor ya lo reservo. No seleccionable.</li>
+            </ul>
+          </li>
+          <li>Selecciona un tramo libre, opcionalmente indica el motivo, y confirma.</li>
+        </ol>
       </div>
     </div>
 
@@ -184,14 +383,49 @@
     <div class="tarjeta manual-seccion" id="logs">
       <h3><i class="bi bi-clock-history"></i>9. Log de Actividad</h3>
       <div class="manual-paso">
-        <strong>Registro de auditoría:</strong> Tabla con todas las acciones realizadas en la plataforma: fecha/hora, usuario, accion, entidad afectada y detalles.
+        <strong>Para que sirve:</strong> El log de actividad es un registro de auditoria que registra automaticamente todas las acciones relevantes: creacion, actualizacion y eliminacion de usuarios, guardias, ausencias, incidencias, espacios y reservas. Sirve para:
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Saber <strong>quien</strong> hizo <strong>que cambio</strong> y <strong>cuando</strong>.</li>
+          <li>Investigar problemas ("quien elimino la guardia del martes?").</li>
+          <li>Verificar que el sistema funciona correctamente ("se estan creando las asignaciones automaticas?").</li>
+        </ul>
       </div>
       <div class="manual-paso">
-        <strong>Filtros:</strong> Busca por tipo de accion y filtra por rango de fechas. Usa la paginacion para navegar entre los registros.
+        <strong>Uso:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Usa la barra de busqueda para filtrar por tipo de accion (ej: "CREAR_GUARDIA", "ELIMINAR_AUSENCIA").</li>
+          <li>Filtra por rango de fechas para acotar la busqueda.</li>
+          <li>Navega entre paginas con los controles de paginacion.</li>
+          <li>La columna "Detalles" muestra los campos principales del registro afectado.</li>
+        </ol>
       </div>
       <div class="manual-nota">
-        <i class="bi bi-info-circle me-1"></i> El log registra automaticamente las acciones de creacion, actualizacion y eliminacion de todos los recursos del sistema.
+        <i class="bi bi-info-circle me-1"></i> El log solo esta disponible para el rol ADMINISTRADOR. El equipo directivo no tiene acceso a esta seccion.
       </div>
+    </div>
+
+    <!-- 10. FAQ -->
+    <div class="tarjeta manual-seccion" id="faq">
+      <h3><i class="bi bi-question-circle"></i>10. Preguntas frecuentes</h3>
+      <dl class="manual-faq">
+        <dt><i class="bi bi-person-x me-2"></i>"Un profesor dice que no puede acceder a la plataforma"</dt>
+        <dd>Ve a Usuarios, buscalo por nombre o correo. Verifica que: 1) su estado sea Activo (si esta inactivo, activalo), 2) tenga al menos el rol PROFESOR asignado. Si no aparece en la lista, es que nunca ha iniciado sesion — pidele que entre con su Google corporativo por primera vez.</dd>
+
+        <dt><i class="bi bi-shield-exclamation me-2"></i>"Hay una guardia sin cubrir y no hay profesores disponibles del edificio"</dt>
+        <dd>Ve a Guardias > pestana "Guardias de hoy". Para ausencias de otros dias, el selector muestra TODOS los profesores activos (no solo los del edificio). Selecciona cualquier profesor disponible y asignalo manualmente. La restriccion de edificio no aplica en asignaciones manuales — es un caso extraordinario que tu decides.</dd>
+
+        <dt><i class="bi bi-calendar-range me-2"></i>"Quiero cambiar el horario de guardias a mitad de curso"</dt>
+        <dd>Ve a Guardias > pestana "Planificadas". Puedes: 1) Usar "Asignar horario" para modificar el grid de un profesor concreto, o 2) Importar un nuevo Excel/CSV que sobrescribira el cuadrante completo. Los contadores de guardias realizadas se mantienen del curso actual.</dd>
+
+        <dt><i class="bi bi-clipboard-check me-2"></i>"Como se si el sistema de guardias esta funcionando correctamente"</dt>
+        <dd>Revisa el Dashboard diariamente: si no hay alertas de guardias sin cubrir, el sistema esta funcionando. Periodicamente verifica que no haya ausencias SIN_CUBRIR antiguas en la pagina de Ausencias (filtra por estado "Sin cubrir"). Si hay, asignalas manualmente.</dd>
+
+        <dt><i class="bi bi-person-dash me-2"></i>"Un profesor se ha ido del centro"</dt>
+        <dd>1) Ve a Usuarios y desactivalo (boton de persona). 2) Ve a Guardias > Planificadas y elimina sus guardias creadas o reasigna su horario a otro profesor. Al desactivarlo, el sistema no le asignara nuevas sustituciones, pero sus guardias planificadas permanecen visibles hasta que las elimines.</dd>
+
+        <dt><i class="bi bi-envelope-x me-2"></i>"Un profesor dice que no le llegan las notificaciones de guardia"</dt>
+        <dd>Las notificaciones se envian al correo de Google con el que inicio sesion. Verifica que el correo que aparece en su perfil de Usuarios sea el correcto. Tambien puede revisar su carpeta de Spam. Las notificaciones tambien aparecen en su Dashboard dentro de la plataforma.</dd>
+      </dl>
     </div>
 
     <div style="text-align:center;padding:20px 0;color:#94a3b8;font-size:13px;">
