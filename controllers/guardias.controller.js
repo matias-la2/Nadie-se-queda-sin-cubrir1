@@ -270,7 +270,7 @@ async function crearAsignada(req, res, next) {
       [id_ausencia]
     );
 
-    if (edificiosAusencia.length > 0) {
+    if (edificiosAusencia.length > 0 && tipo_asignacion !== 'MANUAL') {
       const idsEdificioAusencia = edificiosAusencia.map(e => e.id_edificio);
       const [[{ coincide }]] = await conn.query(
         `SELECT COUNT(*) as coincide FROM profesor_edificio
