@@ -529,6 +529,7 @@
         var disponibles = info.disponibles || [];
         var asignadas = info.asignadas || [];
         var sinCubrirOtrosDias = info.sinCubrirOtrosDias || [];
+        var todosProfesores = info.todosProfesores || [];
 
         _profesoresDisponibles = disponibles;
 
@@ -538,7 +539,7 @@
         document.getElementById("num-disponibles").textContent = disponibles.length;
         document.getElementById("num-asignadas-hoy").textContent = asignadas.length;
 
-        renderSinCubrir(todasSinCubrir, disponibles);
+        renderSinCubrir(todasSinCubrir, disponibles, todosProfesores);
         renderDisponibles(disponibles);
         renderAsignadasHoy(asignadas);
       }).catch(function () {
@@ -551,12 +552,16 @@
       });
     }
 
-    function renderSinCubrir(ausencias, disponibles) {
+    function renderSinCubrir(ausencias, disponibles, todosProfesores) {
       var contenedor = document.getElementById("lista-sin-cubrir");
       if (ausencias.length === 0) {
         contenedor.innerHTML = '<div class="sin-resultados"><i class="bi bi-check-circle sin-resultados-icono"></i>Todas las ausencias estan cubiertas</div>';
         return;
       }
+
+      var hoy = new Date();
+      var fechaHoyISO = hoy.getFullYear() + "-" + String(hoy.getMonth() + 1).padStart(2, "0") + "-" + String(hoy.getDate()).padStart(2, "0");
+
       var html = "";
       for (var i = 0; i < ausencias.length; i++) {
         var a = ausencias[i];
@@ -565,18 +570,29 @@
         var tramo = a.tramo_horario || a.tramo || "—";
         var idAusencia = a.id_ausencia || a.id;
 
+        var fechaISO = "";
         var fechaTexto = "";
         if (a.fecha) {
           var f = String(a.fecha).substring(0, 10).split("-");
-          if (f.length === 3) fechaTexto = f[2] + "/" + f[1] + "/" + f[0];
+          if (f.length === 3) {
+            fechaISO = f[0] + "-" + f[1] + "-" + f[2];
+            fechaTexto = f[2] + "/" + f[1] + "/" + f[0];
+          }
         }
 
+        var esDeHoy = (fechaISO === fechaHoyISO);
+        var listaSustitutos = esDeHoy ? disponibles : (todosProfesores || []);
+
         var opcionesSust = '<option value="">Seleccionar sustituto...</option>';
-        for (var j = 0; j < disponibles.length; j++) {
-          var d = disponibles[j];
+        for (var j = 0; j < listaSustitutos.length; j++) {
+          var d = listaSustitutos[j];
           var nombreDisp = (d.nombre || "") + " " + (d.apellidos || "");
           var idDisp = d.id_usuario || d.id;
-          opcionesSust += '<option value="' + idDisp + '">' + nombreDisp.trim() + ' (' + (d.guardias_realizadas || 0) + ' g.)</option>';
+          if (esDeHoy) {
+            opcionesSust += '<option value="' + idDisp + '">' + nombreDisp.trim() + ' (' + (d.guardias_realizadas || 0) + ' g.)</option>';
+          } else {
+            opcionesSust += '<option value="' + idDisp + '">' + nombreDisp.trim() + '</option>';
+          }
         }
 
         var infoTarea = "";
@@ -586,11 +602,14 @@
           infoTarea += '</div>';
         }
 
+        var escapedFecha = fechaISO.replace(/'/g, "\\'");
+        var escapedTramo = tramo.replace(/'/g, "\\'");
+
         html += '<div class="tarjeta-cobertura d-flex justify-content-between align-items-center mb-2" style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;">' +
                   '<div><strong>' + profesor + '</strong> — ' + (fechaTexto ? '<span style="color:#1152d4;font-weight:600;">' + fechaTexto + '</span> ' : '') + tramo + infoTarea + '</div>' +
                   '<div class="d-flex gap-2 align-items-center">' +
                     '<select class="select-filtro" id="sust-' + idAusencia + '" style="min-width:200px;">' + opcionesSust + '</select>' +
-                    '<button class="btn-primario" onclick="asignarSustituto(' + idAusencia + ')" style="white-space:nowrap;"><i class="bi bi-person-plus me-1"></i>Asignar</button>' +
+                    '<button class="btn-primario" onclick="asignarSustituto(' + idAusencia + ', \'' + escapedFecha + '\', \'' + escapedTramo + '\')" style="white-space:nowrap;"><i class="bi bi-person-plus me-1"></i>Asignar</button>' +
                   '</div>' +
                 '</div>';
       }
@@ -641,14 +660,18 @@
       tbody.innerHTML = html;
     }
 
-    function asignarSustituto(idAusencia) {
+    function asignarSustituto(idAusencia, fecha, tramo) {
       var select = document.getElementById("sust-" + idAusencia);
       if (!select || !select.value) { alert("Selecciona un profesor sustituto."); return; }
-      var hoy = new Date();
-      var fechaHoy = hoy.getFullYear() + "-" + String(hoy.getMonth() + 1).padStart(2, "0") + "-" + String(hoy.getDate()).padStart(2, "0");
       apiFetch('/api/v1/guardias/asignadas', {
         method: 'POST',
-        body: JSON.stringify({ id_ausencia: idAusencia, id_profesor_sustituto: parseInt(select.value), fecha: fechaHoy, tramo_horario: "pendiente", tipo_asignacion: "MANUAL" })
+        body: JSON.stringify({
+          id_ausencia: idAusencia,
+          id_profesor_sustituto: parseInt(select.value),
+          fecha: fecha,
+          tramo_horario: tramo,
+          tipo_asignacion: "MANUAL"
+        })
       }).then(function (data) {
         if (data && data.ok) recargar();
         else alert((data && data.mensaje) || "Error al asignar sustituto");

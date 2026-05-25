@@ -132,6 +132,13 @@ async function crear(req, res, next) {
       conn, idAusencia, fecha, tramo_horario, profesorId, hay_tarea ? true : false
     );
 
+    if (!asignacion) {
+      await conn.query(
+        'UPDATE ausencia SET estado = ? WHERE id_ausencia = ?',
+        ['SIN_CUBRIR', idAusencia]
+      );
+    }
+
     await conn.commit();
     res.registroId = idAusencia;
 

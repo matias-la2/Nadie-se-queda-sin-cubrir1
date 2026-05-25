@@ -380,38 +380,38 @@ async function eliminarAsignada(req, res, next) {
 }
 
 async function responderGuardia(req, res, next) {
+  const id = parseInt(req.params.id);
+  const { accion } = req.body;
+  const idUsuario = req.usuario.id;
+
+  console.log('[GUARDIA] responderGuardia id:', id, 'accion:', accion, 'usuario:', idUsuario);
+
+  if (isNaN(id)) {
+    return error(res, 'ID de guardia no válido', 400);
+  }
+
+  if (!['ACEPTADA', 'RECHAZADA'].includes(accion)) {
+    return error(res, 'Acción no válida. Usa ACEPTADA o RECHAZADA', 400);
+  }
+
+  const [[guardia]] = await pool.query(
+    `SELECT ga.*, a.id_profesor AS id_ausente, a.hay_tarea, a.descripcion_tarea
+     FROM guardia_asignada ga
+     JOIN ausencia a ON ga.id_ausencia = a.id_ausencia
+     WHERE ga.id_guardia_asignada = ?`,
+    [id]
+  );
+
+  if (!guardia) return error(res, 'Guardia asignada no encontrada', 404);
+  if (guardia.id_profesor_sustituto !== idUsuario) {
+    return error(res, 'No tienes permiso para responder a esta guardia', 403);
+  }
+  if (guardia.estado !== 'PENDIENTE') {
+    return error(res, 'Esta guardia ya fue respondida', 409);
+  }
+
   const conn = await pool.getConnection();
   try {
-    const id = parseInt(req.params.id);
-    const { accion } = req.body;
-    const idUsuario = req.usuario.id;
-
-    console.log('[GUARDIA] responderGuardia id:', id, 'accion:', accion, 'usuario:', idUsuario);
-
-    if (isNaN(id)) {
-      return error(res, 'ID de guardia no válido', 400);
-    }
-
-    if (!['ACEPTADA', 'RECHAZADA'].includes(accion)) {
-      return error(res, 'Acción no válida. Usa ACEPTADA o RECHAZADA', 400);
-    }
-
-    const [[guardia]] = await conn.query(
-      `SELECT ga.*, a.id_profesor AS id_ausente, a.hay_tarea, a.descripcion_tarea
-       FROM guardia_asignada ga
-       JOIN ausencia a ON ga.id_ausencia = a.id_ausencia
-       WHERE ga.id_guardia_asignada = ?`,
-      [id]
-    );
-
-    if (!guardia) return error(res, 'Guardia asignada no encontrada', 404);
-    if (guardia.id_profesor_sustituto !== idUsuario) {
-      return error(res, 'No tienes permiso para responder a esta guardia', 403);
-    }
-    if (guardia.estado !== 'PENDIENTE') {
-      return error(res, 'Esta guardia ya fue respondida', 409);
-    }
-
     await conn.beginTransaction();
 
     await conn.query(
@@ -665,6 +665,10 @@ async function asignarAutomaticamente(conn, idAusencia, fecha, tramoHorario, idP
 }
 
 async function buscarCandidatos(conn, diaSemanaDB, fecha, tramoHorario, excluidos, idEdificio) {
+  const ahora = new Date();
+  const anioInicio = ahora.getMonth() >= 8 ? ahora.getFullYear() : ahora.getFullYear() - 1;
+  const inicioCurso = `${anioInicio}-09-01`;
+
   let sql = `SELECT gc.id_usuario, MIN(gc.id_guardia_creada) AS id_guardia_creada,
           u.nombre AS profesor_nombre, u.apellidos AS profesor_apellidos,
           COALESCE(conteo.total, 0) AS guardias_realizadas
@@ -673,7 +677,7 @@ async function buscarCandidatos(conn, diaSemanaDB, fecha, tramoHorario, excluido
    LEFT JOIN (
      SELECT id_profesor_sustituto, COUNT(*) AS total
      FROM guardia_asignada
-     WHERE estado = 'ACEPTADA' AND fecha >= '2025-09-01'
+     WHERE estado = 'ACEPTADA' AND fecha >= '${inicioCurso}'
      GROUP BY id_profesor_sustituto
    ) conteo ON gc.id_usuario = conteo.id_profesor_sustituto
    WHERE (gc.dia_semana = ? OR gc.fecha = ?)
@@ -814,6 +818,10 @@ async function guardiasHoy(req, res, next) {
       delete d.edificio_ids;
     }
 
+    const ahoraHoy = new Date();
+    const anioInicioHoy = ahoraHoy.getMonth() >= 8 ? ahoraHoy.getFullYear() : ahoraHoy.getFullYear() - 1;
+    const inicioCursoHoy = `${anioInicioHoy}-09-01`;
+
     const idsDisponibles = [...new Set(disponibles.map(d => d.id_usuario))];
     const conteoGrupoMap = {};
     if (idsDisponibles.length > 0) {
@@ -821,9 +829,9 @@ async function guardiasHoy(req, res, next) {
         `SELECT id_profesor_sustituto, WEEKDAY(fecha) + 1 AS dia_semana,
                 tramo_horario, COUNT(*) AS total
          FROM guardia_asignada
-         WHERE estado = 'ACEPTADA' AND fecha >= '2025-09-01' AND id_profesor_sustituto IN (?)
+         WHERE estado = 'ACEPTADA' AND fecha >= ? AND id_profesor_sustituto IN (?)
          GROUP BY id_profesor_sustituto, dia_semana, tramo_horario`,
-        [idsDisponibles]
+        [inicioCursoHoy, idsDisponibles]
       );
       for (const row of conteos) {
         const clave = `${row.id_profesor_sustituto}_${row.dia_semana}_${row.tramo_horario}`;
@@ -909,7 +917,16 @@ async function guardiasHoy(req, res, next) {
       }
     }
 
-    return success(res, { ausencias, disponibles, asignadas, sinCubrirOtrosDias });
+    const [todosProfesores] = await pool.query(
+      `SELECT u.id_usuario, u.nombre, u.apellidos
+       FROM usuario u
+       JOIN usuario_rol ur ON u.id_usuario = ur.id_usuario
+       JOIN rol r ON ur.id_rol = r.id_rol
+       WHERE r.nombre_rol = 'PROFESOR' AND u.activo = 1
+       ORDER BY u.apellidos, u.nombre`
+    );
+
+    return success(res, { ausencias, disponibles, asignadas, sinCubrirOtrosDias, todosProfesores });
   } catch (err) {
     next(err);
   }
