@@ -358,9 +358,70 @@ async function eliminarBloqueo(req, res, next) {
   }
 }
 
+// ─── DISPONIBILIDAD ───────────────────────────────────
+
+async function obtenerDisponibilidad(req, res, next) {
+  try {
+    const idEspacio = req.params.id;
+    const fecha = req.query.fecha;
+
+    if (!fecha) return error(res, 'La fecha es obligatoria (formato YYYY-MM-DD)', 400);
+
+    const tramos = [
+      '1a hora (08:15-09:10)',
+      '2a hora (09:10-10:10)',
+      '3a hora (10:10-11:05)',
+      'Recreo (11:05-11:30)',
+      '4a hora (11:30-12:25)',
+      '5a hora (12:25-13:20)',
+      '6a hora (13:20-14:15)'
+    ];
+
+    const partes = fecha.split('-');
+    const fechaLocal = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+    let diaSemana = fechaLocal.getDay();
+    if (diaSemana === 0) diaSemana = 7;
+
+    const [bloqueos] = await pool.query(
+      `SELECT tramo_horario, motivo FROM bloqueo_espacio
+       WHERE id_espacio = ? AND fecha_desde <= ? AND (fecha_hasta IS NULL OR fecha_hasta >= ?)
+       AND (dia_semana IS NULL OR dia_semana = ?)`,
+      [idEspacio, fecha, fecha, diaSemana]
+    );
+
+    const [reservas] = await pool.query(
+      `SELECT r.tramo_horario, u.nombre, u.apellidos
+       FROM reserva r JOIN usuario u ON r.id_profesor = u.id_usuario
+       WHERE r.id_espacio = ? AND r.fecha = ?`,
+      [idEspacio, fecha]
+    );
+
+    const bloqueosMap = {};
+    for (const b of bloqueos) bloqueosMap[b.tramo_horario] = b.motivo || 'Clase programada';
+
+    const reservasMap = {};
+    for (const r of reservas) reservasMap[r.tramo_horario] = r.nombre + ' ' + r.apellidos;
+
+    const resultado = tramos.map(function (tramo) {
+      if (bloqueosMap[tramo]) {
+        return { tramo, estado: 'BLOQUEADO', motivo: bloqueosMap[tramo], reservado_por: null };
+      }
+      if (reservasMap[tramo]) {
+        return { tramo, estado: 'RESERVADO', motivo: null, reservado_por: reservasMap[tramo] };
+      }
+      return { tramo, estado: 'LIBRE', motivo: null, reservado_por: null };
+    });
+
+    return success(res, resultado);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listarEdificios, obtenerEdificio, crearEdificio, actualizarEdificio, eliminarEdificio,
   listarEspacios, obtenerEspacio, crearEspacio, actualizarEspacio, eliminarEspacio,
   listarNombresCurso, guardarNombreCurso, eliminarNombreCurso,
-  listarBloqueos, crearBloqueo, eliminarBloqueo
+  listarBloqueos, crearBloqueo, eliminarBloqueo,
+  obtenerDisponibilidad
 };

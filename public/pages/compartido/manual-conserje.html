@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manual de Usuario — Mantenimiento — IES Río Arba</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/estilos.css">
+  <style>
+    .manual-seccion { margin-bottom: 32px; }
+    .manual-seccion h3 { font-size: 17px; font-weight: 700; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .manual-seccion h3 i { color: #1152d4; font-size: 20px; }
+    .manual-paso { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+    .manual-paso strong { color: #1152d4; }
+    .manual-nota { background: #eff6ff; border-left: 4px solid #1152d4; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 13px; color: #1e40af; }
+    .manual-indice { list-style: none; padding: 0; }
+    .manual-indice li { margin-bottom: 6px; }
+    .manual-indice a { color: #1152d4; text-decoration: none; font-weight: 500; font-size: 14px; }
+    .manual-indice a:hover { text-decoration: underline; }
+    .manual-indice a i { margin-right: 6px; }
+  </style>
+</head>
+
+<body>
+
+  <div id="sidebar-container"></div>
+
+  <main class="contenido-principal">
+
+    <div class="pagina-header">
+      <h1><i class="bi bi-book me-2" style="color:#1152d4;"></i>Manual de Usuario — Mantenimiento</h1>
+      <p>Guia completa para el personal de mantenimiento de la plataforma IES Rio Arba.</p>
+    </div>
+
+    <!-- Indice -->
+    <div class="tarjeta">
+      <h2 class="tarjeta-titulo"><i class="bi bi-list-ol me-2"></i>Indice de contenidos</h2>
+      <ul class="manual-indice">
+        <li><a href="#inicio"><i class="bi bi-chevron-right"></i>1. Inicio y acceso</a></li>
+        <li><a href="#dashboard"><i class="bi bi-chevron-right"></i>2. Dashboard de Mantenimiento</a></li>
+        <li><a href="#incidencias"><i class="bi bi-chevron-right"></i>3. Gestion de Incidencias</a></li>
+        <li><a href="#detalle"><i class="bi bi-chevron-right"></i>4. Detalle de una Incidencia</a></li>
+      </ul>
+    </div>
+
+    <!-- 1. Inicio -->
+    <div class="tarjeta manual-seccion" id="inicio">
+      <h3><i class="bi bi-door-open"></i>1. Inicio y acceso</h3>
+      <div class="manual-paso">
+        <strong>Acceso:</strong> Inicia sesion con tu cuenta de Google corporativa. Como personal de mantenimiento, tienes acceso a las secciones de incidencias y al dashboard de mantenimiento.
+      </div>
+      <div class="manual-paso">
+        <strong>Menu lateral:</strong> Tu sidebar muestra dos opciones: <strong>Dashboard</strong> y <strong>Incidencias</strong>. Es un menu simplificado enfocado en tu trabajo diario.
+      </div>
+      <div class="manual-paso">
+        <strong>Tu perfil:</strong> En la parte inferior del menu aparece tu nombre con el rol "Mantenimiento" y el boton para cerrar sesion.
+      </div>
+    </div>
+
+    <!-- 2. Dashboard -->
+    <div class="tarjeta manual-seccion" id="dashboard">
+      <h3><i class="bi bi-house"></i>2. Dashboard de Mantenimiento</h3>
+      <div class="manual-paso">
+        <strong>Tarjetas resumen:</strong> En la parte superior veras contadores de: incidencias pendientes, incidencias en proceso, resueltas hoy y reservas del dia.
+      </div>
+      <div class="manual-paso">
+        <strong>Tabla de incidencias:</strong> Muestra las incidencias activas con su tipo, estado y fecha. Desde aqui puedes actuar directamente:
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Pulsa <strong>"Iniciar"</strong> en una incidencia Pendiente para pasarla a En proceso.</li>
+          <li>Pulsa <strong>"Resolver"</strong> en una incidencia En proceso para marcarla como Resuelta.</li>
+        </ul>
+      </div>
+      <div class="manual-paso">
+        <strong>Reservas de hoy:</strong> Una lista de las reservas de espacios del dia con informacion del espacio, tramo horario, profesor que reservo y motivo. Util para saber que aulas estan en uso.
+      </div>
+    </div>
+
+    <!-- 3. Incidencias -->
+    <div class="tarjeta manual-seccion" id="incidencias">
+      <h3><i class="bi bi-exclamation-triangle"></i>3. Gestion de Incidencias</h3>
+      <div class="manual-paso">
+        <strong>Listado completo:</strong> Tabla con todas las incidencias del centro. Filtra por estado (Pendiente, En proceso, Resuelta, Cerrada) y por tipo (Material, Hardware, Software, Otros).
+      </div>
+      <div class="manual-paso">
+        <strong>Acciones rapidas:</strong> Desde la tabla puedes:
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><i class="bi bi-eye me-1"></i><strong>Ver detalle:</strong> Pulsa el ojo para acceder a la ficha completa de la incidencia.</li>
+          <li><i class="bi bi-play-circle me-1"></i><strong>Iniciar:</strong> Cambia una incidencia Pendiente a En proceso (indica que has comenzado a trabajar en ella).</li>
+          <li><i class="bi bi-check-circle me-1"></i><strong>Resolver:</strong> Marca como Resuelta cuando hayas terminado la reparacion o solucion.</li>
+        </ul>
+      </div>
+      <div class="manual-nota">
+        <i class="bi bi-info-circle me-1"></i> No puedes crear incidencias nuevas. Los profesores y el equipo directivo son quienes las registran. Tu tarea es gestionarlas y resolverlas.
+      </div>
+    </div>
+
+    <!-- 4. Detalle -->
+    <div class="tarjeta manual-seccion" id="detalle">
+      <h3><i class="bi bi-file-earmark-text"></i>4. Detalle de una Incidencia</h3>
+      <div class="manual-paso">
+        <strong>Informacion completa:</strong> Al pulsar en una incidencia, veras: titulo, descripcion detallada, espacio afectado, quien la creo, fecha de creacion y codigo de referencia (INC-####).
+      </div>
+      <div class="manual-paso">
+        <strong>Panel de estado:</strong> En el lateral derecho aparece el estado actual con botones para avanzar al siguiente paso:
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><strong>Pendiente</strong> &#8594; Boton "Pasar a En proceso"</li>
+          <li><strong>En proceso</strong> &#8594; Boton "Marcar como Resuelta"</li>
+          <li><strong>Resuelta</strong> &#8594; Boton "Cerrar incidencia"</li>
+        </ul>
+      </div>
+      <div class="manual-nota">
+        <i class="bi bi-lightbulb me-1"></i> <strong>Consejo:</strong> Cuando empieces a trabajar en una incidencia, cambiala a "En proceso" para que el profesorado sepa que ya se esta atendiendo.
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:20px 0;color:#94a3b8;font-size:13px;">
+      <i class="bi bi-mortarboard-fill me-1"></i> IES Rio Arba — Manual de Mantenimiento
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/sidebar.js"></script>
+  <script>
+    verificarSesion().then(function (usuario) {
+      if (!usuario) return;
+      crearSidebar("manual", "../../");
+    });
+  </script>
+
+</body>
+</html>

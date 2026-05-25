@@ -109,6 +109,13 @@ function crearSidebar(paginaActiva, rutaBase) {
 
     var rolTexto = obtenerRolPrincipal(roles);
 
+    var manualPagina = "manual-profesor.html";
+    if (esAdmin) manualPagina = "manual-administrador.html";
+    else if (esDirectivo) manualPagina = "manual-directivo.html";
+    else if (esConserje) manualPagina = "manual-conserje.html";
+    var rutaManual = rutaBase + "pages/compartido/" + manualPagina;
+    var claseManualActivo = (paginaActiva === "manual") ? " activo" : "";
+
     var avatarSrc = usuario.avatar_url || "https://ui-avatars.com/api/?name=" + encodeURIComponent(nombreCompleto) + "&background=4f46e5&color=fff&size=80";
     var rutaLogin = rutaBase + "index.html";
 
@@ -135,6 +142,10 @@ function crearSidebar(paginaActiva, rutaBase) {
               '<div class="rol-usuario">' + rolTexto + '</div>' +
             '</div>' +
           '</div>' +
+          '<a href="' + rutaManual + '" class="sidebar-enlace' + claseManualActivo + '" style="margin-bottom:6px;">' +
+            '<i class="bi bi-question-circle"></i>' +
+            '<span>Manual de usuario</span>' +
+          '</a>' +
           '<button class="btn-cerrar-sesion" onclick="cerrarSesionDesde(\'' + rutaLogin + '\')">' +
             '<i class="bi bi-box-arrow-left"></i>' +
             'Cerrar Sesión' +

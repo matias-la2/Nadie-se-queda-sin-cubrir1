@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manual de Usuario — Profesor — IES Río Arba</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/estilos.css">
+  <style>
+    .manual-seccion { margin-bottom: 32px; }
+    .manual-seccion h3 { font-size: 17px; font-weight: 700; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .manual-seccion h3 i { color: #1152d4; font-size: 20px; }
+    .manual-paso { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+    .manual-paso strong { color: #1152d4; }
+    .manual-nota { background: #eff6ff; border-left: 4px solid #1152d4; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 13px; color: #1e40af; }
+    .manual-indice { list-style: none; padding: 0; }
+    .manual-indice li { margin-bottom: 6px; }
+    .manual-indice a { color: #1152d4; text-decoration: none; font-weight: 500; font-size: 14px; }
+    .manual-indice a:hover { text-decoration: underline; }
+    .manual-indice a i { margin-right: 6px; }
+  </style>
+</head>
+
+<body>
+
+  <div id="sidebar-container"></div>
+
+  <main class="contenido-principal">
+
+    <div class="pagina-header">
+      <h1><i class="bi bi-book me-2" style="color:#1152d4;"></i>Manual de Usuario — Profesor</h1>
+      <p>Guia completa para utilizar la plataforma IES Rio Arba como profesor.</p>
+    </div>
+
+    <!-- Indice -->
+    <div class="tarjeta">
+      <h2 class="tarjeta-titulo"><i class="bi bi-list-ol me-2"></i>Indice de contenidos</h2>
+      <ul class="manual-indice">
+        <li><a href="#inicio"><i class="bi bi-chevron-right"></i>1. Inicio y acceso a la plataforma</a></li>
+        <li><a href="#dashboard"><i class="bi bi-chevron-right"></i>2. Dashboard (Panel principal)</a></li>
+        <li><a href="#guardias"><i class="bi bi-chevron-right"></i>3. Mis Guardias</a></li>
+        <li><a href="#ausencias"><i class="bi bi-chevron-right"></i>4. Mis Ausencias</a></li>
+        <li><a href="#incidencias"><i class="bi bi-chevron-right"></i>5. Incidencias</a></li>
+        <li><a href="#reservas"><i class="bi bi-chevron-right"></i>6. Reservas de Espacios</a></li>
+      </ul>
+    </div>
+
+    <!-- 1. Inicio -->
+    <div class="tarjeta manual-seccion" id="inicio">
+      <h3><i class="bi bi-door-open"></i>1. Inicio y acceso a la plataforma</h3>
+      <div class="manual-paso">
+        <strong>Acceder:</strong> Entra en la plataforma a traves de tu navegador web. Inicia sesion con tu cuenta de Google corporativa del centro (@iesrioarba.com).
+      </div>
+      <div class="manual-paso">
+        <strong>Menu lateral:</strong> Una vez dentro, veras un menu a la izquierda (sidebar) con las secciones disponibles: Dashboard, Mis Guardias, Mis Ausencias, Incidencias y Reservas.
+      </div>
+      <div class="manual-paso">
+        <strong>Tu perfil:</strong> En la parte inferior del menu aparece tu nombre, rol y avatar. Desde ahi puedes cerrar sesion.
+      </div>
+      <div class="manual-nota">
+        <i class="bi bi-info-circle me-1"></i> En dispositivos moviles, el menu se oculta automaticamente. Pulsa el boton <strong>&#9776;</strong> (hamburguesa) en la esquina superior izquierda para abrirlo.
+      </div>
+    </div>
+
+    <!-- 2. Dashboard -->
+    <div class="tarjeta manual-seccion" id="dashboard">
+      <h3><i class="bi bi-house"></i>2. Dashboard (Panel principal)</h3>
+      <p style="margin-bottom:12px;">Tu pagina de inicio muestra un resumen de toda tu actividad:</p>
+      <div class="manual-paso">
+        <strong>Tarjetas resumen:</strong> En la parte superior veras contadores con: tus guardias de hoy, total de incidencias, reservas activas y ausencias registradas.
+      </div>
+      <div class="manual-paso">
+        <strong>Guardias pendientes:</strong> Si tienes guardias asignadas pendientes de aceptar o rechazar, aparecera una seccion destacada con botones <strong>Aceptar</strong> y <strong>Rechazar</strong> para cada una.
+      </div>
+      <div class="manual-paso">
+        <strong>Guardias de hoy:</strong> Veras las guardias que debes cubrir hoy con la informacion del aula, tramo horario, profesor ausente y si hay tarea asignada para los alumnos.
+      </div>
+      <div class="manual-paso">
+        <strong>Incidencias recientes:</strong> Una tabla muestra tus ultimas incidencias con su estado (Pendiente, En proceso, Resuelta, Cerrada).
+      </div>
+    </div>
+
+    <!-- 3. Guardias -->
+    <div class="tarjeta manual-seccion" id="guardias">
+      <h3><i class="bi bi-shield-check"></i>3. Mis Guardias</h3>
+      <p style="margin-bottom:12px;">Aqui consultas y gestionas tu actividad de guardias:</p>
+      <div class="manual-paso">
+        <strong>Calendario semanal:</strong> Un cuadrante visual de Lunes a Viernes con los 7 tramos horarios. Las celdas con guardia aparecen con un badge de color segun el edificio (azul para ESO, verde para Bachillerato).
+      </div>
+      <div class="manual-paso">
+        <strong>Guardias planificadas:</strong> Una tabla lista tus guardias fijas del curso con dia de la semana, tramo horario, edificio y curso escolar.
+      </div>
+      <div class="manual-paso">
+        <strong>Guardias pendientes de respuesta:</strong> Cuando te asignan una guardia de sustitucion, aparece aqui con los datos del profesor ausente, el aula y los botones <strong>Aceptar</strong> / <strong>Rechazar</strong>. Al aceptar, recibiras la informacion del aula y si hay tarea. Al rechazar, se notificara al siguiente profesor disponible.
+      </div>
+      <div class="manual-paso">
+        <strong>Guardias asignadas:</strong> Historial de todas las guardias que se te han asignado como sustituto con su fecha, tipo (Automatica/Manual) y estado (Pendiente, Aceptada, Rechazada).
+      </div>
+    </div>
+
+    <!-- 4. Ausencias -->
+    <div class="tarjeta manual-seccion" id="ausencias">
+      <h3><i class="bi bi-calendar-x"></i>4. Mis Ausencias</h3>
+      <div class="manual-paso">
+        <strong>Registrar ausencia:</strong> Pulsa el boton <strong>"Registrar ausencia"</strong>. Rellena: fecha, tramo horario, espacio(s) donde impartes clase, y opcionalmente un comentario. Puedes marcar la casilla <strong>"Dejar tarea"</strong> para escribir instrucciones y adjuntar un archivo (PDF, Word, Excel o imagen, max. 10 MB).
+      </div>
+      <div class="manual-paso">
+        <strong>Filtrar por estado:</strong> Usa el desplegable para ver solo las ausencias Pendientes, Cubiertas o Sin cubrir.
+      </div>
+      <div class="manual-paso">
+        <strong>Tabla de ausencias:</strong> Muestra cada ausencia con fecha, tramo, espacio, estado y si tiene tarea asignada.
+      </div>
+      <div class="manual-nota">
+        <i class="bi bi-lightbulb me-1"></i> Registra tus ausencias con la mayor antelacion posible para que el sistema pueda asignar sustitutos automaticamente.
+      </div>
+    </div>
+
+    <!-- 5. Incidencias -->
+    <div class="tarjeta manual-seccion" id="incidencias">
+      <h3><i class="bi bi-exclamation-triangle"></i>5. Incidencias</h3>
+      <div class="manual-paso">
+        <strong>Crear incidencia:</strong> Pulsa <strong>"Nueva incidencia"</strong>. Rellena el titulo descriptivo, selecciona el espacio afectado (agrupados por edificio), elige el tipo (Material, Hardware, Software u Otros), la fecha se rellena automaticamente y opcionalmente una descripcion detallada.
+      </div>
+      <div class="manual-paso">
+        <strong>Filtros:</strong> Filtra por estado (Pendiente, En proceso, Resuelta, Cerrada) y por tipo para localizar incidencias rapidamente.
+      </div>
+      <div class="manual-paso">
+        <strong>Ver detalle:</strong> Pulsa el icono del ojo (<i class="bi bi-eye"></i>) para acceder a la ficha completa de una incidencia con toda su informacion y estado actual.
+      </div>
+    </div>
+
+    <!-- 6. Reservas -->
+    <div class="tarjeta manual-seccion" id="reservas">
+      <h3><i class="bi bi-calendar-check"></i>6. Reservas de Espacios</h3>
+      <div class="manual-paso">
+        <strong>Nueva reserva:</strong> Pulsa <strong>"Nueva Reserva"</strong>. Selecciona la fecha y el espacio: el sistema cargara automaticamente la disponibilidad de cada tramo. Los tramos disponibles se muestran con <strong>&#10004; Disponible</strong>, los bloqueados con <strong>&#128274;</strong> y los ya reservados con <strong>&#128204; Reservado por [nombre]</strong>.
+      </div>
+      <div class="manual-paso">
+        <strong>Seleccionar tramo:</strong> Solo puedes elegir tramos libres (los ocupados aparecen deshabilitados). Opcionalmente indica el motivo de la reserva.
+      </div>
+      <div class="manual-paso">
+        <strong>Mis reservas:</strong> La tabla muestra todas tus reservas con fecha, tramo, espacio, edificio y motivo. Puedes eliminar reservas futuras pulsando el icono de papelera (<i class="bi bi-trash"></i>).
+      </div>
+      <div class="manual-nota">
+        <i class="bi bi-info-circle me-1"></i> Solo se muestran los espacios con estado "Disponible". Si no ves un espacio, puede estar en mantenimiento o no disponible.
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:20px 0;color:#94a3b8;font-size:13px;">
+      <i class="bi bi-mortarboard-fill me-1"></i> IES Rio Arba — Manual del Profesor
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/sidebar.js"></script>
+  <script>
+    verificarSesion().then(function (usuario) {
+      if (!usuario) return;
+      crearSidebar("manual", "../../");
+    });
+  </script>
+
+</body>
+</html>

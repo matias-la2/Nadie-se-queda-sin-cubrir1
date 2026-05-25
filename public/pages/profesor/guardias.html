@@ -23,9 +23,30 @@
       <p>Consulta tus guardias planificadas y las que has cubierto como sustituto.</p>
     </div>
 
+    <!-- Calendario semanal de guardias -->
+    <div class="tarjeta mb-4">
+      <h2 class="tarjeta-titulo mb-3"><i class="bi bi-calendar-week me-2"></i>Mi calendario de guardias</h2>
+      <p style="color:#6b7280;font-size:14px;margin-bottom:16px;">Tu cuadrante de guardias semanal para el curso actual.</p>
+      <div class="tabla-responsive">
+        <table class="tabla-datos" style="text-align:center;">
+          <thead>
+            <tr>
+              <th>Tramo</th>
+              <th>Lunes</th>
+              <th>Martes</th>
+              <th>Miércoles</th>
+              <th>Jueves</th>
+              <th>Viernes</th>
+            </tr>
+          </thead>
+          <tbody id="calendario-body"></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- Guardias planificadas -->
     <div class="tarjeta mb-4">
-      <h2 class="tarjeta-titulo mb-3"><i class="bi bi-calendar-week me-2"></i>Mis guardias planificadas</h2>
+      <h2 class="tarjeta-titulo mb-3"><i class="bi bi-list-check me-2"></i>Mis guardias planificadas</h2>
       <div class="tabla-responsive">
         <table class="tabla-datos">
           <thead>
@@ -82,9 +103,78 @@
       _usuario = usuario;
 
       crearSidebar("guardias", "../../");
+      cargarCalendario(usuario);
       cargarPlanificadas(usuario);
       cargarCubiertas(usuario);
     });
+
+    function cargarCalendario(usuario) {
+      apiFetch('/api/v1/guardias/creadas?id_usuario=' + usuario.id).then(function (data) {
+        var tbody = document.getElementById("calendario-body");
+        var filas = [];
+
+        if (data && data.datos) {
+          filas = Array.isArray(data.datos) ? data.datos : (data.datos.registros || []);
+        }
+
+        if (filas.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-calendar-x sin-resultados-icono"></i>No tienes guardias planificadas este curso</td></tr>';
+          return;
+        }
+
+        var tramos = [
+          '1a hora (08:15-09:10)',
+          '2a hora (09:10-10:10)',
+          '3a hora (10:10-11:05)',
+          'Recreo (11:05-11:30)',
+          '4a hora (11:30-12:25)',
+          '5a hora (12:25-13:20)',
+          '6a hora (13:20-14:15)'
+        ];
+
+        var guardiasMap = {};
+        for (var t = 0; t < tramos.length; t++) {
+          guardiasMap[tramos[t]] = {};
+        }
+
+        for (var i = 0; i < filas.length; i++) {
+          var g = filas[i];
+          var tramo = g.tramo_horario;
+          var dia = g.dia_semana;
+          if (tramo && dia && guardiasMap[tramo]) {
+            guardiasMap[tramo][dia] = g.edificio_nombre || 'Centro';
+          }
+        }
+
+        var colores = { 'ESO': '#2563EB', 'Bachillerato': '#059669' };
+        var colorDefault = '#6366F1';
+        var html = "";
+
+        for (var t = 0; t < tramos.length; t++) {
+          html += '<tr>';
+          html += '<td style="font-weight:600;font-size:13px;text-align:left;white-space:nowrap;">' + tramos[t] + '</td>';
+          for (var d = 1; d <= 5; d++) {
+            var edificio = guardiasMap[tramos[t]][d];
+            if (edificio) {
+              var color = colores[edificio] || colorDefault;
+              html += '<td style="padding:6px;">' +
+                '<span style="display:inline-block;background:' + color + ';color:#fff;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600;">' +
+                '🛡️ Guardia</span>' +
+                '<div style="font-size:11px;color:#6b7280;margin-top:2px;">' + edificio + '</div>' +
+                '</td>';
+            } else {
+              html += '<td style="color:#d1d5db;font-size:14px;">—</td>';
+            }
+          }
+          html += '</tr>';
+        }
+
+        tbody.innerHTML = html;
+      }).catch(function () {
+        document.getElementById("calendario-body").innerHTML =
+          '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-calendar-x sin-resultados-icono"></i>No tienes guardias planificadas este curso</td></tr>';
+      });
+    }
 
     function cargarPlanificadas(usuario) {
       var diasSemana = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];

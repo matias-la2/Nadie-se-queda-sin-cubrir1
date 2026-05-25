@@ -55,15 +55,9 @@
                     Tramo horario <span class="obligatorio">*</span>
                   </label>
                   <select id="campo-tramo" required>
-                    <option value="">Selecciona un tramo...</option>
-                    <option value="08:25-09:20">08:25 - 09:20</option>
-                    <option value="09:20-10:15">09:20 - 10:15</option>
-                    <option value="10:15-11:10">10:15 - 11:10</option>
-                    <option value="11:10-11:40">11:10 - 11:40 (Recreo)</option>
-                    <option value="11:40-12:35">11:40 - 12:35</option>
-                    <option value="12:35-13:30">12:35 - 13:30</option>
-                    <option value="13:30-14:25">13:30 - 14:25</option>
+                    <option value="">Selecciona fecha y espacio primero...</option>
                   </select>
+                  <small id="tramo-info" style="display:block;margin-top:4px;color:#6b7280;font-size:12px;"></small>
                 </div>
               </div>
             </div>
@@ -141,6 +135,9 @@
       campoFecha.min = fechaHoy;
 
       cargarEspacios();
+
+      document.getElementById("campo-fecha").addEventListener("change", cargarDisponibilidad);
+      document.getElementById("campo-espacio").addEventListener("change", cargarDisponibilidad);
     });
 
     function cargarEspacios() {
@@ -186,6 +183,58 @@
           select.appendChild(opt);
         }
       }).catch(function () {});
+    }
+
+    function cargarDisponibilidad() {
+      var fecha = document.getElementById("campo-fecha").value;
+      var idEspacio = document.getElementById("campo-espacio").value;
+      var select = document.getElementById("campo-tramo");
+      var info = document.getElementById("tramo-info");
+
+      select.innerHTML = '<option value="">Selecciona fecha y espacio primero...</option>';
+      info.textContent = "";
+
+      if (!fecha || !idEspacio) return;
+
+      select.innerHTML = '<option value="">Cargando disponibilidad...</option>';
+
+      apiFetch('/api/v1/espacios/disponibilidad/' + idEspacio + '?fecha=' + fecha).then(function (data) {
+        var tramos = [];
+        if (data && data.datos) {
+          tramos = Array.isArray(data.datos) ? data.datos : (data.datos.registros || []);
+        }
+
+        select.innerHTML = '<option value="">Selecciona un tramo...</option>';
+        var libres = 0;
+        var ocupados = 0;
+
+        for (var i = 0; i < tramos.length; i++) {
+          var t = tramos[i];
+          var opt = document.createElement("option");
+          opt.value = t.tramo;
+
+          if (t.estado === 'LIBRE') {
+            opt.textContent = t.tramo + ' — ✅ Disponible';
+            libres++;
+          } else if (t.estado === 'BLOQUEADO') {
+            opt.textContent = t.tramo + ' — 🔒 ' + (t.motivo || 'Bloqueado');
+            opt.disabled = true;
+            opt.style.color = '#9ca3af';
+            ocupados++;
+          } else if (t.estado === 'RESERVADO') {
+            opt.textContent = t.tramo + ' — 📌 Reservado por ' + t.reservado_por;
+            opt.disabled = true;
+            opt.style.color = '#9ca3af';
+            ocupados++;
+          }
+
+          select.appendChild(opt);
+        }
+
+        info.textContent = libres + ' tramo(s) libre(s), ' + ocupados + ' ocupado(s)';
+      }).catch(function () {
+        select.innerHTML = '<option value="">Error al cargar disponibilidad</option>';
+      });
     }
 
     function mostrarError(mensaje) {

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manual de Usuario — Administrador — IES Río Arba</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/estilos.css">
+  <style>
+    .manual-seccion { margin-bottom: 32px; }
+    .manual-seccion h3 { font-size: 17px; font-weight: 700; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .manual-seccion h3 i { color: #1152d4; font-size: 20px; }
+    .manual-paso { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+    .manual-paso strong { color: #1152d4; }
+    .manual-nota { background: #eff6ff; border-left: 4px solid #1152d4; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 13px; color: #1e40af; }
+    .manual-indice { list-style: none; padding: 0; }
+    .manual-indice li { margin-bottom: 6px; }
+    .manual-indice a { color: #1152d4; text-decoration: none; font-weight: 500; font-size: 14px; }
+    .manual-indice a:hover { text-decoration: underline; }
+    .manual-indice a i { margin-right: 6px; }
+  </style>
+</head>
+
+<body>
+
+  <div id="sidebar-container"></div>
+
+  <main class="contenido-principal">
+
+    <div class="pagina-header">
+      <h1><i class="bi bi-book me-2" style="color:#1152d4;"></i>Manual de Usuario — Administrador</h1>
+      <p>Guia completa de administracion de la plataforma IES Rio Arba.</p>
+    </div>
+
+    <!-- Indice -->
+    <div class="tarjeta">
+      <h2 class="tarjeta-titulo"><i class="bi bi-list-ol me-2"></i>Indice de contenidos</h2>
+      <ul class="manual-indice">
+        <li><a href="#inicio"><i class="bi bi-chevron-right"></i>1. Inicio y navegacion</a></li>
+        <li><a href="#dashboard"><i class="bi bi-chevron-right"></i>2. Dashboard administrativo</a></li>
+        <li><a href="#usuarios"><i class="bi bi-chevron-right"></i>3. Gestion de Usuarios</a></li>
+        <li><a href="#guardias"><i class="bi bi-chevron-right"></i>4. Gestion de Guardias</a></li>
+        <li><a href="#ausencias"><i class="bi bi-chevron-right"></i>5. Gestion de Ausencias</a></li>
+        <li><a href="#incidencias"><i class="bi bi-chevron-right"></i>6. Gestion de Incidencias</a></li>
+        <li><a href="#aulas"><i class="bi bi-chevron-right"></i>7. Aulas y Espacios</a></li>
+        <li><a href="#reservas"><i class="bi bi-chevron-right"></i>8. Reservas</a></li>
+        <li><a href="#logs"><i class="bi bi-chevron-right"></i>9. Log de Actividad</a></li>
+      </ul>
+    </div>
+
+    <!-- 1. Inicio -->
+    <div class="tarjeta manual-seccion" id="inicio">
+      <h3><i class="bi bi-door-open"></i>1. Inicio y navegacion</h3>
+      <div class="manual-paso">
+        <strong>Acceso:</strong> Inicia sesion con tu cuenta de Google corporativa. Como administrador, tienes acceso completo a todas las secciones de la plataforma.
+      </div>
+      <div class="manual-paso">
+        <strong>Menu lateral:</strong> El sidebar muestra dos bloques: <strong>Menu Principal</strong> (Dashboard, Incidencias, Reservas) y <strong>Administracion</strong> (Usuarios, Guardias, Ausencias, Aulas y Espacios, Log de actividad).
+      </div>
+    </div>
+
+    <!-- 2. Dashboard -->
+    <div class="tarjeta manual-seccion" id="dashboard">
+      <h3><i class="bi bi-house"></i>2. Dashboard administrativo</h3>
+      <div class="manual-paso">
+        <strong>Resumen general:</strong> Tarjetas con contadores de: incidencias activas, ausencias del dia, aulas reservadas y profesores activos.
+      </div>
+      <div class="manual-paso">
+        <strong>Alerta de guardias sin cubrir:</strong> Si hay ausencias del dia sin sustituto asignado, aparece una alerta destacada con un boton para ir directamente a la gestion de guardias.
+      </div>
+      <div class="manual-paso">
+        <strong>Incidencias recientes:</strong> Tabla con las ultimas incidencias donde puedes cambiar el estado directamente desde un desplegable en linea.
+      </div>
+      <div class="manual-paso">
+        <strong>Cobertura de hoy:</strong> Lista de las guardias del dia con el estado de cada una, profesor sustituto y profesor ausente.
+      </div>
+    </div>
+
+    <!-- 3. Usuarios -->
+    <div class="tarjeta manual-seccion" id="usuarios">
+      <h3><i class="bi bi-people-fill"></i>3. Gestion de Usuarios</h3>
+      <div class="manual-paso">
+        <strong>Vista general:</strong> Tarjetas resumen con usuarios activos, inactivos y totales. Tabla con todos los usuarios del sistema.
+      </div>
+      <div class="manual-paso">
+        <strong>Buscar y filtrar:</strong> Usa la barra de busqueda para encontrar usuarios por nombre o correo. Filtra por rol (Profesor, Equipo Directivo, Administrador, Mantenimiento) y por estado (Activo/Inactivo).
+      </div>
+      <div class="manual-paso">
+        <strong>Editar roles:</strong> Pulsa el icono de engranaje (<i class="bi bi-gear"></i>) en un usuario para abrir el modal de edicion de roles. Marca o desmarca los roles necesarios (debe tener al menos uno).
+      </div>
+      <div class="manual-paso">
+        <strong>Activar/Desactivar:</strong> Pulsa el icono de persona (<i class="bi bi-person-slash"></i> / <i class="bi bi-person-check"></i>) para cambiar el estado del usuario. Se pedira confirmacion antes de aplicar el cambio.
+      </div>
+      <div class="manual-nota">
+        <i class="bi bi-exclamation-triangle me-1"></i> Al desactivar un usuario, este no podra acceder a la plataforma pero sus datos se mantienen en el sistema.
+      </div>
+    </div>
+
+    <!-- 4. Guardias -->
+    <div class="tarjeta manual-seccion" id="guardias">
+      <h3><i class="bi bi-shield-check"></i>4. Gestion de Guardias</h3>
+      <p style="margin-bottom:12px;">La pagina de guardias tiene tres pestanas:</p>
+
+      <div class="manual-paso">
+        <strong>Pestana "Guardias de hoy":</strong> Muestra las ausencias del dia sin cubrir con un desplegable para seleccionar sustituto y boton <strong>Asignar</strong>. Tambien lista los profesores disponibles con el numero de guardias que ya han cubierto, y las guardias ya asignadas hoy.
+      </div>
+      <div class="manual-paso">
+        <strong>Pestana "Guardias planificadas":</strong> Gestiona el cuadrante de guardias del curso. Puedes:
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><strong>Crear grupo:</strong> Asigna profesores a un dia/tramo/edificio concreto.</li>
+          <li><strong>Asignar horario:</strong> Selecciona un profesor y marca los tramos de su horario de guardias en un grid semanal.</li>
+          <li><strong>Importar CSV/Excel:</strong> Carga masiva de guardias desde archivos. El sistema valida el formato y muestra una vista previa antes de confirmar.</li>
+        </ul>
+      </div>
+      <div class="manual-paso">
+        <strong>Pestana "Vista por tramo":</strong> Un grid visual que muestra todos los profesores asignados a cada tramo horario, filtrable por edificio y curso escolar. Util para ver la cobertura general del centro.
+      </div>
+    </div>
+
+    <!-- 5. Ausencias -->
+    <div class="tarjeta manual-seccion" id="ausencias">
+      <h3><i class="bi bi-calendar-x"></i>5. Gestion de Ausencias</h3>
+      <div class="manual-paso">
+        <strong>Registrar ausencia:</strong> Pulsa <strong>"Registrar ausencia"</strong> para crear una ausencia de cualquier profesor. Selecciona el profesor, fecha, tramo, espacio(s) y opcionalmente adjunta tarea.
+      </div>
+      <div class="manual-paso">
+        <strong>Tarjetas resumen:</strong> Contadores de ausencias Pendientes, Cubiertas, Sin cubrir y Total.
+      </div>
+      <div class="manual-paso">
+        <strong>Filtros:</strong> Filtra por estado y por rango de fechas (desde/hasta).
+      </div>
+      <div class="manual-paso">
+        <strong>Cambiar estado:</strong> Usa el desplegable en linea de la tabla para cambiar el estado de una ausencia. Tambien puedes eliminar ausencias con el boton de papelera.
+      </div>
+    </div>
+
+    <!-- 6. Incidencias -->
+    <div class="tarjeta manual-seccion" id="incidencias">
+      <h3><i class="bi bi-exclamation-triangle"></i>6. Gestion de Incidencias</h3>
+      <div class="manual-paso">
+        <strong>Panel completo:</strong> Tarjetas resumen con Pendientes, En proceso, Resueltas y Total. Busca por titulo, espacio o creador. Filtra por estado y tipo.
+      </div>
+      <div class="manual-paso">
+        <strong>Cambiar estado en linea:</strong> Desde la propia tabla, usa el desplegable de estado para cambiar una incidencia entre Pendiente, En proceso, Resuelta y Cerrada.
+      </div>
+      <div class="manual-paso">
+        <strong>Ver detalle:</strong> Pulsa el ojo (<i class="bi bi-eye"></i>) para ver toda la informacion. Desde el detalle puedes avanzar el estado paso a paso.
+      </div>
+      <div class="manual-paso">
+        <strong>Eliminar:</strong> Pulsa la papelera (<i class="bi bi-trash"></i>) para eliminar una incidencia. Se pedira confirmacion.
+      </div>
+    </div>
+
+    <!-- 7. Aulas -->
+    <div class="tarjeta manual-seccion" id="aulas">
+      <h3><i class="bi bi-door-open"></i>7. Aulas y Espacios</h3>
+      <p style="margin-bottom:12px;">Tres pestanas para gestionar la infraestructura del centro:</p>
+      <div class="manual-paso">
+        <strong>Espacios:</strong> Lista de todas las aulas y salas. Filtra por edificio, estado o curso escolar. Puedes anadir nuevos espacios con ID opcional, nombre, edificio, planta, capacidad y estado (Disponible, No disponible, En mantenimiento). Pulsa el ojo para ver el detalle de un espacio.
+      </div>
+      <div class="manual-paso">
+        <strong>Edificios:</strong> Gestiona los edificios del centro. Anade nuevos edificios con nombre y numero de plantas.
+      </div>
+      <div class="manual-paso">
+        <strong>Bloqueos:</strong> Crea bloqueos para impedir que se reserven ciertos espacios en tramos concretos. Indica el espacio, dia (opcional para bloqueo permanente), tramo, fechas de inicio/fin y motivo. Los tramos bloqueados apareceran como no disponibles en las reservas.
+      </div>
+    </div>
+
+    <!-- 8. Reservas -->
+    <div class="tarjeta manual-seccion" id="reservas">
+      <h3><i class="bi bi-calendar-check"></i>8. Reservas</h3>
+      <div class="manual-paso">
+        <strong>Crear reserva:</strong> Igual que los profesores: selecciona fecha y espacio, el sistema muestra la disponibilidad de cada tramo en tiempo real. Solo los tramos libres son seleccionables.
+      </div>
+      <div class="manual-paso">
+        <strong>Ver reservas:</strong> La tabla muestra todas las reservas del centro con fecha, tramo, espacio, edificio, quien la reservo y motivo. Puedes eliminar reservas futuras.
+      </div>
+    </div>
+
+    <!-- 9. Logs -->
+    <div class="tarjeta manual-seccion" id="logs">
+      <h3><i class="bi bi-clock-history"></i>9. Log de Actividad</h3>
+      <div class="manual-paso">
+        <strong>Registro de auditoría:</strong> Tabla con todas las acciones realizadas en la plataforma: fecha/hora, usuario, accion, entidad afectada y detalles.
+      </div>
+      <div class="manual-paso">
+        <strong>Filtros:</strong> Busca por tipo de accion y filtra por rango de fechas. Usa la paginacion para navegar entre los registros.
+      </div>
+      <div class="manual-nota">
+        <i class="bi bi-info-circle me-1"></i> El log registra automaticamente las acciones de creacion, actualizacion y eliminacion de todos los recursos del sistema.
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:20px 0;color:#94a3b8;font-size:13px;">
+      <i class="bi bi-mortarboard-fill me-1"></i> IES Rio Arba — Manual del Administrador
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/sidebar.js"></script>
+  <script>
+    verificarSesion().then(function (usuario) {
+      if (!usuario) return;
+      crearSidebar("manual", "../../");
+    });
+  </script>
+
+</body>
+</html>

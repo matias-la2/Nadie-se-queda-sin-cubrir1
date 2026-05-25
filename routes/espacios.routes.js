@@ -62,6 +62,9 @@ router.delete('/bloqueos/:id',
   controller.eliminarBloqueo
 );
 
+// ─── Disponibilidad ───────────────────────────────────
+router.get('/disponibilidad/:id', controller.obtenerDisponibilidad);
+
 // ─── Espacios ──────────────────────────────────────────
 router.get('/', controller.listarEspacios);
 router.get('/:id', controller.obtenerEspacio);
