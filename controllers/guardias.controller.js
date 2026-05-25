@@ -862,7 +862,54 @@ async function guardiasHoy(req, res, next) {
        AND ga.estado IN ('PENDIENTE', 'ACEPTADA')`
     );
 
-    return success(res, { ausencias, disponibles, asignadas });
+    let sinCubrirOtrosDiasSql = `
+      SELECT a.*, u.nombre AS profesor_nombre, u.apellidos AS profesor_apellidos,
+             p.departamento
+      FROM ausencia a
+      JOIN usuario u ON a.id_profesor = u.id_usuario
+      JOIN profesor p ON a.id_profesor = p.id_usuario
+      WHERE a.fecha != CURDATE()
+      AND a.estado = 'SIN_CUBRIR'`;
+    const sinCubrirParams = [];
+
+    if (filtroEdificio) {
+      sinCubrirOtrosDiasSql += ` AND EXISTS (
+        SELECT 1 FROM ausencia_espacio ae
+        JOIN espacio es ON ae.id_espacio = es.id_espacio
+        WHERE ae.id_ausencia = a.id_ausencia AND es.id_edificio = ?
+      )`;
+      sinCubrirParams.push(filtroEdificio);
+    }
+
+    sinCubrirOtrosDiasSql += ` ORDER BY a.fecha ASC`;
+
+    const [sinCubrirOtrosDias] = await pool.query(sinCubrirOtrosDiasSql, sinCubrirParams);
+
+    const idsSinCubrir = sinCubrirOtrosDias.map(a => a.id_ausencia);
+    if (idsSinCubrir.length > 0) {
+      const [espaciosSinCubrir] = await pool.query(
+        `SELECT ae.id_ausencia, es.id_espacio, es.nombre, e.id_edificio, e.nombre AS edificio_nombre
+         FROM ausencia_espacio ae
+         JOIN espacio es ON ae.id_espacio = es.id_espacio
+         JOIN edificio e ON es.id_edificio = e.id_edificio
+         WHERE ae.id_ausencia IN (?)`,
+        [idsSinCubrir]
+      );
+      const espaciosMapOtros = new Map();
+      for (const row of espaciosSinCubrir) {
+        if (!espaciosMapOtros.has(row.id_ausencia)) {
+          espaciosMapOtros.set(row.id_ausencia, []);
+        }
+        espaciosMapOtros.get(row.id_ausencia).push(row);
+      }
+      for (const aus of sinCubrirOtrosDias) {
+        const espacios = espaciosMapOtros.get(aus.id_ausencia) || [];
+        aus.espacios = espacios;
+        aus.edificios = [...new Set(espacios.map(e => e.id_edificio))];
+      }
+    }
+
+    return success(res, { ausencias, disponibles, asignadas, sinCubrirOtrosDias });
   } catch (err) {
     next(err);
   }

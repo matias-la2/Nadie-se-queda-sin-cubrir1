@@ -528,14 +528,17 @@
         var ausencias = info.ausencias || [];
         var disponibles = info.disponibles || [];
         var asignadas = info.asignadas || [];
+        var sinCubrirOtrosDias = info.sinCubrirOtrosDias || [];
 
         _profesoresDisponibles = disponibles;
 
-        document.getElementById("num-ausencias-hoy").textContent = ausencias.length;
+        var todasSinCubrir = ausencias.concat(sinCubrirOtrosDias);
+
+        document.getElementById("num-ausencias-hoy").textContent = todasSinCubrir.length;
         document.getElementById("num-disponibles").textContent = disponibles.length;
         document.getElementById("num-asignadas-hoy").textContent = asignadas.length;
 
-        renderSinCubrir(ausencias, disponibles);
+        renderSinCubrir(todasSinCubrir, disponibles);
         renderDisponibles(disponibles);
         renderAsignadasHoy(asignadas);
       }).catch(function () {
@@ -558,8 +561,15 @@
       for (var i = 0; i < ausencias.length; i++) {
         var a = ausencias[i];
         var profesor = a.profesor_nombre || a.nombre || "—";
+        if (a.profesor_apellidos) profesor += " " + a.profesor_apellidos;
         var tramo = a.tramo_horario || a.tramo || "—";
         var idAusencia = a.id_ausencia || a.id;
+
+        var fechaTexto = "";
+        if (a.fecha) {
+          var f = String(a.fecha).substring(0, 10).split("-");
+          if (f.length === 3) fechaTexto = f[2] + "/" + f[1] + "/" + f[0];
+        }
 
         var opcionesSust = '<option value="">Seleccionar sustituto...</option>';
         for (var j = 0; j < disponibles.length; j++) {
@@ -577,7 +587,7 @@
         }
 
         html += '<div class="tarjeta-cobertura d-flex justify-content-between align-items-center mb-2" style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;">' +
-                  '<div><strong>' + profesor + '</strong> — ' + tramo + infoTarea + '</div>' +
+                  '<div><strong>' + profesor + '</strong> — ' + (fechaTexto ? '<span style="color:#1152d4;font-weight:600;">' + fechaTexto + '</span> ' : '') + tramo + infoTarea + '</div>' +
                   '<div class="d-flex gap-2 align-items-center">' +
                     '<select class="select-filtro" id="sust-' + idAusencia + '" style="min-width:200px;">' + opcionesSust + '</select>' +
                     '<button class="btn-primario" onclick="asignarSustituto(' + idAusencia + ')" style="white-space:nowrap;"><i class="bi bi-person-plus me-1"></i>Asignar</button>' +
