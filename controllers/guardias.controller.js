@@ -262,6 +262,15 @@ async function crearAsignada(req, res, next) {
       return error(res, 'El profesor sustituto ya tiene una guardia asignada en ese horario', 409);
     }
 
+    const [[ausenciaCheck]] = await conn.query(
+      'SELECT id_profesor FROM ausencia WHERE id_ausencia = ?',
+      [id_ausencia]
+    );
+    if (ausenciaCheck && ausenciaCheck.id_profesor === id_profesor_sustituto) {
+      conn.release();
+      return error(res, 'El profesor ausente no puede ser su propio sustituto', 400);
+    }
+
     const [edificiosAusencia] = await conn.query(
       `SELECT DISTINCT es.id_edificio
        FROM ausencia_espacio ae
