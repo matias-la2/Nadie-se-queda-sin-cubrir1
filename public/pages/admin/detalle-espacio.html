@@ -99,6 +99,7 @@
                   <label style="font-size:12px;color:#64748b;">Tramo horario *</label>
                   <select class="select-filtro" id="bloqueo-tramo" style="width:100%;" required>
                     <option value="">Seleccionar...</option>
+                    <option value="TODO_EL_DIA">Todo el día</option>
                     <option value="1a hora (08:15-09:10)">1a hora (08:15-09:10)</option>
                     <option value="2a hora (09:10-10:10)">2a hora (09:10-10:10)</option>
                     <option value="3a hora (10:10-11:05)">3a hora (10:10-11:05)</option>
@@ -123,11 +124,12 @@
                 <label style="font-size:12px;color:#64748b;">Motivo</label>
                 <input type="text" class="select-filtro" id="bloqueo-motivo" placeholder="Ej: Clase fija 2o Bach" style="width:100%;">
               </div>
-              <div class="d-flex gap-2">
-                <button class="btn-primario" onclick="crearBloqueo()" style="font-size:12px;padding:6px 14px;">
+              <div class="d-flex gap-2 align-items-center">
+                <button class="btn-primario" onclick="crearBloqueo()" id="btn-crear-bloqueo" style="font-size:12px;padding:6px 14px;">
                   <i class="bi bi-check-lg"></i> Crear bloqueo
                 </button>
                 <button class="btn-secundario" onclick="toggleFormBloqueo()" style="font-size:12px;padding:6px 14px;">Cancelar</button>
+                <span id="bloqueo-status-msg" style="font-size:12px;color:#64748b;margin-left:8px;"></span>
               </div>
             </div>
             <div class="tabla-responsive">
@@ -138,6 +140,7 @@
                 <tbody id="tabla-bloqueos"></tbody>
               </table>
             </div>
+            <div id="feedback-bloqueo"></div>
           </div>
 
           <!-- Reservas del espacio -->
@@ -174,6 +177,7 @@
               <i class="bi bi-check-lg"></i>
               Guardar cambio
             </button>
+            <div id="feedback-estado"></div>
           </div>
 
           <div class="tarjeta mb-3">
@@ -190,6 +194,7 @@
             <button class="btn-primario btn-guardar-estado" onclick="guardarNombreCurso()">
               <i class="bi bi-check-lg"></i> Guardar nombre
             </button>
+            <div id="feedback-nombre-curso"></div>
             <div id="nombre-curso-actual" style="margin-top:10px;"></div>
           </div>
 
@@ -235,6 +240,16 @@
       }
     }
 
+    function mostrarFeedback(contenedorId, mensaje, esError) {
+      var div = document.getElementById(contenedorId);
+      var bg = esError ? '#fef2f2' : '#f0fdf4';
+      var border = esError ? '#fecaca' : '#bbf7d0';
+      var color = esError ? '#991b1b' : '#166534';
+      var icono = esError ? 'bi-exclamation-triangle' : 'bi-check-circle';
+      div.innerHTML = '<div style="margin-top:8px;padding:8px 12px;background:' + bg + ';border:1px solid ' + border + ';border-radius:6px;color:' + color + ';font-size:13px;"><i class="bi ' + icono + ' me-1"></i>' + mensaje + '</div>';
+      if (!esError) setTimeout(function() { div.innerHTML = ''; }, 3000);
+    }
+
     var _cursoEscolar = calcularCursoActual();
 
     verificarSesion().then(function (usuario) {
@@ -247,6 +262,13 @@
       }
 
       document.getElementById("input-curso-escolar").value = _cursoEscolar;
+
+      var cursoInput = document.getElementById("input-curso-escolar");
+      var cursoTimer = null;
+      cursoInput.addEventListener("input", function () {
+        clearTimeout(cursoTimer);
+        cursoTimer = setTimeout(cargarNombreCurso, 500);
+      });
 
       cargarEspacio();
       cargarBloqueos();
@@ -356,11 +378,12 @@
       }).then(function (data) {
         if (data && data.ok) {
           cargarEspacio();
+          mostrarFeedback('feedback-estado', "Estado actualizado a '" + textoEstadoPor(nuevoEstado) + "'", false);
         } else {
-          alert((data && data.mensaje) || "Error al actualizar estado");
+          mostrarFeedback('feedback-estado', (data && data.mensaje) || "Error al actualizar estado", true);
         }
       }).catch(function () {
-        alert("Error de conexión");
+        mostrarFeedback('feedback-estado', "Error de conexion", true);
       });
     }
 
@@ -377,20 +400,47 @@
         return;
       }
 
-      var body = {
-        id_espacio: parseInt(_espacioId),
-        dia_semana: document.getElementById("bloqueo-dia").value ? parseInt(document.getElementById("bloqueo-dia").value) : null,
-        tramo_horario: tramo,
-        fecha_desde: desde,
-        fecha_hasta: document.getElementById("bloqueo-hasta").value || null,
-        motivo: document.getElementById("bloqueo-motivo").value || null
-      };
+      var diaSemana = document.getElementById("bloqueo-dia").value ? parseInt(document.getElementById("bloqueo-dia").value) : null;
+      var hasta = document.getElementById("bloqueo-hasta").value || null;
+      var motivo = document.getElementById("bloqueo-motivo").value || null;
+      var statusMsg = document.getElementById("bloqueo-status-msg");
+      var btn = document.getElementById("btn-crear-bloqueo");
 
-      apiFetch('/api/v1/espacios/bloqueos', {
-        method: 'POST',
-        body: JSON.stringify(body)
-      }).then(function (data) {
-        if (data && data.ok) {
+      var todosTramos = [
+        "1a hora (08:15-09:10)", "2a hora (09:10-10:10)", "3a hora (10:10-11:05)",
+        "Recreo (11:05-11:30)", "4a hora (11:30-12:25)", "5a hora (12:25-13:20)", "6a hora (13:20-14:15)"
+      ];
+
+      var tramosACrear = tramo === "TODO_EL_DIA" ? todosTramos : [tramo];
+
+      btn.disabled = true;
+      statusMsg.style.color = "#64748b";
+      statusMsg.textContent = tramosACrear.length > 1 ? "Creando " + tramosACrear.length + " bloqueos..." : "Creando bloqueo...";
+
+      var promesas = [];
+      for (var i = 0; i < tramosACrear.length; i++) {
+        var body = {
+          id_espacio: parseInt(_espacioId),
+          dia_semana: diaSemana,
+          tramo_horario: tramosACrear[i],
+          fecha_desde: desde,
+          fecha_hasta: hasta,
+          motivo: motivo
+        };
+        promesas.push(apiFetch('/api/v1/espacios/bloqueos', {
+          method: 'POST',
+          body: JSON.stringify(body)
+        }));
+      }
+
+      Promise.all(promesas).then(function (resultados) {
+        var creados = 0;
+        for (var j = 0; j < resultados.length; j++) {
+          if (resultados[j] && resultados[j].ok) creados++;
+        }
+
+        if (creados === tramosACrear.length) {
+          statusMsg.textContent = "";
           toggleFormBloqueo();
           document.getElementById("bloqueo-dia").value = "";
           document.getElementById("bloqueo-tramo").value = "";
@@ -398,11 +448,18 @@
           document.getElementById("bloqueo-hasta").value = "";
           document.getElementById("bloqueo-motivo").value = "";
           cargarBloqueos();
+          var msg = creados > 1 ? creados + " bloqueos creados (todo el dia)" : "Bloqueo creado correctamente";
+          mostrarFeedback('feedback-bloqueo', msg, false);
         } else {
-          alert((data && data.mensaje) || "Error al crear bloqueo");
+          statusMsg.style.color = "#dc2626";
+          statusMsg.textContent = "Solo se crearon " + creados + " de " + tramosACrear.length;
+          cargarBloqueos();
         }
+        btn.disabled = false;
       }).catch(function () {
-        alert("Error de conexión");
+        statusMsg.style.color = "#dc2626";
+        statusMsg.textContent = "Error de conexion";
+        btn.disabled = false;
       });
     }
 
@@ -414,27 +471,32 @@
       }).then(function (data) {
         if (data && data.ok) {
           cargarBloqueos();
+          mostrarFeedback('feedback-bloqueo', "Bloqueo eliminado", false);
         } else {
-          alert((data && data.mensaje) || "Error al eliminar bloqueo");
+          mostrarFeedback('feedback-bloqueo', (data && data.mensaje) || "Error al eliminar bloqueo", true);
         }
       }).catch(function () {
-        alert("Error de conexión");
+        mostrarFeedback('feedback-bloqueo', "Error de conexion", true);
       });
     }
 
     function cargarNombreCurso() {
       var curso = document.getElementById("input-curso-escolar").value.trim();
-      if (!curso) return;
+      if (!curso) {
+        document.getElementById("nombre-curso-actual").innerHTML = '';
+        return;
+      }
 
       apiFetch('/api/v1/espacios/nombres-curso/' + _espacioId + '?curso_escolar=' + encodeURIComponent(curso)).then(function (data) {
         var contenedor = document.getElementById("nombre-curso-actual");
         if (data && data.ok && data.datos && data.datos.nombre_curso) {
+          var nombreActual = data.datos.nombre_curso;
           contenedor.innerHTML =
             '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:10px;display:flex;align-items:center;justify-content:space-between;">' +
-              '<span style="font-size:13px;color:#166534;"><strong>' + data.datos.nombre_curso + '</strong> (' + curso + ')</span>' +
+              '<span style="font-size:13px;color:#166534;">Curso [' + curso + ']: <strong>' + nombreActual + '</strong></span>' +
               '<button class="btn-accion peligro" title="Eliminar" onclick="eliminarNombreCurso()" style="margin-left:8px;"><i class="bi bi-trash"></i></button>' +
             '</div>';
-          document.getElementById("input-nombre-curso").value = data.datos.nombre_curso;
+          document.getElementById("input-nombre-curso").value = nombreActual;
         } else {
           contenedor.innerHTML = '<small style="color:#94a3b8;">Sin nombre asignado para ' + curso + '</small>';
           document.getElementById("input-nombre-curso").value = "";
@@ -452,23 +514,34 @@
         return;
       }
 
+      var contenedor = document.getElementById("nombre-curso-actual");
+      var yaExiste = contenedor.querySelector('strong');
+      var textoAnterior = yaExiste ? yaExiste.textContent : null;
+
       apiFetch('/api/v1/espacios/nombres-curso/' + _espacioId, {
         method: 'PUT',
         body: JSON.stringify({ curso_escolar: curso, nombre_curso: nombre })
       }).then(function (data) {
         if (data && data.ok) {
           cargarNombreCurso();
+          var msg = textoAnterior
+            ? "Nombre actualizado a '" + nombre + "'"
+            : "Nombre '" + nombre + "' guardado para el curso " + curso;
+          mostrarFeedback('feedback-nombre-curso', msg, false);
         } else {
-          alert((data && data.mensaje) || "Error al guardar nombre de curso");
+          mostrarFeedback('feedback-nombre-curso', (data && data.mensaje) || "Error al guardar nombre de curso", true);
         }
       }).catch(function () {
-        alert("Error de conexión");
+        mostrarFeedback('feedback-nombre-curso', "Error de conexion", true);
       });
     }
 
     function eliminarNombreCurso() {
       var curso = document.getElementById("input-curso-escolar").value.trim();
-      if (!confirm("¿Eliminar el nombre de curso para " + curso + "?")) return;
+      var contenedor = document.getElementById("nombre-curso-actual");
+      var nombreElem = contenedor.querySelector('strong');
+      var nombreActual = nombreElem ? nombreElem.textContent : "este nombre";
+      if (!confirm("¿Eliminar el nombre '" + nombreActual + "' del curso " + curso + "?")) return;
 
       apiFetch('/api/v1/espacios/nombres-curso/' + _espacioId + '?curso_escolar=' + encodeURIComponent(curso), {
         method: 'DELETE'
@@ -476,11 +549,12 @@
         if (data && data.ok) {
           document.getElementById("input-nombre-curso").value = "";
           cargarNombreCurso();
+          mostrarFeedback('feedback-nombre-curso', "Nombre eliminado para el curso " + curso, false);
         } else {
-          alert((data && data.mensaje) || "Error al eliminar nombre de curso");
+          mostrarFeedback('feedback-nombre-curso', (data && data.mensaje) || "Error al eliminar nombre de curso", true);
         }
       }).catch(function () {
-        alert("Error de conexión");
+        mostrarFeedback('feedback-nombre-curso', "Error de conexion", true);
       });
     }
   </script>
