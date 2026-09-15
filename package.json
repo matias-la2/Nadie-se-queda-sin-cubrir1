@@ -10,7 +10,9 @@
     "lint:fix": "eslint . --ext .js --fix --ignore-pattern node_modules",
     "format": "prettier --write \"**/*.{js,json,css,html}\"",
     "test": "jest --detectOpenHandles --forceExit",
-    "test:nombres": "node --test tests/nombres.service.test.js"
+    "test:nombres": "node --test tests/nombres.service.test.js",
+    "test:importador": "node --test tests/importador-guardias.service.test.js",
+    "test:bloque": "node --test tests/nombres.service.test.js tests/importador-guardias.service.test.js"
   },
   "dependencies": {
     "cookie-parser": "^1.4.6",
