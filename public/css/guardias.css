@@ -332,3 +332,27 @@
 .leyenda-bach { background: #dcfce7; border: 1px solid #15803d; }
 .leyenda-ciclos { background: #fff7ed; border: 1px solid #c2410c; }
 .leyenda-sin { background: #f1f5f9; border: 1px solid #94a3b8; }
+
+/* ───────────────────────────────────────────────────── */
+/* ASISTENTE IMPORTAR EXCEL — PASOS                     */
+/* ───────────────────────────────────────────────────── */
+
+.excel-paso-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+.excel-paso-badge.activo {
+  background: #1152d4;
+  color: #ffffff;
+}
+
+.excel-paso-badge.completado {
+  background: #dcfce7;
+  color: #15803d;
+}
