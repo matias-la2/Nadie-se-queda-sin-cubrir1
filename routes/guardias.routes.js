@@ -1,7 +1,6 @@
 const { Router } = require('express');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 const { verificarToken } = require('../middleware/auth.middleware');
 const { requiereRol } = require('../middleware/rol.middleware');
 const { registrarAccion } = require('../middleware/log.middleware');
@@ -9,22 +8,13 @@ const {
   validar,
   crearGuardiaCreadaSchema, actualizarGuardiaCreadaSchema,
   crearGrupoGuardiaSchema, crearGuardiaAsignadaSchema,
-  guardarHorarioSchema, importarCSVSchema
+  guardarHorarioSchema, importarCSVSchema, confirmarExcelSchema
 } = require('../validators/guardias.validator');
 const controller = require('../controllers/guardias.controller');
 
-const UPLOAD_DIR = path.join(__dirname, '..', 'uploads', 'excel');
-if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-
-const uploadExcel = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
-    filename: (_req, file, cb) => {
-      const unique = Date.now() + '-' + Math.round(Math.random() * 1e6);
-      cb(null, unique + path.extname(file.originalname));
-    }
-  }),
-  limits: { fileSize: 10 * 1024 * 1024 },
+const uploadExcelMem = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2 * 1024 * 1024, files: 2 },
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     if (['.xls', '.xlsx'].includes(ext)) return cb(null, true);
@@ -68,11 +58,16 @@ router.post('/creadas/importar',
   registrarAccion('IMPORTAR_GUARDIAS', 'guardia_creada'),
   controller.importarCSV
 );
-router.post('/creadas/importar-excel',
+router.post('/creadas/importar-excel/analizar',
   requiereRol('EQUIPO_DIRECTIVO', 'ADMINISTRADOR'),
-  uploadExcel.single('archivo'),
+  uploadExcelMem.array('archivos', 2),
+  controller.analizarExcel
+);
+router.post('/creadas/importar-excel/confirmar',
+  requiereRol('EQUIPO_DIRECTIVO', 'ADMINISTRADOR'),
+  validar(confirmarExcelSchema),
   registrarAccion('IMPORTAR_GUARDIAS_EXCEL', 'guardia_creada'),
-  controller.importarExcel
+  controller.confirmarExcel
 );
 router.put('/creadas/:id',
   requiereRol('EQUIPO_DIRECTIVO', 'ADMINISTRADOR'),

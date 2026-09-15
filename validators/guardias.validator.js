@@ -72,9 +72,29 @@ const importarCSVSchema = z.object({
   })).min(1, 'Debe incluir al menos una guardia')
 });
 
+const confirmarExcelSchema = z.object({
+  curso: cursoEscolarSchema,
+  edificios: z.array(z.number().int().positive()).min(1),
+  guardias: z.array(z.object({
+    edificio_id: z.number().int().positive(),
+    dia: z.number().int().min(1).max(5),
+    tramo: z.string().min(1),
+    nombreExcel: z.string().min(1),
+    esPlaza: z.boolean(),
+  })),
+  decisiones: z.record(
+    z.string(),
+    z.discriminatedUnion('accion', [
+      z.object({ accion: z.literal('VINCULAR'), id_usuario: z.number().int().positive() }),
+      z.object({ accion: z.literal('PENDIENTE_LOGIN') }),
+      z.object({ accion: z.literal('IGNORAR') }),
+    ])
+  ),
+});
+
 module.exports = {
   crearGuardiaCreadaSchema, actualizarGuardiaCreadaSchema,
   crearGrupoGuardiaSchema, crearGuardiaAsignadaSchema,
-  guardarHorarioSchema, importarCSVSchema,
+  guardarHorarioSchema, importarCSVSchema, confirmarExcelSchema,
   validar
 };

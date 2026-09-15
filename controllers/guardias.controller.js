@@ -1,11 +1,11 @@
-const fs = require('fs');
-const XLSX = require('xlsx');
 const pool = require('../config/db');
 const { success, error } = require('../helpers/response.helper');
 const { paginar, respuestaPaginada } = require('../helpers/pagination.helper');
 const { enviarEmail, plantillaNotificacion } = require('../services/email.service');
 const { TRAMOS, ETIQUETAS_LECTIVAS } = require('../config/tramos');
-const { inicioCursoActual } = require('../helpers/curso.helper');
+const { cursoActual, inicioCursoActual } = require('../helpers/curso.helper');
+const { parsearArchivo } = require('../services/importador-guardias.service');
+const { normalizar, emparejar } = require('../services/nombres.service');
 
 // ─── GUARDIAS CREADAS (planificadas) ───────────────────
 
@@ -958,156 +958,281 @@ async function guardarHorario(req, res, next) {
   }
 }
 
-// ─── IMPORTAR EXCEL ───────────────────────────────────
+// ─── IMPORTAR EXCEL (dos fases) ──────────────────────
 
-async function importarExcel(req, res, next) {
-  const conn = await pool.getConnection();
+async function analizarExcel(req, res, next) {
   try {
-    if (!req.file) return error(res, 'No se ha enviado ningun archivo', 400);
-
-    const curso_escolar = req.body.curso_escolar;
-    if (!curso_escolar) return error(res, 'El curso escolar es obligatorio', 400);
-
-    const workbook = XLSX.readFile(req.file.path);
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-
-    if (data.length < 3) return error(res, 'El archivo no tiene suficientes filas', 400);
-
-    const TRAMO_MAP = ETIQUETAS_LECTIVAS;
-
-    const DIA_OFFSETS = [
-      { dia: 1, colInicio: 1 },
-      { dia: 2, colInicio: 7 },
-      { dia: 3, colInicio: 13 },
-      { dia: 4, colInicio: 19 },
-      { dia: 5, colInicio: 25 }
-    ];
-
-    const [edificiosDB] = await conn.query('SELECT id_edificio, nombre FROM edificio');
-    const edificioMap = {};
-    for (const e of edificiosDB) {
-      edificioMap[e.nombre.toUpperCase().trim()] = e.id_edificio;
+    if (!req.files || req.files.length === 0) {
+      return error(res, 'No se han enviado archivos', 400);
     }
 
-    const guardiasDetectadas = [];
-    const profesoresNoEncontrados = [];
-    const errores = [];
+    const [edificiosDB] = await pool.query('SELECT id_edificio, nombre FROM edificio');
+    const [usuarios] = await pool.query(
+      `SELECT DISTINCT u.id_usuario AS id, u.nombre, u.apellidos
+       FROM usuario u
+       JOIN usuario_rol ur ON u.id_usuario = ur.id_usuario
+       JOIN rol r ON ur.id_rol = r.id_rol
+       WHERE r.nombre_rol = 'PROFESOR' AND u.activo = 1`
+    );
+    const [aliasRows] = await pool.query('SELECT nombre_normalizado, id_usuario FROM alias_profesor');
+    const aliasMap = new Map(aliasRows.map(a => [a.nombre_normalizado, a.id_usuario]));
+    const [pendientes] = await pool.query('SELECT nombre_normalizado FROM profesor_pendiente_login');
+    const pendientesSet = new Set(pendientes.map(p => p.nombre_normalizado));
 
-    for (let fila = 2; fila < data.length; fila++) {
-      const row = data[fila];
-      const nombreCompleto = (row[0] || '').toString().trim();
-      if (!nombreCompleto) continue;
+    const archivos = [];
+    const edificiosVistos = new Set();
 
-      for (const diaInfo of DIA_OFFSETS) {
-        for (let offset = 0; offset < 6; offset++) {
-          const col = diaInfo.colInicio + offset;
-          const celda = (row[col] || '').toString().trim();
-          if (!celda.toUpperCase().includes('GUARDIA')) continue;
+    for (const file of req.files) {
+      const resultado = parsearArchivo(file.buffer, edificiosDB);
 
-          const lineas = celda.split(/\n/);
-          let edificioNombre = null;
-          if (lineas.length > 1) {
-            edificioNombre = lineas[1].trim().toUpperCase();
-          }
+      if (edificiosVistos.has(resultado.edificio.id)) {
+        return error(res, 'Los dos archivos son del mismo edificio: ' + resultado.edificio.nombre, 400);
+      }
+      edificiosVistos.add(resultado.edificio.id);
 
-          guardiasDetectadas.push({
-            fila: fila + 1,
-            nombre: nombreCompleto,
-            dia_semana: diaInfo.dia,
-            tramo_horario: TRAMO_MAP[offset],
-            edificio: edificioNombre,
-            id_edificio: edificioNombre ? (edificioMap[edificioNombre] || null) : null
-          });
-        }
+      archivos.push({
+        nombre: file.originalname,
+        edificio: resultado.edificio,
+        guardias: resultado.guardias.length,
+        guardiasDetalle: resultado.guardias,
+        nombresUnicos: resultado.nombresUnicos,
+        plazas: resultado.plazas,
+      });
+    }
+
+    const todosNombres = new Set();
+    const todasPlazas = new Set();
+    const todasGuardias = [];
+
+    for (const arch of archivos) {
+      for (const n of arch.nombresUnicos) todosNombres.add(n);
+      for (const p of arch.plazas) todasPlazas.add(p);
+      for (const g of arch.guardiasDetalle) {
+        todasGuardias.push({
+          edificio_id: arch.edificio.id,
+          dia: g.dia_semana,
+          tramo: g.tramo_horario,
+          nombreExcel: g.nombreExcel,
+          esPlaza: g.esPlaza,
+        });
       }
     }
 
-    const nombresUnicos = [...new Set(guardiasDetectadas.map(g => g.nombre))];
-    const mapaNombreId = {};
+    const resueltos = [];
+    const probables = [];
+    const sinCuenta = [];
 
-    for (const nombre of nombresUnicos) {
-      const partes = nombre.split(/[\s,]+/).filter(Boolean);
-      let encontrado = null;
+    for (const nombreExcel of todosNombres) {
+      const normNombre = normalizar(nombreExcel);
 
-      if (partes.length >= 2) {
-        const condiciones = [];
-        const params = [];
-
-        condiciones.push('CONCAT(u.apellidos, \' \', u.nombre) LIKE ?');
-        params.push(`%${nombre}%`);
-        condiciones.push('CONCAT(u.nombre, \' \', u.apellidos) LIKE ?');
-        params.push(`%${nombre}%`);
-
-        const [rows] = await conn.query(
-          `SELECT u.id_usuario, u.nombre, u.apellidos FROM usuario u
-           JOIN usuario_rol ur ON u.id_usuario = ur.id_usuario
-           JOIN rol r ON ur.id_rol = r.id_rol
-           WHERE r.nombre_rol = 'PROFESOR' AND u.activo = 1
-           AND (${condiciones.join(' OR ')})
-           LIMIT 1`,
-          params
-        );
-        if (rows.length > 0) encontrado = rows[0];
-      }
-
-      if (!encontrado) {
-        const [rows2] = await conn.query(
-          `SELECT u.id_usuario, u.nombre, u.apellidos FROM usuario u
-           JOIN usuario_rol ur ON u.id_usuario = ur.id_usuario
-           JOIN rol r ON ur.id_rol = r.id_rol
-           WHERE r.nombre_rol = 'PROFESOR' AND u.activo = 1
-           AND (CONCAT(u.nombre, ' ', u.apellidos) LIKE ? OR CONCAT(u.apellidos, ' ', u.nombre) LIKE ?)
-           LIMIT 1`,
-          [`%${partes[0]}%${partes.length > 1 ? '%' + partes[1] + '%' : ''}`,
-           `%${partes[0]}%${partes.length > 1 ? '%' + partes[1] + '%' : ''}`]
-        );
-        if (rows2.length > 0) encontrado = rows2[0];
-      }
-
-      if (encontrado) {
-        mapaNombreId[nombre] = encontrado.id_usuario;
-      } else {
-        profesoresNoEncontrados.push(nombre);
-      }
-    }
-
-    const validos = [];
-    for (const g of guardiasDetectadas) {
-      const idUsuario = mapaNombreId[g.nombre];
-      if (!idUsuario) {
-        errores.push({ fila: g.fila, nombre: g.nombre, error: 'Profesor no encontrado en la BD' });
+      if (pendientesSet.has(normNombre)) {
+        sinCuenta.push({ nombreExcel });
         continue;
       }
-      validos.push({ ...g, id_usuario: idUsuario });
+
+      const match = emparejar(nombreExcel, usuarios, aliasMap);
+
+      if (match.tipo === 'EXACTO') {
+        const c = match.candidatos[0];
+        resueltos.push({
+          nombreExcel,
+          id_usuario: c.id,
+          nombre: `${c.nombre} ${c.apellidos}`,
+        });
+      } else if (match.tipo === 'PROBABLE') {
+        probables.push({
+          nombreExcel,
+          candidatos: match.candidatos.map(c => ({
+            id_usuario: c.id,
+            nombre: `${c.nombre} ${c.apellidos}`,
+            score: Math.round(c.score * 100) / 100,
+          })),
+        });
+      } else {
+        sinCuenta.push({ nombreExcel });
+      }
     }
+
+    const curso = cursoActual();
+
+    return success(res, {
+      curso,
+      archivos: archivos.map(a => ({
+        nombre: a.nombre,
+        edificio: a.edificio,
+        guardias: a.guardias,
+      })),
+      resueltos,
+      probables,
+      sinCuenta,
+      plazas: [...todasPlazas],
+      guardias: todasGuardias,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function confirmarExcel(req, res, next) {
+  const conn = await pool.getConnection();
+  try {
+    const { curso, edificios, guardias, decisiones } = req.body;
 
     await conn.beginTransaction();
 
-    const ids = [];
-    for (const g of validos) {
-      const [result] = await conn.query(
-        `INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_edificio, origen)
-         VALUES (?, ?, ?, ?, ?, 'EXCEL')`,
-        [g.dia_semana, g.tramo_horario, curso_escolar, g.id_usuario, g.id_edificio || null]
-      );
-      ids.push(result.insertId);
+    // 1. Procesar decisiones VINCULAR → alias_profesor
+    const vinculados = new Map();
+    const ignorados = new Set();
+    for (const [nombreExcel, decision] of Object.entries(decisiones)) {
+      if (decision.accion === 'VINCULAR') {
+        const norm = normalizar(nombreExcel);
+        await conn.query(
+          `INSERT INTO alias_profesor (nombre_normalizado, id_usuario)
+           VALUES (?, ?) ON DUPLICATE KEY UPDATE id_usuario = VALUES(id_usuario)`,
+          [norm, decision.id_usuario]
+        );
+        vinculados.set(nombreExcel, decision.id_usuario);
+      } else if (decision.accion === 'PENDIENTE_LOGIN') {
+        const norm = normalizar(nombreExcel);
+        await conn.query(
+          `INSERT IGNORE INTO profesor_pendiente_login (nombre_normalizado, nombre_original)
+           VALUES (?, ?)`,
+          [norm, nombreExcel]
+        );
+      } else if (decision.accion === 'IGNORAR') {
+        ignorados.add(nombreExcel);
+      }
     }
+
+    // 2. Plazas pendientes
+    const plazasFromGuardias = [...new Set(
+      guardias.filter(g => g.esPlaza).map(g => g.nombreExcel)
+    )];
+    for (const codigo of plazasFromGuardias) {
+      await conn.query(
+        `INSERT IGNORE INTO plaza_pendiente (codigo, curso) VALUES (?, ?)`,
+        [codigo, curso]
+      );
+    }
+
+    // 3. DELETE guardias EXCEL del curso + edificios indicados
+    if (edificios.length > 0) {
+      await conn.query(
+        `DELETE FROM guardia_creada
+         WHERE origen = 'EXCEL' AND curso_escolar = ? AND id_edificio IN (?)`,
+        [curso, edificios]
+      );
+    }
+
+    // 4. Resolver titulares y preparar datos
+    const [usuarios] = await conn.query(
+      `SELECT DISTINCT u.id_usuario AS id, u.nombre, u.apellidos
+       FROM usuario u
+       JOIN usuario_rol ur ON u.id_usuario = ur.id_usuario
+       JOIN rol r ON ur.id_rol = r.id_rol
+       WHERE r.nombre_rol = 'PROFESOR' AND u.activo = 1`
+    );
+    const [aliasRows] = await conn.query('SELECT nombre_normalizado, id_usuario FROM alias_profesor');
+    const aliasMap = new Map(aliasRows.map(a => [a.nombre_normalizado, a.id_usuario]));
+
+    // Map plaza codigo → id
+    const plazaCodigos = [...new Set(guardias.filter(g => g.esPlaza).map(g => g.nombreExcel))];
+    const plazaIdMap = new Map();
+    if (plazaCodigos.length > 0) {
+      const [plazaRows] = await conn.query(
+        `SELECT id, codigo FROM plaza_pendiente WHERE curso = ? AND codigo IN (?)`,
+        [curso, plazaCodigos]
+      );
+      for (const p of plazaRows) plazaIdMap.set(p.codigo, p.id);
+    }
+
+    // Map pendiente nombre → id
+    const [pendienteRows] = await conn.query('SELECT id, nombre_normalizado FROM profesor_pendiente_login');
+    const pendienteIdMap = new Map(pendienteRows.map(p => [p.nombre_normalizado, p.id]));
+
+    // 5. INSERT guardias deduplicando por nombre+día+tramo
+    const insertados = new Set();
+    let guardiasCreadas = 0;
+    let contResueltos = 0;
+    let contPlazas = 0;
+    let contPendientes = 0;
+    let contIgnorados = 0;
+
+    for (const g of guardias) {
+      if (ignorados.has(g.nombreExcel)) {
+        contIgnorados++;
+        continue;
+      }
+
+      const dedupeKey = `${g.nombreExcel}|${g.dia}|${g.tramo}`;
+      if (insertados.has(dedupeKey)) continue;
+      insertados.add(dedupeKey);
+
+      let idUsuario = null;
+      let idPlaza = null;
+      let idPendiente = null;
+
+      if (g.esPlaza) {
+        idPlaza = plazaIdMap.get(g.nombreExcel) || null;
+        if (!idPlaza) continue;
+        contPlazas++;
+      } else {
+        // Check vinculados first
+        if (vinculados.has(g.nombreExcel)) {
+          idUsuario = vinculados.get(g.nombreExcel);
+          contResueltos++;
+        } else {
+          // Try emparejar
+          const match = emparejar(g.nombreExcel, usuarios, aliasMap);
+          if (match.tipo === 'EXACTO') {
+            idUsuario = match.candidatos[0].id;
+            contResueltos++;
+          } else {
+            // Check pendiente_login
+            const norm = normalizar(g.nombreExcel);
+            const pendId = pendienteIdMap.get(norm);
+            if (pendId) {
+              idPendiente = pendId;
+              contPendientes++;
+            } else {
+              continue;
+            }
+          }
+        }
+      }
+
+      await conn.query(
+        `INSERT INTO guardia_creada
+         (dia_semana, tramo_horario, curso_escolar, id_usuario, id_plaza_pendiente, id_profesor_pendiente, id_edificio, origen)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'EXCEL')`,
+        [g.dia, g.tramo, curso, idUsuario, idPlaza, idPendiente, g.edificio_id]
+      );
+      guardiasCreadas++;
+    }
+
+    // 6. Log
+    const resumen = JSON.stringify({
+      guardias: guardiasCreadas, edificios,
+      resueltos: contResueltos, plazas: contPlazas,
+      pendientes: contPendientes, ignorados: contIgnorados,
+    });
+    await conn.query(
+      `INSERT INTO log_acciones (accion, tabla_afectada, id_usuario, datos_extra)
+       VALUES ('IMPORTAR_GUARDIAS_EXCEL', 'guardia_creada', ?, ?)`,
+      [req.usuario.id, resumen]
+    );
 
     await conn.commit();
 
-    try { fs.unlinkSync(req.file.path); } catch (_e) { /* best-effort cleanup */ }
-
     return success(res, {
-      creadas: ids.length,
-      errores,
-      profesores_no_encontrados: profesoresNoEncontrados
+      guardiasCreadas,
+      resueltos: contResueltos,
+      plazas: contPlazas,
+      pendientesLogin: contPendientes,
+      ignorados: contIgnorados,
     }, 201);
   } catch (err) {
     await conn.rollback();
-    if (req.file) {
-      try { fs.unlinkSync(req.file.path); } catch (_e) { /* best-effort cleanup */ }
-    }
     next(err);
   } finally {
     conn.release();
@@ -1178,6 +1303,7 @@ function listarTramos(_req, res) {
 module.exports = {
   listarCreadas, obtenerCreada, crearCreada, crearGrupo, actualizarCreada, eliminarCreada,
   listarAsignadas, crearAsignada, eliminarAsignada, responderGuardia,
-  guardiasHoy, asignarAutomaticamente, guardarHorario, importarCSV, importarExcel,
+  guardiasHoy, asignarAutomaticamente, guardarHorario, importarCSV,
+  analizarExcel, confirmarExcel,
   listarTramos
 };
