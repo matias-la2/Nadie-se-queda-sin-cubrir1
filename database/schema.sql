@@ -1,6 +1,6 @@
 -- ============================================================
 -- Portal Web para Profesores del Instituto
--- schema.sql — DDL completo (17 tablas)
+-- schema.sql — DDL completo (20 tablas)
 -- ============================================================
 
 SET NAMES utf8mb4;
@@ -172,7 +172,44 @@ CREATE TABLE IF NOT EXISTS ausencia_espacio (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ───────────────────────────────────────
--- 12. GUARDIA_CREADA
+-- 12a. PLAZA_PENDIENTE (plazas sin persona)
+-- ───────────────────────────────────────
+CREATE TABLE IF NOT EXISTS plaza_pendiente (
+    id              INT             AUTO_INCREMENT PRIMARY KEY,
+    codigo          VARCHAR(10)     NOT NULL,
+    curso           VARCHAR(9)      NOT NULL
+        COMMENT 'Ej: 2026-2027',
+    id_usuario      INT UNSIGNED    NULL,
+    fecha_asignacion DATETIME       NULL,
+    UNIQUE KEY uq_plaza (codigo, curso),
+    CONSTRAINT fk_pp_usuario FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
+        ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ───────────────────────────────────────
+-- 12b. ALIAS_PROFESOR (nombre Excel -> usuario)
+-- ───────────────────────────────────────
+CREATE TABLE IF NOT EXISTS alias_profesor (
+    id              INT             AUTO_INCREMENT PRIMARY KEY,
+    nombre_normalizado VARCHAR(150) NOT NULL UNIQUE,
+    id_usuario      INT UNSIGNED    NOT NULL,
+    creado_en       DATETIME        DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_ap_usuario FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
+        ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ───────────────────────────────────────
+-- 12c. PROFESOR_PENDIENTE_LOGIN
+-- ───────────────────────────────────────
+CREATE TABLE IF NOT EXISTS profesor_pendiente_login (
+    id              INT             AUTO_INCREMENT PRIMARY KEY,
+    nombre_normalizado VARCHAR(150) NOT NULL UNIQUE,
+    nombre_original VARCHAR(150)    NOT NULL,
+    creado_en       DATETIME        DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ───────────────────────────────────────
+-- 12d. GUARDIA_CREADA
 -- ───────────────────────────────────────
 CREATE TABLE IF NOT EXISTS guardia_creada (
     id_guardia_creada   INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY,
@@ -180,12 +217,25 @@ CREATE TABLE IF NOT EXISTS guardia_creada (
     dia_semana          TINYINT         NULL,
     tramo_horario       VARCHAR(50)     NOT NULL,
     curso_escolar       VARCHAR(10)     NOT NULL,
-    id_usuario          INT UNSIGNED    NOT NULL,
+    id_usuario          INT UNSIGNED    NULL,
     id_espacio          INT UNSIGNED    NULL,
+    id_edificio         INT UNSIGNED    NULL,
+    id_plaza_pendiente  INT             NULL,
+    id_profesor_pendiente INT           NULL,
+    origen              ENUM('MANUAL','CSV','EXCEL') NOT NULL DEFAULT 'MANUAL',
     CONSTRAINT fk_gc_usuario FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
         ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT fk_gc_espacio FOREIGN KEY (id_espacio) REFERENCES espacio(id_espacio)
-        ON UPDATE CASCADE ON DELETE SET NULL
+        ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT fk_gc_edificio FOREIGN KEY (id_edificio) REFERENCES edificio(id_edificio)
+        ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT fk_gc_plaza FOREIGN KEY (id_plaza_pendiente) REFERENCES plaza_pendiente(id)
+        ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT fk_gc_prof_pendiente FOREIGN KEY (id_profesor_pendiente) REFERENCES profesor_pendiente_login(id)
+        ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT chk_guardia_titular CHECK (
+        (id_usuario IS NOT NULL) + (id_plaza_pendiente IS NOT NULL) + (id_profesor_pendiente IS NOT NULL) = 1
+    )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ───────────────────────────────────────
@@ -261,7 +311,8 @@ CREATE TABLE IF NOT EXISTS notificacion (
     id_usuario      INT UNSIGNED    NOT NULL,
     tipo            ENUM('RESERVA_RECORDATORIO','AUSENCIA_ASIGNADA',
                     'GUARDIA_REASIGNADA','INCIDENCIA_CAMBIO',
-                    'GUARDIA_PENDIENTE','GUARDIA_RECHAZADA') NOT NULL,
+                    'GUARDIA_PENDIENTE','GUARDIA_RECHAZADA',
+                    'PLAZA_SIN_ASIGNAR') NOT NULL,
     mensaje         TEXT            NOT NULL,
     leida           TINYINT(1)      NOT NULL DEFAULT 0,
     referencia_id   INT UNSIGNED    NULL,
@@ -297,6 +348,7 @@ CREATE INDEX idx_aus_fecha          ON ausencia(fecha);
 CREATE INDEX idx_aus_estado         ON ausencia(estado);
 CREATE INDEX idx_gc_usuario         ON guardia_creada(id_usuario);
 CREATE INDEX idx_gc_dia             ON guardia_creada(dia_semana, tramo_horario);
+CREATE INDEX idx_gc_edificio        ON guardia_creada(id_edificio);
 CREATE INDEX idx_ga_ausencia        ON guardia_asignada(id_ausencia);
 CREATE INDEX idx_ga_sustituto       ON guardia_asignada(id_profesor_sustituto);
 CREATE INDEX idx_ga_estado          ON guardia_asignada(estado);

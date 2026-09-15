@@ -4,6 +4,8 @@ const pool = require('../config/db');
 const { success, error } = require('../helpers/response.helper');
 const { paginar, respuestaPaginada } = require('../helpers/pagination.helper');
 const { enviarEmail, plantillaNotificacion } = require('../services/email.service');
+const { TRAMOS, ETIQUETAS_LECTIVAS } = require('../config/tramos');
+const { inicioCursoActual } = require('../helpers/curso.helper');
 
 // ─── GUARDIAS CREADAS (planificadas) ───────────────────
 
@@ -37,11 +39,15 @@ async function listarCreadas(req, res, next) {
       `SELECT gc.*,
               u.nombre AS profesor_nombre, u.apellidos AS profesor_apellidos,
               es.nombre AS espacio_nombre,
-              ed.nombre AS edificio_nombre
+              ed.nombre AS edificio_nombre,
+              pp.codigo AS plaza_codigo,
+              ppl.nombre_original AS pendiente_nombre
        FROM guardia_creada gc
-       JOIN usuario u ON gc.id_usuario = u.id_usuario
+       LEFT JOIN usuario u ON gc.id_usuario = u.id_usuario
        LEFT JOIN espacio es ON gc.id_espacio = es.id_espacio
-       LEFT JOIN edificio ed ON es.id_edificio = ed.id_edificio
+       LEFT JOIN edificio ed ON gc.id_edificio = ed.id_edificio
+       LEFT JOIN plaza_pendiente pp ON gc.id_plaza_pendiente = pp.id
+       LEFT JOIN profesor_pendiente_login ppl ON gc.id_profesor_pendiente = ppl.id
        ${whereSql}
        ORDER BY gc.dia_semana, gc.tramo_horario
        LIMIT ? OFFSET ?`,
@@ -77,19 +83,10 @@ async function crearCreada(req, res, next) {
   try {
     const { fecha, dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio, id_edificio } = req.body;
 
-    let espacioFinal = id_espacio || null;
-    if (!espacioFinal && id_edificio) {
-      const [espRows] = await pool.query(
-        'SELECT id_espacio FROM espacio WHERE id_edificio = ? LIMIT 1',
-        [id_edificio]
-      );
-      if (espRows.length > 0) espacioFinal = espRows[0].id_espacio;
-    }
-
     const [result] = await pool.query(
-      `INSERT INTO guardia_creada (fecha, dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [fecha || null, dia_semana || null, tramo_horario, curso_escolar, id_usuario, espacioFinal]
+      `INSERT INTO guardia_creada (fecha, dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio, id_edificio)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [fecha || null, dia_semana || null, tramo_horario, curso_escolar, id_usuario, id_espacio || null, id_edificio || null]
     );
     res.registroId = result.insertId;
     return success(res, { id: result.insertId }, 201);
@@ -108,6 +105,7 @@ async function actualizarCreada(req, res, next) {
     if (req.body.curso_escolar !== undefined) { campos.push('curso_escolar = ?'); valores.push(req.body.curso_escolar); }
     if (req.body.id_usuario !== undefined) { campos.push('id_usuario = ?'); valores.push(req.body.id_usuario); }
     if (req.body.id_espacio !== undefined) { campos.push('id_espacio = ?'); valores.push(req.body.id_espacio); }
+    if (req.body.id_edificio !== undefined) { campos.push('id_edificio = ?'); valores.push(req.body.id_edificio); }
     if (campos.length === 0) return error(res, 'No se enviaron campos para actualizar', 400);
 
     valores.push(req.params.id);
@@ -140,23 +138,14 @@ async function crearGrupo(req, res, next) {
   try {
     const { dia_semana, tramo_horario, curso_escolar, id_edificio, id_usuarios } = req.body;
 
-    let espacioFinal = null;
-    if (id_edificio) {
-      const [espRows] = await conn.query(
-        'SELECT id_espacio FROM espacio WHERE id_edificio = ? LIMIT 1',
-        [id_edificio]
-      );
-      if (espRows.length > 0) espacioFinal = espRows[0].id_espacio;
-    }
-
     await conn.beginTransaction();
 
     const ids = [];
     for (const id_usuario of id_usuarios) {
       const [result] = await conn.query(
-        `INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio)
+        `INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_edificio)
          VALUES (?, ?, ?, ?, ?)`,
-        [dia_semana, tramo_horario, curso_escolar, id_usuario, espacioFinal]
+        [dia_semana, tramo_horario, curso_escolar, id_usuario, id_edificio || null]
       );
       ids.push(result.insertId);
     }
@@ -674,9 +663,7 @@ async function asignarAutomaticamente(conn, idAusencia, fecha, tramoHorario, idP
 }
 
 async function buscarCandidatos(conn, diaSemanaDB, fecha, tramoHorario, excluidos, idEdificio) {
-  const ahora = new Date();
-  const anioInicio = ahora.getMonth() >= 8 ? ahora.getFullYear() : ahora.getFullYear() - 1;
-  const inicioCurso = `${anioInicio}-09-01`;
+  const inicioCurso = inicioCursoActual();
 
   let sql = `SELECT gc.id_usuario, MIN(gc.id_guardia_creada) AS id_guardia_creada,
           u.nombre AS profesor_nombre, u.apellidos AS profesor_apellidos,
@@ -686,10 +673,11 @@ async function buscarCandidatos(conn, diaSemanaDB, fecha, tramoHorario, excluido
    LEFT JOIN (
      SELECT id_profesor_sustituto, COUNT(*) AS total
      FROM guardia_asignada
-     WHERE estado = 'ACEPTADA' AND fecha >= '${inicioCurso}'
+     WHERE estado = 'ACEPTADA' AND fecha >= ?
      GROUP BY id_profesor_sustituto
    ) conteo ON gc.id_usuario = conteo.id_profesor_sustituto
-   WHERE (gc.dia_semana = ? OR gc.fecha = ?)
+   WHERE gc.id_usuario IS NOT NULL
+   AND (gc.dia_semana = ? OR gc.fecha = ?)
    AND gc.tramo_horario = ?
    AND gc.id_usuario NOT IN (?)
    AND NOT EXISTS (
@@ -698,13 +686,10 @@ async function buscarCandidatos(conn, diaSemanaDB, fecha, tramoHorario, excluido
      AND ga2.fecha = ? AND ga2.tramo_horario = ?
      AND ga2.estado IN ('PENDIENTE', 'ACEPTADA')
    )`;
-  const params = [diaSemanaDB, fecha, tramoHorario, excluidos, fecha, tramoHorario];
+  const params = [inicioCurso, diaSemanaDB, fecha, tramoHorario, excluidos, fecha, tramoHorario];
 
   if (idEdificio) {
-    sql += ` AND (
-      gc.id_espacio IS NULL
-      OR EXISTS (SELECT 1 FROM espacio es2 WHERE es2.id_espacio = gc.id_espacio AND es2.id_edificio = ?)
-    )`;
+    sql += ` AND (gc.id_edificio IS NULL OR gc.id_edificio = ?)`;
     params.push(idEdificio);
   }
 
@@ -827,9 +812,7 @@ async function guardiasHoy(req, res, next) {
       delete d.edificio_ids;
     }
 
-    const ahoraHoy = new Date();
-    const anioInicioHoy = ahoraHoy.getMonth() >= 8 ? ahoraHoy.getFullYear() : ahoraHoy.getFullYear() - 1;
-    const inicioCursoHoy = `${anioInicioHoy}-09-01`;
+    const inicioCursoHoy = inicioCursoActual();
 
     const idsDisponibles = [...new Set(disponibles.map(d => d.id_usuario))];
     const conteoGrupoMap = {};
@@ -948,29 +931,19 @@ async function guardarHorario(req, res, next) {
   try {
     const { id_usuario, curso_escolar, guardias, id_edificio } = req.body;
 
-    let espacioDefecto = null;
-    if (id_edificio) {
-      const [espRows] = await conn.query(
-        'SELECT id_espacio FROM espacio WHERE id_edificio = ? LIMIT 1',
-        [id_edificio]
-      );
-      if (espRows.length > 0) espacioDefecto = espRows[0].id_espacio;
-    }
-
     await conn.beginTransaction();
 
     await conn.query(
-      'DELETE FROM guardia_creada WHERE id_usuario = ? AND curso_escolar = ?',
+      "DELETE FROM guardia_creada WHERE id_usuario = ? AND curso_escolar = ? AND origen = 'MANUAL'",
       [id_usuario, curso_escolar]
     );
 
     const ids = [];
     for (const g of guardias) {
-      const idEspacio = g.id_espacio || espacioDefecto || null;
       const [result] = await conn.query(
-        `INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio)
+        `INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_edificio)
          VALUES (?, ?, ?, ?, ?)`,
-        [g.dia_semana, g.tramo_horario, curso_escolar, id_usuario, idEspacio]
+        [g.dia_semana, g.tramo_horario, curso_escolar, id_usuario, id_edificio || null]
       );
       ids.push(result.insertId);
     }
@@ -1001,14 +974,7 @@ async function importarExcel(req, res, next) {
 
     if (data.length < 3) return error(res, 'El archivo no tiene suficientes filas', 400);
 
-    const TRAMO_MAP = [
-      '1a hora (08:15-09:10)',
-      '2a hora (09:10-10:10)',
-      '3a hora (10:10-11:05)',
-      '4a hora (11:30-12:25)',
-      '5a hora (12:25-13:20)',
-      '6a hora (13:20-14:15)'
-    ];
+    const TRAMO_MAP = ETIQUETAS_LECTIVAS;
 
     const DIA_OFFSETS = [
       { dia: 1, colInicio: 1 },
@@ -1116,24 +1082,14 @@ async function importarExcel(req, res, next) {
       validos.push({ ...g, id_usuario: idUsuario });
     }
 
-    const espacioPorEdificio = {};
-    for (const e of edificiosDB) {
-      const [espRows] = await conn.query(
-        'SELECT id_espacio FROM espacio WHERE id_edificio = ? LIMIT 1',
-        [e.id_edificio]
-      );
-      if (espRows.length > 0) espacioPorEdificio[e.id_edificio] = espRows[0].id_espacio;
-    }
-
     await conn.beginTransaction();
 
     const ids = [];
     for (const g of validos) {
-      const espacioRef = g.id_edificio ? (espacioPorEdificio[g.id_edificio] || null) : null;
       const [result] = await conn.query(
-        `INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio)
-         VALUES (?, ?, ?, ?, ?)`,
-        [g.dia_semana, g.tramo_horario, curso_escolar, g.id_usuario, espacioRef]
+        `INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_edificio, origen)
+         VALUES (?, ?, ?, ?, ?, 'EXCEL')`,
+        [g.dia_semana, g.tramo_horario, curso_escolar, g.id_usuario, g.id_edificio || null]
       );
       ids.push(result.insertId);
     }
@@ -1193,23 +1149,14 @@ async function importarCSV(req, res, next) {
       validos.push({ ...g, id_usuario: idUsuario });
     }
 
-    let espacioRef = null;
-    if (id_edificio) {
-      const [espRows] = await conn.query(
-        'SELECT id_espacio FROM espacio WHERE id_edificio = ? LIMIT 1',
-        [id_edificio]
-      );
-      if (espRows.length > 0) espacioRef = espRows[0].id_espacio;
-    }
-
     await conn.beginTransaction();
 
     const ids = [];
     for (const g of validos) {
       const [result] = await conn.query(
-        `INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio)
-         VALUES (?, ?, ?, ?, ?)`,
-        [g.dia_semana, g.tramo_horario, curso_escolar, g.id_usuario, espacioRef]
+        `INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_edificio, origen)
+         VALUES (?, ?, ?, ?, ?, 'CSV')`,
+        [g.dia_semana, g.tramo_horario, curso_escolar, g.id_usuario, id_edificio || null]
       );
       ids.push(result.insertId);
     }
@@ -1224,8 +1171,13 @@ async function importarCSV(req, res, next) {
   }
 }
 
+function listarTramos(_req, res) {
+  return success(res, TRAMOS);
+}
+
 module.exports = {
   listarCreadas, obtenerCreada, crearCreada, crearGrupo, actualizarCreada, eliminarCreada,
   listarAsignadas, crearAsignada, eliminarAsignada, responderGuardia,
-  guardiasHoy, asignarAutomaticamente, guardarHorario, importarCSV, importarExcel
+  guardiasHoy, asignarAutomaticamente, guardarHorario, importarCSV, importarExcel,
+  listarTramos
 };

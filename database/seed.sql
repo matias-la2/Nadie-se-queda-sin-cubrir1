@@ -83,22 +83,22 @@ INSERT INTO profesor_edificio (id_usuario, id_edificio) VALUES (5, 1);
 INSERT INTO profesor_edificio (id_usuario, id_edificio) VALUES (5, 2);
 
 -- ─── Guardias creadas (planificadas, curso 2025-2026) ──────
--- Elena: Lunes 1ª hora en Aula 1A ESO, Miércoles 3ª hora en Aula 1B ESO
-INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio) VALUES
-  (1, '1ª hora (08:15-09:10)', '2025-2026', 1, 1),
-  (3, '3ª hora (10:10-11:05)', '2025-2026', 1, 2);
--- Carlos: Martes 2ª hora en Aula 1A Bach, Jueves 4ª hora en Aula 1B Bach
-INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio) VALUES
-  (2, '2ª hora (09:10-10:10)', '2025-2026', 2, 5),
-  (4, '4ª hora (11:30-12:25)', '2025-2026', 2, 6);
--- Jefe: Lunes 2ª hora en Laboratorio de Ciencias, Viernes 1ª hora en Salón de Actos Bach
-INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio) VALUES
-  (1, '2ª hora (09:10-10:10)', '2025-2026', 5, 7),
-  (5, '1ª hora (08:15-09:10)', '2025-2026', 5, 8);
+-- Elena: Lunes 1a hora en Aula 1A ESO, Miércoles 3a hora en Aula 1B ESO
+INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio, id_edificio) VALUES
+  (1, '1a hora (08:30-09:20)', '2025-2026', 1, 1, 1),
+  (3, '3a hora (10:20-11:10)', '2025-2026', 1, 2, 1);
+-- Carlos: Martes 2a hora en Aula 1A Bach, Jueves 4a hora en Aula 1B Bach
+INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio, id_edificio) VALUES
+  (2, '2a hora (09:25-10:15)', '2025-2026', 2, 5, 2),
+  (4, '4a hora (11:45-12:35)', '2025-2026', 2, 6, 2);
+-- Jefe: Lunes 2a hora en Laboratorio de Ciencias, Viernes 1a hora en Salón de Actos Bach
+INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_espacio, id_edificio) VALUES
+  (1, '2a hora (09:25-10:15)', '2025-2026', 5, 7, 2),
+  (5, '1a hora (08:30-09:20)', '2025-2026', 5, 8, 2);
 
 -- ─── Ausencia de prueba ────────────────────────────────────
 INSERT INTO ausencia (tramo_horario, fecha, comentario, estado, hay_tarea, descripcion_tarea, id_profesor, id_usuario_creador) VALUES
-  ('1ª hora (08:15-09:10)', '2026-01-15', NULL, 'CUBIERTA', 1, 'Ejercicios página 45 del libro de Matemáticas', 1, 1);
+  ('1a hora (08:30-09:20)', '2026-01-15', NULL, 'CUBIERTA', 1, 'Ejercicios página 45 del libro de Matemáticas', 1, 1);
 
 -- ─── Asociar ausencia al espacio (Aula 1A ESO) ────────────
 INSERT INTO ausencia_espacio (id_ausencia, id_espacio) VALUES (1, 1);
@@ -106,4 +106,26 @@ INSERT INTO ausencia_espacio (id_ausencia, id_espacio) VALUES (1, 1);
 -- ─── Guardia asignada de prueba ────────────────────────────
 -- Carlos cubre la ausencia de Elena
 INSERT INTO guardia_asignada (fecha, tramo_horario, tipo_asignacion, id_ausencia, id_profesor_sustituto, id_clase) VALUES
-  ('2026-01-15', '1ª hora (08:15-09:10)', 'MANUAL', 1, 2, 1);
+  ('2026-01-15', '1a hora (08:30-09:20)', 'MANUAL', 1, 2, 1);
+
+-- ─── Plaza pendiente de prueba (SIF1, curso 2026-2027) ─────
+INSERT INTO plaza_pendiente (codigo, curso) VALUES ('SIF1', '2026-2027');
+
+-- Guardias de la plaza SIF1: Lunes 1a, Martes 3a, Jueves 5a en edificio ESO
+INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_plaza_pendiente, id_edificio, origen) VALUES
+  (1, '1a hora (08:30-09:20)', '2026-2027', 1, 1, 'EXCEL'),
+  (2, '3a hora (10:20-11:10)', '2026-2027', 1, 1, 'EXCEL'),
+  (4, '5a hora (12:40-13:30)', '2026-2027', 1, 1, 'EXCEL');
+
+-- ─── Profesor pendiente de login de prueba ─────────────────
+INSERT INTO profesor_pendiente_login (nombre_normalizado, nombre_original) VALUES
+  ('DARIO JACINTO ESTANDARINA', 'DARIO JACINTO ESTANDARINA');
+
+-- Guardias del profesor pendiente: Miércoles 2a, Viernes 4a en Bachillerato
+INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_profesor_pendiente, id_edificio, origen) VALUES
+  (3, '2a hora (09:25-10:15)', '2026-2027', 1, 2, 'EXCEL'),
+  (5, '4a hora (11:45-12:35)', '2026-2027', 1, 2, 'EXCEL');
+
+-- ─── Alias de ejemplo ──────────────────────────────────────
+INSERT INTO alias_profesor (nombre_normalizado, id_usuario) VALUES
+  ('ELENA GARCIA MARTINEZ', 1);

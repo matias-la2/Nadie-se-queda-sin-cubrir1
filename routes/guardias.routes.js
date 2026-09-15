@@ -35,6 +35,9 @@ const uploadExcel = multer({
 const router = Router();
 router.use(verificarToken);
 
+// ─── Tramos horarios ──────────────────────────────────
+router.get('/tramos', controller.listarTramos);
+
 // ─── Guardias de hoy ──────────────────────────────────
 router.get('/hoy', controller.guardiasHoy);
 

@@ -1,10 +1,18 @@
 const { z } = require('zod');
+const { ETIQUETAS } = require('../config/tramos');
+
+const tramoHorarioSchema = z.enum(ETIQUETAS, {
+  errorMap: () => ({ message: `Tramo horario no válido. Valores permitidos: ${ETIQUETAS.join(', ')}` })
+});
+
+const cursoEscolarSchema = z.string()
+  .regex(/^\d{4}-\d{4}$/, 'Formato de curso escolar: YYYY-YYYY (ej: 2026-2027)');
 
 const crearGuardiaCreadaSchema = z.object({
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato: YYYY-MM-DD').nullish(),
   dia_semana: z.number().int().min(1).max(5).nullish(),
-  tramo_horario: z.string().min(1, 'El tramo horario es obligatorio'),
-  curso_escolar: z.string().min(1, 'El curso escolar es obligatorio').max(10),
+  tramo_horario: tramoHorarioSchema,
+  curso_escolar: cursoEscolarSchema,
   id_usuario: z.number().int().positive('El usuario es obligatorio'),
   id_espacio: z.number().int().positive().nullish(),
   id_edificio: z.number().int().positive().nullish()
@@ -14,15 +22,15 @@ const actualizarGuardiaCreadaSchema = crearGuardiaCreadaSchema.partial();
 
 const crearGrupoGuardiaSchema = z.object({
   dia_semana: z.number().int().min(1).max(5, 'Día de la semana: 1 (Lun) a 5 (Vie)'),
-  tramo_horario: z.string().min(1, 'El tramo horario es obligatorio'),
-  curso_escolar: z.string().min(1, 'El curso escolar es obligatorio').max(10),
+  tramo_horario: tramoHorarioSchema,
+  curso_escolar: cursoEscolarSchema,
   id_edificio: z.number().int().positive('El edificio es obligatorio'),
   id_usuarios: z.array(z.number().int().positive()).min(1, 'Debe incluir al menos un profesor')
 });
 
 const crearGuardiaAsignadaSchema = z.object({
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato: YYYY-MM-DD'),
-  tramo_horario: z.string().min(1, 'El tramo horario es obligatorio'),
+  tramo_horario: tramoHorarioSchema,
   tipo_asignacion: z.enum(['AUTOMATICA', 'MANUAL']).optional(),
   comentario: z.string().nullish(),
   id_ausencia: z.number().int().positive('La ausencia es obligatoria'),
@@ -46,21 +54,21 @@ function validar(schema) {
 
 const guardarHorarioSchema = z.object({
   id_usuario: z.number().int().positive('El usuario es obligatorio'),
-  curso_escolar: z.string().min(1).max(10),
+  curso_escolar: cursoEscolarSchema,
   id_edificio: z.number().int().positive('El edificio es obligatorio'),
   guardias: z.array(z.object({
     dia_semana: z.number().int().min(1).max(5),
-    tramo_horario: z.string().min(1)
+    tramo_horario: tramoHorarioSchema
   }))
 });
 
 const importarCSVSchema = z.object({
-  curso_escolar: z.string().min(1).max(10),
+  curso_escolar: cursoEscolarSchema,
   id_edificio: z.number().int().positive('El edificio es obligatorio'),
   guardias: z.array(z.object({
     correo: z.string().email('Correo inválido'),
     dia_semana: z.coerce.number().int().min(1).max(5),
-    tramo_horario: z.string().min(1)
+    tramo_horario: tramoHorarioSchema
   })).min(1, 'Debe incluir al menos una guardia')
 });
 

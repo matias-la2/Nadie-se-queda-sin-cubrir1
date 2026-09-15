@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const { success, error } = require('../helpers/response.helper');
 const { paginar, respuestaPaginada } = require('../helpers/pagination.helper');
+const { ETIQUETAS } = require('../config/tramos');
 
 // ─── EDIFICIOS ─────────────────────────────────────────
 
@@ -401,15 +402,7 @@ async function obtenerDisponibilidad(req, res, next) {
 
     if (!fecha) return error(res, 'La fecha es obligatoria (formato YYYY-MM-DD)', 400);
 
-    const tramos = [
-      '1a hora (08:15-09:10)',
-      '2a hora (09:10-10:10)',
-      '3a hora (10:10-11:05)',
-      'Recreo (11:05-11:30)',
-      '4a hora (11:30-12:25)',
-      '5a hora (12:25-13:20)',
-      '6a hora (13:20-14:15)'
-    ];
+    const tramos = ETIQUETAS;
 
     const partes = fecha.split('-');
     const fechaLocal = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
