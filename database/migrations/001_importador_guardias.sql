@@ -57,15 +57,29 @@ ALTER TABLE guardia_creada
     ADD CONSTRAINT fk_gc_edificio FOREIGN KEY (id_edificio) REFERENCES edificio(id_edificio)
         ON UPDATE CASCADE ON DELETE SET NULL,
     ADD CONSTRAINT fk_gc_plaza FOREIGN KEY (id_plaza_pendiente) REFERENCES plaza_pendiente(id)
-        ON UPDATE CASCADE ON DELETE SET NULL,
+        ON UPDATE CASCADE ON DELETE RESTRICT,
     ADD CONSTRAINT fk_gc_prof_pendiente FOREIGN KEY (id_profesor_pendiente) REFERENCES profesor_pendiente_login(id)
-        ON UPDATE CASCADE ON DELETE SET NULL;
+        ON UPDATE CASCADE ON DELETE RESTRICT;
 
--- CHECK: exactamente uno de los tres titulares debe estar relleno
-ALTER TABLE guardia_creada
-    ADD CONSTRAINT chk_guardia_titular CHECK (
-        (id_usuario IS NOT NULL) + (id_plaza_pendiente IS NOT NULL) + (id_profesor_pendiente IS NOT NULL) = 1
-    );
+-- Trigger: exactamente uno de los tres titulares debe estar relleno
+-- (CHECK no puede usarse en MySQL 8 sobre columnas con FK referencial)
+DELIMITER //
+CREATE TRIGGER trg_gc_titular_insert BEFORE INSERT ON guardia_creada
+FOR EACH ROW
+BEGIN
+  IF (NEW.id_usuario IS NOT NULL) + (NEW.id_plaza_pendiente IS NOT NULL) + (NEW.id_profesor_pendiente IS NOT NULL) <> 1 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Exactamente uno de id_usuario, id_plaza_pendiente, id_profesor_pendiente debe estar relleno';
+  END IF;
+END //
+
+CREATE TRIGGER trg_gc_titular_update BEFORE UPDATE ON guardia_creada
+FOR EACH ROW
+BEGIN
+  IF (NEW.id_usuario IS NOT NULL) + (NEW.id_plaza_pendiente IS NOT NULL) + (NEW.id_profesor_pendiente IS NOT NULL) <> 1 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Exactamente uno de id_usuario, id_plaza_pendiente, id_profesor_pendiente debe estar relleno';
+  END IF;
+END //
+DELIMITER ;
 
 -- Rellenar id_edificio de las filas existentes a partir de id_espacio
 UPDATE guardia_creada gc
