@@ -32,7 +32,7 @@ docker compose exec db mysql -u root -padmin portal_ies < database/migrations/00
 
 | Variable | Descripción | Valor por defecto |
 |---|---|---|
-| `PLAZA_CODIGO_REGEX` | Expresión regular para detectar códigos de plaza en los archivos de horarios (ej: SIF1, SIF2) | `^SIF\d+$` |
+| `PLAZA_CODIGO_REGEX` | Expresión regular para detectar códigos de plaza en los archivos de horarios (ej: SIF1, GH1). El punto de entrada es Guardias > Planificadas > Importar Excel | `^[A-Z]{2,4}\d{1,2}$` |
 
 ## Arranque sin Docker (desarrollo)
 

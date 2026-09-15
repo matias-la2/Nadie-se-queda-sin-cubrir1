@@ -282,54 +282,55 @@
     <div class="tarjeta manual-seccion" id="importar-horarios">
       <h3><i class="bi bi-file-earmark-spreadsheet"></i>9. Importar guardias desde el programa de horarios</h3>
       <p style="margin-bottom:12px;">
-        Si tu centro genera los cuadrantes de guardia con un programa de horarios (SIF, Peñalara, etc.), puedes importar los archivos Excel directamente. Se sube <strong>un archivo por edificio</strong>.
+        Si tu centro genera los cuadrantes de guardia con el programa de horarios del centro, puedes importar los archivos Excel (<strong>.xls / .xlsx</strong>) directamente desde <strong>Guardias &gt; Planificadas &gt; Importar Excel</strong>. Puedes subir varios archivos a la vez (por ejemplo, ESO y Bachillerato) o uno solo si solo quieres actualizar un edificio.
       </p>
 
       <div class="manual-paso">
-        <strong>Paso 1 — Subir archivo y analizar:</strong>
+        <strong>Paso 1 — Subir archivos y analizar:</strong>
         <ol style="margin:8px 0 0 16px;font-size:13px;">
-          <li>Ve a <strong>Guardias &gt; Planificadas</strong> y pulsa <strong>"Importar Excel"</strong>.</li>
-          <li>Selecciona el <strong>edificio</strong> y el <strong>curso escolar</strong>.</li>
-          <li>Arrastra o selecciona el archivo <strong>.xls / .xlsx</strong> del programa de horarios.</li>
-          <li>El sistema analizará el archivo, detectará los nombres de los profesores y los emparejará con las cuentas del sistema.</li>
+          <li>Pulsa <strong>"Importar Excel"</strong> en la pestaña de guardias planificadas.</li>
+          <li>Arrastra o selecciona uno o varios archivos <strong>.xls / .xlsx</strong>.</li>
+          <li>No necesitas seleccionar edificio ni curso: el sistema <strong>detecta el edificio</strong> a partir de la cabecera del archivo (celda A1) y <strong>calcula el curso escolar</strong> automáticamente a partir de la fecha actual.</li>
+          <li>El sistema analiza los archivos, extrae los nombres de los profesores y los empareja con las cuentas registradas.</li>
         </ol>
       </div>
 
       <div class="manual-paso">
-        <strong>Paso 2 — Revisión de coincidencias:</strong> El asistente muestra una tabla con cada profesor del archivo y su estado:
+        <strong>Paso 2 — Revisión de coincidencias:</strong> El asistente muestra los resultados del análisis agrupados en cuatro bloques:
         <ul style="margin:8px 0 0 16px;font-size:13px;">
-          <li><span style="color:#16a34a;"><i class="bi bi-check-circle"></i></span> <strong>Coincidencia exacta:</strong> el nombre coincide con un usuario registrado. Las guardias se asignarán directamente.</li>
-          <li><span style="color:#f59e0b;"><i class="bi bi-exclamation-triangle"></i></span> <strong>Nombre dudoso:</strong> el sistema ha encontrado un candidato probable pero no está seguro al 100%. Revisa que la sugerencia sea correcta y confírmala, o selecciona manualmente el profesor correcto del desplegable.</li>
-          <li><span style="color:#6366f1;"><i class="bi bi-clock-history"></i></span> <strong>Sin cuenta todavía:</strong> el profesor aparece en el archivo pero no se ha registrado en la plataforma. Sus guardias se crean igualmente y se vincularán automáticamente cuando se registre con su cuenta de Google.</li>
-          <li><span style="color:#1152d4;"><i class="bi bi-person-plus"></i></span> <strong>Plaza pendiente (código SIF):</strong> el nombre del profesor en el archivo encaja con un código de plaza (ej: SIF1, SIF2). Estas guardias se asocian a la plaza, no a una persona concreta. Cuando se incorpore el profesor titular, se le asigna la plaza y hereda automáticamente las guardias.</li>
+          <li><span style="color:#16a34a;"><i class="bi bi-check-circle"></i></span> <strong>Resueltos automáticamente:</strong> nombres que coinciden exactamente con un usuario registrado. Las guardias se asignarán directamente. No requieren acción.</li>
+          <li><span style="color:#f59e0b;"><i class="bi bi-exclamation-triangle"></i></span> <strong>Nombres dudosos:</strong> el sistema ha encontrado candidatos probables con un porcentaje de coincidencia, pero no está seguro al 100%. Para cada uno puedes: seleccionar el profesor correcto del desplegable (que muestra los candidatos con su %), o dejarlo como <em>pendiente de login</em> si el profesor aún no se ha registrado.</li>
+          <li><span style="color:#6366f1;"><i class="bi bi-clock-history"></i></span> <strong>Sin cuenta todavía:</strong> profesores que aparecen en el archivo pero no se han registrado en la plataforma. Para cada uno puedes: dejarlo como <em>pendiente de login</em> (se vinculará automáticamente cuando se registre con su Google), <em>vincular a un profesor</em> existente del desplegable, o <em>ignorarlo</em> si ya no pertenece al centro.</li>
+          <li><span style="color:#1152d4;"><i class="bi bi-person-plus"></i></span> <strong>Plazas detectadas:</strong> códigos de plaza encontrados en el archivo (ej: SIF1, GH1). Estas guardias se asocian a la plaza, no a una persona concreta. Cuando se incorpore el profesor titular, se le asigna la plaza y hereda automáticamente las guardias.</li>
         </ul>
       </div>
 
       <div class="manual-paso">
         <strong>Paso 3 — Confirmar importación:</strong>
         <ol style="margin:8px 0 0 16px;font-size:13px;">
-          <li>Revisa el resumen: guardias a crear, profesores vinculados, plazas pendientes y profesores sin cuenta.</li>
+          <li>Revisa el resumen final: total de guardias a crear, profesores resueltos, plazas detectadas, pendientes de login e ignorados.</li>
           <li>Pulsa <strong>"Confirmar importación"</strong>.</li>
-          <li>El sistema crea las guardias y muestra un resumen final con las guardias creadas por día/tramo.</li>
+          <li>El sistema crea las guardias y muestra un resumen con las guardias creadas desglosadas por día y tramo.</li>
         </ol>
       </div>
 
+      <div class="manual-nota advertencia">
+        <i class="bi bi-exclamation-triangle me-1"></i> <strong>Atención:</strong> La importación <strong>sustituye</strong> las guardias planificadas importadas anteriormente de esos mismos edificios para el curso actual. Las guardias ya realizadas (asignadas a sustituciones) y las creadas manualmente no se tocan.
+      </div>
+
       <div class="manual-paso">
-        <strong>Procedimiento — Asignar una plaza SIF cuando se incorpora un profesor:</strong>
+        <strong>Procedimiento — Asignar una plaza cuando se incorpora un profesor:</strong>
         <ol style="margin:8px 0 0 16px;font-size:13px;">
           <li>Cuando un profesor nuevo inicia sesión y no tiene guardias, recibirás una notificación <strong>"Plaza sin asignar"</strong> (<i class="bi bi-bell"></i> en el menú lateral).</li>
           <li>Pulsa la notificación: se abrirá la página de <strong>Profesores</strong> con el modal de asignación de plaza.</li>
-          <li>Selecciona la plaza SIF correspondiente (ej: SIF1) del desplegable.</li>
+          <li>Selecciona la plaza correspondiente (ej: SIF1) del desplegable.</li>
           <li>Al confirmar, el profesor hereda automáticamente <strong>todas las guardias de esa plaza</strong> y recibe el rol PROFESOR si no lo tenía.</li>
           <li>Alternativa: desde la sección <strong>"Plazas Pendientes"</strong> en la página de Profesores, puedes ver todas las plazas libres y asignadas, y desvincular una plaza si el profesor cambia.</li>
         </ol>
       </div>
 
       <div class="manual-nota">
-        <i class="bi bi-info-circle me-1"></i> <strong>Repite la importación para cada edificio.</strong> Si el centro tiene ESO, Bachillerato y Ciclos, sube un archivo por edificio seleccionando cada vez el edificio correcto.
-      </div>
-      <div class="manual-nota advertencia">
-        <i class="bi bi-exclamation-triangle me-1"></i> <strong>Atención:</strong> Al importar se añaden guardias nuevas; no se eliminan las existentes. Si quieres reemplazar el cuadrante completo de un edificio, elimina primero las guardias anteriores desde la vista planificada.
+        <i class="bi bi-info-circle me-1"></i> Puedes subir los archivos de todos los edificios a la vez en un solo paso, o importar solo el edificio que necesites actualizar.
       </div>
     </div>
 
