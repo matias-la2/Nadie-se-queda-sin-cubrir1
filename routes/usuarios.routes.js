@@ -6,7 +6,8 @@ const {
   validar,
   actualizarUsuarioSchema, cambiarRolesSchema,
   crearProfesorSchema, actualizarProfesorSchema,
-  crearDirectivoSchema, actualizarDirectivoSchema
+  crearDirectivoSchema, actualizarDirectivoSchema,
+  asignarPlazaSchema
 } = require('../validators/usuarios.validator');
 const controller = require('../controllers/usuarios.controller');
 
@@ -59,6 +60,17 @@ router.delete('/directivos/:id',
   controller.eliminarDirectivo
 );
 
+// ─── Plazas pendientes ────────────────────────────────
+router.get('/plazas-pendientes',
+  requiereRol('ADMINISTRADOR', 'EQUIPO_DIRECTIVO'),
+  controller.listarPlazasPendientes
+);
+router.delete('/plazas/:codigo/desvincular',
+  requiereRol('ADMINISTRADOR', 'EQUIPO_DIRECTIVO'),
+  registrarAccion('DESVINCULAR_PLAZA', 'plaza_pendiente'),
+  controller.desvincularPlaza
+);
+
 // ─── Log de actividad ─────────────────────────────────
 router.get('/logs',
   requiereRol('ADMINISTRADOR'),
@@ -90,6 +102,12 @@ router.put('/:id/roles',
   validar(cambiarRolesSchema),
   registrarAccion('CAMBIAR_ROLES', 'usuario_rol'),
   controller.cambiarRoles
+);
+router.post('/:id/asignar-plaza',
+  requiereRol('ADMINISTRADOR', 'EQUIPO_DIRECTIVO'),
+  validar(asignarPlazaSchema),
+  registrarAccion('ASIGNAR_PLAZA', 'plaza_pendiente'),
+  controller.asignarPlaza
 );
 
 module.exports = router;

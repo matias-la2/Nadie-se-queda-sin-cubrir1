@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const { success, error } = require('../helpers/response.helper');
 const { paginar, respuestaPaginada } = require('../helpers/pagination.helper');
+const { cursoActual } = require('../helpers/curso.helper');
 
 // ─── USUARIOS ──────────────────────────────────────────
 
@@ -387,6 +388,133 @@ async function eliminarDirectivo(req, res, next) {
   }
 }
 
+// ─── PLAZAS PENDIENTES ────────────────────────────────
+
+async function listarPlazasPendientes(req, res, next) {
+  try {
+    const curso = cursoActual();
+    const [rows] = await pool.query(
+      `SELECT pp.id, pp.codigo, pp.curso, pp.id_usuario, pp.fecha_asignacion,
+              u.nombre AS usuario_nombre, u.apellidos AS usuario_apellidos,
+              COUNT(gc.id_guardia_creada) AS guardias
+       FROM plaza_pendiente pp
+       LEFT JOIN usuario u ON pp.id_usuario = u.id_usuario
+       LEFT JOIN guardia_creada gc ON gc.id_plaza_pendiente = pp.id
+       WHERE pp.curso = ?
+       GROUP BY pp.id
+       ORDER BY pp.codigo`,
+      [curso]
+    );
+    return success(res, rows);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function asignarPlaza(req, res, next) {
+  const conn = await pool.getConnection();
+  try {
+    const idUsuario = parseInt(req.params.id);
+    const { codigo } = req.body;
+    const curso = cursoActual();
+
+    const [[usuario]] = await conn.query(
+      'SELECT id_usuario, activo FROM usuario WHERE id_usuario = ?',
+      [idUsuario]
+    );
+    if (!usuario) { conn.release(); return error(res, 'Usuario no encontrado', 404); }
+    if (!usuario.activo) { conn.release(); return error(res, 'El usuario no está activo', 400); }
+
+    const [[plaza]] = await conn.query(
+      'SELECT id, id_usuario FROM plaza_pendiente WHERE codigo = ? AND curso = ?',
+      [codigo, curso]
+    );
+    if (!plaza) { conn.release(); return error(res, `Plaza ${codigo} no encontrada para el curso ${curso}`, 404); }
+    if (plaza.id_usuario) { conn.release(); return error(res, `Plaza ${codigo} ya está asignada a otro usuario`, 409); }
+
+    await conn.beginTransaction();
+
+    const [[rolProf]] = await conn.query("SELECT id_rol FROM rol WHERE nombre_rol = 'PROFESOR'");
+    const [[existeRol]] = await conn.query(
+      'SELECT 1 AS e FROM usuario_rol WHERE id_usuario = ? AND id_rol = ?',
+      [idUsuario, rolProf.id_rol]
+    );
+    if (!existeRol) {
+      await conn.query('INSERT INTO usuario_rol (id_usuario, id_rol) VALUES (?, ?)', [idUsuario, rolProf.id_rol]);
+    }
+    await conn.query('INSERT IGNORE INTO profesor (id_usuario) VALUES (?)', [idUsuario]);
+
+    await conn.query(
+      'UPDATE plaza_pendiente SET id_usuario = ?, fecha_asignacion = NOW() WHERE id = ?',
+      [idUsuario, plaza.id]
+    );
+
+    const [updateResult] = await conn.query(
+      'UPDATE guardia_creada SET id_usuario = ?, id_plaza_pendiente = NULL WHERE id_plaza_pendiente = ?',
+      [idUsuario, plaza.id]
+    );
+
+    await conn.query(
+      `UPDATE notificacion SET leida = 1
+       WHERE tipo = 'PLAZA_SIN_ASIGNAR' AND referencia_id = ? AND leida = 0`,
+      [idUsuario]
+    );
+
+    await conn.commit();
+
+    return success(res, {
+      codigo,
+      id_usuario: idUsuario,
+      guardiasTransferidas: updateResult.affectedRows,
+    });
+  } catch (err) {
+    await conn.rollback();
+    next(err);
+  } finally {
+    conn.release();
+  }
+}
+
+async function desvincularPlaza(req, res, next) {
+  const conn = await pool.getConnection();
+  try {
+    const codigo = req.params.codigo.toUpperCase();
+    const curso = cursoActual();
+
+    const [[plaza]] = await conn.query(
+      'SELECT id, id_usuario FROM plaza_pendiente WHERE codigo = ? AND curso = ?',
+      [codigo, curso]
+    );
+    if (!plaza) { conn.release(); return error(res, `Plaza ${codigo} no encontrada para el curso ${curso}`, 404); }
+    if (!plaza.id_usuario) { conn.release(); return error(res, `Plaza ${codigo} no está asignada a ningún usuario`, 400); }
+
+    await conn.beginTransaction();
+
+    const [updateResult] = await conn.query(
+      `UPDATE guardia_creada SET id_plaza_pendiente = ?, id_usuario = NULL
+       WHERE id_usuario = ? AND origen = 'EXCEL' AND curso_escolar = ?`,
+      [plaza.id, plaza.id_usuario, curso]
+    );
+
+    await conn.query(
+      'UPDATE plaza_pendiente SET id_usuario = NULL, fecha_asignacion = NULL WHERE id = ?',
+      [plaza.id]
+    );
+
+    await conn.commit();
+
+    return success(res, {
+      codigo,
+      guardiasRevertidas: updateResult.affectedRows,
+    });
+  } catch (err) {
+    await conn.rollback();
+    next(err);
+  } finally {
+    conn.release();
+  }
+}
+
 // ─── LOG DE ACTIVIDAD ──────────────────────────────────
 
 async function listarLogs(req, res, next) {
@@ -439,5 +567,6 @@ module.exports = {
   listar, obtenerPorId, actualizar, toggleActivo, cambiarRoles,
   listarProfesores, crearProfesor, actualizarProfesor, eliminarProfesor,
   listarDirectivos, crearDirectivo, actualizarDirectivo, eliminarDirectivo,
+  listarPlazasPendientes, asignarPlaza, desvincularPlaza,
   listarLogs
 };

@@ -31,6 +31,10 @@ const actualizarDirectivoSchema = z.object({
   cargo: z.string().min(1, 'El cargo es obligatorio').max(100)
 });
 
+const asignarPlazaSchema = z.object({
+  codigo: z.string().min(1, 'El código de plaza es obligatorio').transform(s => s.toUpperCase()),
+});
+
 function validar(schema) {
   return (req, res, next) => {
     const resultado = schema.safeParse(req.body);
@@ -48,5 +52,6 @@ module.exports = {
   actualizarUsuarioSchema, cambiarRolesSchema,
   crearProfesorSchema, actualizarProfesorSchema,
   crearDirectivoSchema, actualizarDirectivoSchema,
+  asignarPlazaSchema,
   validar
 };
