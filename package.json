@@ -9,7 +9,8 @@
     "lint": "eslint . --ext .js --ignore-pattern node_modules --ignore-pattern public/js/datos-prueba.js",
     "lint:fix": "eslint . --ext .js --fix --ignore-pattern node_modules",
     "format": "prettier --write \"**/*.{js,json,css,html}\"",
-    "test": "jest --detectOpenHandles --forceExit"
+    "test": "jest --detectOpenHandles --forceExit",
+    "test:nombres": "node --test tests/nombres.service.test.js"
   },
   "dependencies": {
     "cookie-parser": "^1.4.6",
