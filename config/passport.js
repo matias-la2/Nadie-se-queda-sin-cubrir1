@@ -2,6 +2,7 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const pool = require('./db');
 const { esMiembroDelGrupo } = require('../services/google-group.service');
+const { vincularNuevoUsuario } = require('../services/vinculacion.service');
 
 passport.use(new GoogleStrategy(
   {
@@ -58,6 +59,17 @@ passport.use(new GoogleStrategy(
           'INSERT IGNORE INTO profesor (id_usuario, departamento) VALUES (?, NULL)',
           [idUsuario]
         );
+
+        try {
+          const connVinc = await pool.getConnection();
+          try {
+            await vincularNuevoUsuario(connVinc, { id: idUsuario, nombre, apellidos, correo });
+          } finally {
+            connVinc.release();
+          }
+        } catch (vincErr) {
+          console.error('[passport] Error en vinculación automática:', vincErr);
+        }
       }
 
       const [roles] = await pool.query(

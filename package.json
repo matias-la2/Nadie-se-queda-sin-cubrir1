@@ -12,6 +12,8 @@
     "test": "jest --detectOpenHandles --forceExit",
     "test:nombres": "node --test tests/nombres.service.test.js",
     "test:importador": "node --test tests/importador-guardias.service.test.js",
+    "test:endpoints": "node --test tests/importador.endpoints.test.js",
+    "test:vinculacion": "node --test tests/vinculacion.service.test.js",
     "test:bloque": "node --test tests/nombres.service.test.js tests/importador-guardias.service.test.js"
   },
   "dependencies": {

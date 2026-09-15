@@ -78,7 +78,7 @@ const confirmarExcelSchema = z.object({
   guardias: z.array(z.object({
     edificio_id: z.number().int().positive(),
     dia: z.number().int().min(1).max(5),
-    tramo: z.string().min(1),
+    tramo: tramoHorarioSchema,
     nombreExcel: z.string().min(1),
     esPlaza: z.boolean(),
   })),

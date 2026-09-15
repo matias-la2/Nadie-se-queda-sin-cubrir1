@@ -65,10 +65,16 @@ async function obtenerCreada(req, res, next) {
     const [rows] = await pool.query(
       `SELECT gc.*,
               u.nombre AS profesor_nombre, u.apellidos AS profesor_apellidos,
-              es.nombre AS espacio_nombre
+              es.nombre AS espacio_nombre,
+              ed.nombre AS edificio_nombre,
+              pp.codigo AS plaza_codigo,
+              ppl.nombre_original AS pendiente_nombre
        FROM guardia_creada gc
-       JOIN usuario u ON gc.id_usuario = u.id_usuario
+       LEFT JOIN usuario u ON gc.id_usuario = u.id_usuario
        LEFT JOIN espacio es ON gc.id_espacio = es.id_espacio
+       LEFT JOIN edificio ed ON gc.id_edificio = ed.id_edificio
+       LEFT JOIN plaza_pendiente pp ON gc.id_plaza_pendiente = pp.id
+       LEFT JOIN profesor_pendiente_login ppl ON gc.id_profesor_pendiente = ppl.id
        WHERE gc.id_guardia_creada = ?`,
       [req.params.id]
     );
@@ -782,7 +788,8 @@ async function guardiasHoy(req, res, next) {
       LEFT JOIN espacio es ON gc.id_espacio = es.id_espacio
       LEFT JOIN profesor_edificio pe ON gc.id_usuario = pe.id_usuario
       LEFT JOIN edificio e ON pe.id_edificio = e.id_edificio
-      WHERE (gc.dia_semana = WEEKDAY(CURDATE()) + 1 OR gc.fecha = CURDATE())
+      WHERE gc.id_usuario IS NOT NULL
+      AND (gc.dia_semana = WEEKDAY(CURDATE()) + 1 OR gc.fecha = CURDATE())
       AND NOT EXISTS (
         SELECT 1 FROM guardia_asignada ga
         WHERE ga.id_profesor_sustituto = gc.id_usuario
@@ -1195,7 +1202,18 @@ async function confirmarExcel(req, res, next) {
               idPendiente = pendId;
               contPendientes++;
             } else {
-              continue;
+              await conn.query(
+                `INSERT IGNORE INTO profesor_pendiente_login (nombre_normalizado, nombre_original)
+                 VALUES (?, ?)`,
+                [norm, g.nombreExcel]
+              );
+              const [[pendRow]] = await conn.query(
+                'SELECT id FROM profesor_pendiente_login WHERE nombre_normalizado = ?',
+                [norm]
+              );
+              idPendiente = pendRow.id;
+              pendienteIdMap.set(norm, idPendiente);
+              contPendientes++;
             }
           }
         }

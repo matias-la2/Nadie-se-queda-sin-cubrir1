@@ -13,6 +13,7 @@ process.env.DB_HOST = 'localhost';
 const request = require('supertest');
 const app = require('../server');
 const pool = require('../config/db');
+const { normalizar } = require('../services/nombres.service');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const DOCS = path.join(__dirname, '..', 'docs');
@@ -279,6 +280,70 @@ describe('Validación Zod confirmar', () => {
       })
       .expect(400);
     assert.equal(res.body.ok, false);
+  });
+});
+
+describe('confirmar auto-pendiente para nombres sin decisión', () => {
+  let datosAnalisis;
+
+  before(async () => {
+    await limpiarGuardiasExcel();
+
+    const res = await request(app)
+      .post('/api/v1/guardias/creadas/importar-excel/analizar')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .attach('archivos', path.join(DOCS, 'Guardias ESO.xls'))
+      .attach('archivos', path.join(DOCS, 'Guardias Bto.xls'));
+
+    datosAnalisis = res.body.datos;
+  });
+
+  it('crea pendiente_login automáticamente para nombres sin decisión', async () => {
+    assert.ok(datosAnalisis.sinCuenta.length > 0, 'Debe haber al menos un nombre sin cuenta');
+
+    const nombreOmitido = datosAnalisis.sinCuenta[0].nombreExcel;
+
+    const decisiones = {};
+    for (const p of datosAnalisis.probables) {
+      if (p.candidatos.length > 0) {
+        decisiones[p.nombreExcel] = { accion: 'VINCULAR', id_usuario: p.candidatos[0].id_usuario };
+      } else {
+        decisiones[p.nombreExcel] = { accion: 'IGNORAR' };
+      }
+    }
+    for (let i = 1; i < datosAnalisis.sinCuenta.length; i++) {
+      decisiones[datosAnalisis.sinCuenta[i].nombreExcel] = { accion: 'PENDIENTE_LOGIN' };
+    }
+
+    const body = {
+      curso: datosAnalisis.curso,
+      edificios: datosAnalisis.archivos.map(a => a.edificio.id),
+      guardias: datosAnalisis.guardias,
+      decisiones,
+    };
+
+    const res = await request(app)
+      .post('/api/v1/guardias/creadas/importar-excel/confirmar')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send(body)
+      .expect(201);
+
+    const d = res.body.datos;
+    assert.ok(d.pendientesLogin > 0, 'Debe haber pendientes de login');
+    assert.equal(d.ignorados, 0, 'No debe haber ignorados (ninguna decisión IGNORAR)');
+
+    const norm = normalizar(nombreOmitido);
+    const [[row]] = await pool.query(
+      'SELECT id FROM profesor_pendiente_login WHERE nombre_normalizado = ?',
+      [norm]
+    );
+    assert.ok(row, `"${nombreOmitido}" debería existir en profesor_pendiente_login`);
+
+    const [[{ count }]] = await pool.query(
+      'SELECT COUNT(*) AS count FROM guardia_creada WHERE id_profesor_pendiente = ?',
+      [row.id]
+    );
+    assert.ok(count > 0, `"${nombreOmitido}" debería tener guardias creadas`);
   });
 });
 
