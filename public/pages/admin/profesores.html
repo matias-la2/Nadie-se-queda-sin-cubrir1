@@ -96,6 +96,7 @@
             <tr>
               <th>Profesor</th>
               <th>Correo electrónico</th>
+              <th>Plaza</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -112,17 +113,97 @@
 
   </main>
 
+
+  <!-- Modal asignar plaza -->
+  <div class="modal fade" id="modal-asignar-plaza" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content modal-contenido">
+
+        <div class="modal-header modal-cabecera">
+          <h5 class="modal-title modal-titulo">
+            <i class="bi bi-person-plus me-2 modal-icono-titulo"></i>
+            Asignar Plaza
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+
+        <div class="modal-body modal-cuerpo">
+          <div id="modal-asignar-error" class="modal-error"></div>
+          <div id="modal-asignar-form">
+            <p class="mb-3" id="modal-asignar-nombre" style="font-weight:600;"></p>
+            <input type="hidden" id="modal-asignar-id">
+            <label class="modal-label">Plaza <span class="campo-obligatorio">*</span></label>
+            <select class="form-select campo-completo" id="modal-asignar-select"></select>
+          </div>
+          <div id="modal-asignar-exito" hidden style="padding:12px 0;font-size:14px;color:#15803d;"></div>
+        </div>
+
+        <div class="modal-footer modal-pie">
+          <button type="button" class="btn-secundario" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn-primario" id="btn-confirmar-asignar" onclick="confirmarAsignarPlaza()">
+            <i class="bi bi-check-lg"></i> Asignar
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modal confirmar toggle activo -->
+  <div class="modal fade" id="modal-confirmar-toggle" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content modal-contenido">
+
+        <div class="modal-header modal-cabecera">
+          <h5 class="modal-title modal-titulo">
+            <i class="bi bi-exclamation-triangle me-2" style="color:#f59e0b;"></i>
+            Confirmar
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+
+        <div class="modal-body modal-cuerpo">
+          <div id="modal-toggle-error" class="modal-error"></div>
+          <p id="modal-toggle-texto"></p>
+          <input type="hidden" id="modal-toggle-id">
+        </div>
+
+        <div class="modal-footer modal-pie">
+          <button type="button" class="btn-secundario" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn-primario" onclick="confirmarToggleActivo()">
+            <i class="bi bi-check-lg"></i> Confirmar
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../../js/auth.js"></script>
   <script src="../../js/sidebar.js"></script>
 
   <script>
+    var _plazasData = [];
+
+    function escapeHtml(str) {
+      var d = document.createElement('div');
+      d.textContent = str || '';
+      return d.innerHTML;
+    }
+
     verificarSesion().then(function (usuario) {
       if (!usuario) return;
 
       crearSidebar("profesores", "../../");
       actualizarResumen();
-      cargarProfesores();
+
+      cargarPlazas().then(function () {
+        cargarProfesores();
+        handleVincularParam();
+      });
 
       document.getElementById("filtro-estado").addEventListener("change", function () { cargarProfesores(); });
 
@@ -147,6 +228,12 @@
       }).catch(function () { document.getElementById("num-total").textContent = "0"; });
     }
 
+    function cargarPlazas() {
+      return apiFetch('/api/v1/usuarios/plazas-pendientes').then(function (data) {
+        _plazasData = (data && data.ok && data.datos) ? data.datos : [];
+      }).catch(function () { _plazasData = []; });
+    }
+
     function cargarProfesores() {
       var busqueda = document.getElementById("input-busqueda").value.trim();
       var activo = document.getElementById("filtro-estado").value;
@@ -164,15 +251,25 @@
           "Mostrando " + filas.length + " de " + pag.total + " profesores";
 
         if (filas.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron profesores</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron profesores</td></tr>';
           return;
         }
 
         var html = "";
         for (var i = 0; i < filas.length; i++) {
           var u = filas[i];
-          var nombreCompleto = (u.nombre || "") + " " + (u.apellidos || "");
-          var avatarSrc = u.avatar_url || "https://ui-avatars.com/api/?name=" + encodeURIComponent(nombreCompleto.trim()) + "&background=dbeafe&color=1152d4&bold=true";
+          var nombreRaw = ((u.nombre || "") + " " + (u.apellidos || "")).trim();
+          var nombreEsc = escapeHtml(nombreRaw);
+          var nombreJs = nombreRaw.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+          var avatarSrc = u.avatar_url || "https://ui-avatars.com/api/?name=" + encodeURIComponent(nombreRaw) + "&background=dbeafe&color=1152d4&bold=true";
+
+          var plazaHtml = '<span style="color:#94a3b8;">—</span>';
+          for (var k = 0; k < _plazasData.length; k++) {
+            if (_plazasData[k].id_usuario === u.id_usuario) {
+              plazaHtml = '<span class="badge-estado badge-en-proceso">' + escapeHtml(_plazasData[k].codigo) + '</span>';
+              break;
+            }
+          }
 
           var badgeEstado;
           if (u.activo) {
@@ -185,40 +282,160 @@
           var tituloToggle = u.activo ? "Desactivar" : "Activar";
           var iconoToggle = u.activo ? "bi-person-slash" : "bi-person-check";
 
+          var botonesAccion =
+            '<button class="btn-accion' + clasePeligro + '" title="' + tituloToggle + '" onclick="abrirModalConfirmarToggle(' + u.id_usuario + ', \'' + nombreJs + '\', ' + (u.activo ? 'true' : 'false') + ')"><i class="bi ' + iconoToggle + '"></i></button>';
+
+          if (u.activo) {
+            botonesAccion += '<button class="btn-accion" title="Asignar plaza" onclick="abrirModalAsignarPlaza(' + u.id_usuario + ', \'' + nombreJs + '\')"><i class="bi bi-person-plus"></i></button>';
+          }
+
           html += '<tr>' +
                     '<td><div class="celda-profesor">' +
                       '<img src="' + avatarSrc + '" class="avatar-profesor" alt="">' +
-                      '<div><div class="profesor-nombre">' + nombreCompleto.trim() + '</div><div class="profesor-id">ID: ' + String(u.id_usuario).padStart(4, "0") + '</div></div>' +
+                      '<div><div class="profesor-nombre">' + nombreEsc + '</div><div class="profesor-id">ID: ' + String(u.id_usuario).padStart(4, "0") + '</div></div>' +
                     '</div></td>' +
-                    '<td class="celda-sm">' + (u.correo || "—") + '</td>' +
+                    '<td class="celda-sm">' + escapeHtml(u.correo || "—") + '</td>' +
+                    '<td>' + plazaHtml + '</td>' +
                     '<td>' + badgeEstado + '</td>' +
-                    '<td>' +
-                      '<button class="btn-accion' + clasePeligro + '" title="' + tituloToggle + '" onclick="toggleActivo(' + u.id_usuario + ', \'' + nombreCompleto.trim().replace(/'/g, "\\'") + '\', ' + (u.activo ? 'true' : 'false') + ')"><i class="bi ' + iconoToggle + '"></i></button>' +
-                    '</td>' +
+                    '<td><div class="d-flex gap-1">' + botonesAccion + '</div></td>' +
                   '</tr>';
         }
         tbody.innerHTML = html;
       }).catch(function () {
         document.getElementById("tabla-body").innerHTML =
-          '<tr><td colspan="4" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron profesores</td></tr>';
+          '<tr><td colspan="5" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron profesores</td></tr>';
         document.getElementById("contador-texto").textContent = "Mostrando 0 profesores";
       });
     }
 
-    function toggleActivo(id, nombre, estaActivo) {
+    // ─── Modal asignar plaza ──────────────────────────────
+
+    function abrirModalAsignarPlaza(idUsuario, nombre) {
+      document.getElementById("modal-asignar-id").value = idUsuario;
+      document.getElementById("modal-asignar-nombre").textContent = nombre;
+      document.getElementById("modal-asignar-error").style.display = "none";
+      document.getElementById("modal-asignar-exito").hidden = true;
+      document.getElementById("modal-asignar-form").hidden = false;
+      document.getElementById("btn-confirmar-asignar").hidden = false;
+
+      var select = document.getElementById("modal-asignar-select");
+      select.innerHTML = "";
+
+      var libres = [];
+      for (var i = 0; i < _plazasData.length; i++) {
+        if (!_plazasData[i].id_usuario) libres.push(_plazasData[i]);
+      }
+
+      if (libres.length === 0) {
+        var optVacia = document.createElement("option");
+        optVacia.value = "";
+        optVacia.textContent = "No hay plazas libres en este curso";
+        select.appendChild(optVacia);
+        document.getElementById("btn-confirmar-asignar").disabled = true;
+      } else {
+        document.getElementById("btn-confirmar-asignar").disabled = false;
+        for (var j = 0; j < libres.length; j++) {
+          var opt = document.createElement("option");
+          opt.value = libres[j].codigo;
+          opt.textContent = libres[j].codigo + " (" + libres[j].guardias + " guardias)";
+          select.appendChild(opt);
+        }
+      }
+
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-asignar-plaza")).show();
+    }
+
+    function confirmarAsignarPlaza() {
+      var id = document.getElementById("modal-asignar-id").value;
+      var codigo = document.getElementById("modal-asignar-select").value;
+      var errorDiv = document.getElementById("modal-asignar-error");
+      errorDiv.style.display = "none";
+
+      if (!codigo) {
+        errorDiv.textContent = "Selecciona una plaza.";
+        errorDiv.style.display = "block";
+        return;
+      }
+
+      apiFetch('/api/v1/usuarios/' + id + '/asignar-plaza', {
+        method: 'POST',
+        body: JSON.stringify({ codigo: codigo })
+      }).then(function (data) {
+        if (data && data.ok) {
+          document.getElementById("modal-asignar-form").hidden = true;
+          document.getElementById("btn-confirmar-asignar").hidden = true;
+          var exitoDiv = document.getElementById("modal-asignar-exito");
+          exitoDiv.hidden = false;
+          exitoDiv.textContent = "";
+          var icono = document.createElement("i");
+          icono.className = "bi bi-check-circle me-2";
+          icono.style.color = "#16a34a";
+          exitoDiv.appendChild(icono);
+          exitoDiv.appendChild(document.createTextNode(
+            "Plaza " + data.datos.codigo + " asignada correctamente. Se transfirieron " +
+            data.datos.guardiasTransferidas + " guardias."
+          ));
+
+          cargarPlazas().then(function () {
+            cargarProfesores();
+          });
+        } else {
+          errorDiv.textContent = (data && data.mensaje) || "Error al asignar plaza";
+          errorDiv.style.display = "block";
+        }
+      }).catch(function () {
+        errorDiv.textContent = "Error de conexión";
+        errorDiv.style.display = "block";
+      });
+    }
+
+    // ─── Modal confirmar toggle ───────────────────────────
+
+    function abrirModalConfirmarToggle(id, nombre, estaActivo) {
+      document.getElementById("modal-toggle-id").value = id;
       var accion = estaActivo ? "desactivar" : "activar";
-      if (!confirm("¿Quieres " + accion + " a " + nombre + "?")) return;
+      document.getElementById("modal-toggle-texto").textContent = "¿Quieres " + accion + " a " + nombre + "?";
+      document.getElementById("modal-toggle-error").style.display = "none";
+
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-confirmar-toggle")).show();
+    }
+
+    function confirmarToggleActivo() {
+      var id = document.getElementById("modal-toggle-id").value;
+      var errorDiv = document.getElementById("modal-toggle-error");
+      errorDiv.style.display = "none";
 
       apiFetch('/api/v1/usuarios/' + id + '/toggle-activo', {
         method: 'PATCH'
       }).then(function (data) {
         if (data && data.ok) {
+          bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-confirmar-toggle")).hide();
           actualizarResumen();
           cargarProfesores();
         } else {
-          alert((data && data.mensaje) || "Error al cambiar estado");
+          errorDiv.textContent = (data && data.mensaje) || "Error al cambiar estado";
+          errorDiv.style.display = "block";
         }
-      }).catch(function () { alert("Error de conexión"); });
+      }).catch(function () {
+        errorDiv.textContent = "Error de conexión";
+        errorDiv.style.display = "block";
+      });
+    }
+
+    // ─── ?vincular param ──────────────────────────────────
+
+    function handleVincularParam() {
+      var params = new URLSearchParams(window.location.search);
+      var vincularId = params.get('vincular');
+      if (!vincularId) return;
+
+      apiFetch('/api/v1/usuarios/' + vincularId).then(function (data) {
+        if (data && data.ok && data.datos) {
+          var u = data.datos;
+          var nombre = ((u.nombre || '') + ' ' + (u.apellidos || '')).trim();
+          abrirModalAsignarPlaza(u.id_usuario, nombre);
+        }
+      });
     }
   </script>
 

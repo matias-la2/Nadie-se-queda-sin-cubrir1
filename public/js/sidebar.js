@@ -119,6 +119,24 @@ function crearSidebar(paginaActiva, rutaBase) {
     var avatarSrc = usuario.avatar_url || "https://ui-avatars.com/api/?name=" + encodeURIComponent(nombreCompleto) + "&background=4f46e5&color=fff&size=80";
     var rutaLogin = rutaBase + "index.html";
 
+    var htmlCampana = "";
+    var htmlPanelNotif = "";
+    if (esAdmin || esDirectivo) {
+      htmlCampana =
+        '<div class="notif-campana" id="notif-campana">' +
+          '<i class="bi bi-bell"></i>' +
+          '<span class="notif-contador" id="notif-contador" hidden></span>' +
+        '</div>';
+      htmlPanelNotif =
+        '<div class="notif-panel" id="notif-panel" hidden>' +
+          '<div class="notif-panel-cabecera">' +
+            '<span style="font-weight:600;font-size:13px;">Notificaciones</span>' +
+            '<a href="#" id="notif-leer-todas" style="font-size:12px;color:#1152d4;text-decoration:none;">Marcar leídas</a>' +
+          '</div>' +
+          '<div id="notif-lista"></div>' +
+        '</div>';
+    }
+
     var htmlSidebar =
       '<button class="btn-hamburguesa" id="btn-hamburguesa" onclick="toggleSidebar()">' +
         '<i class="bi bi-list"></i>' +
@@ -128,7 +146,9 @@ function crearSidebar(paginaActiva, rutaBase) {
         '<div class="sidebar-header">' +
           '<i class="bi bi-mortarboard-fill icono-logo"></i>' +
           '<div class="nombre-centro">IES Río Arba</div>' +
+          htmlCampana +
         '</div>' +
+        htmlPanelNotif +
         '<div class="sidebar-nav">' +
           '<div class="sidebar-seccion-titulo">Menú Principal</div>' +
           htmlEnlacesPrincipal +
@@ -154,6 +174,10 @@ function crearSidebar(paginaActiva, rutaBase) {
       '</nav>';
 
     contenedor.innerHTML = htmlSidebar;
+
+    if (esAdmin || esDirectivo) {
+      inicializarNotificaciones(rutaBase);
+    }
   });
 }
 
@@ -177,4 +201,138 @@ function toggleSidebar() {
   if (!sidebar || !overlay) return;
   sidebar.classList.toggle("abierto");
   overlay.classList.toggle("visible");
+}
+
+// ─── Notificaciones ─────────────────────────────────────
+
+var NOTIF_ICONOS = {
+  'PLAZA_SIN_ASIGNAR':    { clase: 'bi-person-plus',          bg: '#eff6ff', color: '#1152d4' },
+  'GUARDIA_PENDIENTE':    { clase: 'bi-shield-exclamation',   bg: '#fef9c3', color: '#b45309' },
+  'GUARDIA_REASIGNADA':   { clase: 'bi-arrow-repeat',         bg: '#f0fdf4', color: '#16a34a' },
+  'GUARDIA_RECHAZADA':    { clase: 'bi-x-circle',             bg: '#fef2f2', color: '#ef4444' },
+  'AUSENCIA_ASIGNADA':    { clase: 'bi-calendar-x',           bg: '#fef2f2', color: '#ef4444' },
+  'INCIDENCIA_CAMBIO':    { clase: 'bi-exclamation-triangle',  bg: '#fff7ed', color: '#c2410c' },
+  'RESERVA_RECORDATORIO': { clase: 'bi-calendar-check',       bg: '#f0fdf4', color: '#16a34a' }
+};
+
+function inicializarNotificaciones(rutaBase) {
+  var campana = document.getElementById('notif-campana');
+  var panel = document.getElementById('notif-panel');
+  if (!campana || !panel) return;
+
+  campana.addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (panel.hidden) {
+      panel.hidden = false;
+      cargarListaNotificaciones(rutaBase);
+    } else {
+      panel.hidden = true;
+    }
+  });
+
+  panel.addEventListener('click', function (e) {
+    e.stopPropagation();
+  });
+
+  document.addEventListener('click', function () {
+    panel.hidden = true;
+  });
+
+  var btnLeer = document.getElementById('notif-leer-todas');
+  if (btnLeer) {
+    btnLeer.addEventListener('click', function (e) {
+      e.preventDefault();
+      apiFetch('/api/v1/notificaciones/leer-todas', { method: 'PATCH' }).then(function () {
+        var badge = document.getElementById('notif-contador');
+        if (badge) badge.hidden = true;
+        var lista = document.getElementById('notif-lista');
+        if (lista) lista.innerHTML = '<div class="notif-vacio"><i class="bi bi-bell-slash" style="display:block;font-size:20px;margin-bottom:6px;"></i>Sin notificaciones nuevas</div>';
+      });
+    });
+  }
+
+  cargarContadorNotificaciones();
+}
+
+function cargarContadorNotificaciones() {
+  apiFetch('/api/v1/notificaciones?leida=0&limit=1').then(function (data) {
+    var total = (data && data.datos && data.datos.paginacion) ? data.datos.paginacion.total : 0;
+    var badge = document.getElementById('notif-contador');
+    if (badge) {
+      if (total > 0) {
+        badge.textContent = total > 9 ? '9+' : total;
+        badge.hidden = false;
+      } else {
+        badge.hidden = true;
+      }
+    }
+  }).catch(function () {});
+}
+
+function cargarListaNotificaciones(rutaBase) {
+  apiFetch('/api/v1/notificaciones?leida=0').then(function (data) {
+    var notifs = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
+    var lista = document.getElementById('notif-lista');
+    if (!lista) return;
+
+    if (notifs.length === 0) {
+      lista.innerHTML = '<div class="notif-vacio"><i class="bi bi-bell-slash" style="display:block;font-size:20px;margin-bottom:6px;"></i>Sin notificaciones nuevas</div>';
+      return;
+    }
+
+    var html = '';
+    for (var i = 0; i < Math.min(notifs.length, 8); i++) {
+      var n = notifs[i];
+      var icono = NOTIF_ICONOS[n.tipo] || { clase: 'bi-bell', bg: '#f1f5f9', color: '#64748b' };
+      var link = obtenerEnlaceNotificacion(n, rutaBase);
+      var tiempo = tiempoRelativo(n.created_at);
+      var msgEsc = escapeHtmlSidebar(n.mensaje);
+
+      html += '<a href="' + link + '" class="notif-item" data-notif-id="' + n.id_notificacion + '">' +
+                '<div class="notif-item-icono" style="background:' + icono.bg + ';color:' + icono.color + ';">' +
+                  '<i class="bi ' + icono.clase + '"></i>' +
+                '</div>' +
+                '<div style="flex:1;min-width:0;">' +
+                  '<div class="notif-item-texto">' + msgEsc + '</div>' +
+                  '<div class="notif-item-fecha">' + tiempo + '</div>' +
+                '</div>' +
+              '</a>';
+    }
+    lista.innerHTML = html;
+
+    var items = lista.querySelectorAll('.notif-item');
+    for (var j = 0; j < items.length; j++) {
+      items[j].addEventListener('click', function () {
+        var nid = this.getAttribute('data-notif-id');
+        apiFetch('/api/v1/notificaciones/' + nid + '/leer', { method: 'PATCH' });
+      });
+    }
+  }).catch(function () {});
+}
+
+function obtenerEnlaceNotificacion(notif, rutaBase) {
+  if (notif.tipo === 'PLAZA_SIN_ASIGNAR' && notif.referencia_id) {
+    return rutaBase + 'pages/admin/usuarios.html?vincular=' + notif.referencia_id;
+  }
+  return '#';
+}
+
+function escapeHtmlSidebar(str) {
+  var d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+function tiempoRelativo(fechaStr) {
+  var fecha = new Date(fechaStr);
+  var ahora = new Date();
+  var diffMs = ahora - fecha;
+  var diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return 'ahora';
+  if (diffMin < 60) return 'hace ' + diffMin + ' min';
+  var diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return 'hace ' + diffH + 'h';
+  var diffD = Math.floor(diffH / 24);
+  if (diffD < 7) return 'hace ' + diffD + 'd';
+  return fecha.toLocaleDateString('es-ES');
 }
