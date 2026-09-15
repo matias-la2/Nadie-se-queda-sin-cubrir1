@@ -119,23 +119,19 @@ function crearSidebar(paginaActiva, rutaBase) {
     var avatarSrc = usuario.avatar_url || "https://ui-avatars.com/api/?name=" + encodeURIComponent(nombreCompleto) + "&background=4f46e5&color=fff&size=80";
     var rutaLogin = rutaBase + "index.html";
 
-    var htmlCampana = "";
-    var htmlPanelNotif = "";
-    if (esAdmin || esDirectivo) {
-      htmlCampana =
-        '<div class="notif-campana" id="notif-campana">' +
-          '<i class="bi bi-bell"></i>' +
-          '<span class="notif-contador" id="notif-contador" hidden></span>' +
-        '</div>';
-      htmlPanelNotif =
-        '<div class="notif-panel" id="notif-panel" hidden>' +
-          '<div class="notif-panel-cabecera">' +
-            '<span style="font-weight:600;font-size:13px;">Notificaciones</span>' +
-            '<a href="#" id="notif-leer-todas" style="font-size:12px;color:#1152d4;text-decoration:none;">Marcar leídas</a>' +
-          '</div>' +
-          '<div id="notif-lista"></div>' +
-        '</div>';
-    }
+    var htmlCampana =
+      '<div class="notif-campana" id="notif-campana">' +
+        '<i class="bi bi-bell"></i>' +
+        '<span class="notif-contador" id="notif-contador" hidden></span>' +
+      '</div>';
+    var htmlPanelNotif =
+      '<div class="notif-panel" id="notif-panel" hidden>' +
+        '<div class="notif-panel-cabecera">' +
+          '<span style="font-weight:600;font-size:13px;">Notificaciones</span>' +
+          '<a href="#" id="notif-leer-todas" style="font-size:12px;color:#1152d4;text-decoration:none;">Marcar leídas</a>' +
+        '</div>' +
+        '<div id="notif-lista"></div>' +
+      '</div>';
 
     var htmlSidebar =
       '<button class="btn-hamburguesa" id="btn-hamburguesa" onclick="toggleSidebar()">' +
@@ -175,9 +171,7 @@ function crearSidebar(paginaActiva, rutaBase) {
 
     contenedor.innerHTML = htmlSidebar;
 
-    if (esAdmin || esDirectivo) {
-      inicializarNotificaciones(rutaBase);
-    }
+    inicializarNotificaciones(rutaBase, roles);
   });
 }
 
@@ -215,7 +209,7 @@ var NOTIF_ICONOS = {
   'RESERVA_RECORDATORIO': { clase: 'bi-calendar-check',       bg: '#f0fdf4', color: '#16a34a' }
 };
 
-function inicializarNotificaciones(rutaBase) {
+function inicializarNotificaciones(rutaBase, roles) {
   var campana = document.getElementById('notif-campana');
   var panel = document.getElementById('notif-panel');
   if (!campana || !panel) return;
@@ -224,7 +218,7 @@ function inicializarNotificaciones(rutaBase) {
     e.stopPropagation();
     if (panel.hidden) {
       panel.hidden = false;
-      cargarListaNotificaciones(rutaBase);
+      cargarListaNotificaciones(rutaBase, roles);
     } else {
       panel.hidden = true;
     }
@@ -252,6 +246,7 @@ function inicializarNotificaciones(rutaBase) {
   }
 
   cargarContadorNotificaciones();
+  setInterval(cargarContadorNotificaciones, 60000);
 }
 
 function cargarContadorNotificaciones() {
@@ -269,7 +264,7 @@ function cargarContadorNotificaciones() {
   }).catch(function () {});
 }
 
-function cargarListaNotificaciones(rutaBase) {
+function cargarListaNotificaciones(rutaBase, roles) {
   apiFetch('/api/v1/notificaciones?leida=0').then(function (data) {
     var notifs = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
     var lista = document.getElementById('notif-lista');
@@ -284,7 +279,7 @@ function cargarListaNotificaciones(rutaBase) {
     for (var i = 0; i < Math.min(notifs.length, 8); i++) {
       var n = notifs[i];
       var icono = NOTIF_ICONOS[n.tipo] || { clase: 'bi-bell', bg: '#f1f5f9', color: '#64748b' };
-      var link = obtenerEnlaceNotificacion(n, rutaBase);
+      var link = obtenerEnlaceNotificacion(n, rutaBase, roles);
       var tiempo = tiempoRelativo(n.created_at);
       var msgEsc = escapeHtmlSidebar(n.mensaje);
 
@@ -310,11 +305,36 @@ function cargarListaNotificaciones(rutaBase) {
   }).catch(function () {});
 }
 
-function obtenerEnlaceNotificacion(notif, rutaBase) {
-  if (notif.tipo === 'PLAZA_SIN_ASIGNAR' && notif.referencia_id) {
-    return rutaBase + 'pages/admin/usuarios.html?vincular=' + notif.referencia_id;
+function obtenerEnlaceNotificacion(notif, rutaBase, roles) {
+  var esAdmin = roles.indexOf('ADMINISTRADOR') !== -1;
+  var esDirectivo = roles.indexOf('EQUIPO_DIRECTIVO') !== -1;
+  var esConserje = roles.indexOf('CONSERJE') !== -1;
+
+  switch (notif.tipo) {
+    case 'PLAZA_SIN_ASIGNAR':
+      if (!notif.referencia_id) return '#';
+      if (esAdmin) return rutaBase + 'pages/admin/usuarios.html?vincular=' + notif.referencia_id;
+      if (esDirectivo) return rutaBase + 'pages/admin/profesores.html?vincular=' + notif.referencia_id;
+      return '#';
+    case 'GUARDIA_PENDIENTE':
+    case 'GUARDIA_REASIGNADA':
+      if (esAdmin || esDirectivo) return rutaBase + 'pages/admin/guardias.html';
+      return rutaBase + 'pages/profesor/guardias.html';
+    case 'GUARDIA_RECHAZADA':
+      if (esAdmin || esDirectivo) return rutaBase + 'pages/admin/guardias.html';
+      return '#';
+    case 'AUSENCIA_ASIGNADA':
+      if (esAdmin || esDirectivo) return rutaBase + 'pages/admin/ausencias.html';
+      return rutaBase + 'pages/profesor/ausencias.html';
+    case 'INCIDENCIA_CAMBIO':
+      if (esAdmin || esDirectivo) return rutaBase + 'pages/admin/incidencias.html';
+      if (esConserje) return rutaBase + 'pages/conserje/incidencias.html';
+      return rutaBase + 'pages/profesor/incidencias.html';
+    case 'RESERVA_RECORDATORIO':
+      return rutaBase + 'pages/profesor/reservas.html';
+    default:
+      return '#';
   }
-  return '#';
 }
 
 function escapeHtmlSidebar(str) {

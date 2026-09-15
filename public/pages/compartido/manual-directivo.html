@@ -51,7 +51,8 @@
         <li><a href="#incidencias"><i class="bi bi-chevron-right"></i>6. Incidencias</a></li>
         <li><a href="#aulas"><i class="bi bi-chevron-right"></i>7. Aulas y Espacios</a></li>
         <li><a href="#reservas"><i class="bi bi-chevron-right"></i>8. Reservas</a></li>
-        <li><a href="#faq"><i class="bi bi-chevron-right"></i>9. Preguntas frecuentes</a></li>
+        <li><a href="#importar-horarios"><i class="bi bi-chevron-right"></i>9. Importar guardias desde el programa de horarios</a></li>
+        <li><a href="#faq"><i class="bi bi-chevron-right"></i>10. Preguntas frecuentes</a></li>
       </ul>
     </div>
 
@@ -277,9 +278,64 @@
       </div>
     </div>
 
-    <!-- 9. FAQ -->
+    <!-- 9. Importar guardias desde el programa de horarios -->
+    <div class="tarjeta manual-seccion" id="importar-horarios">
+      <h3><i class="bi bi-file-earmark-spreadsheet"></i>9. Importar guardias desde el programa de horarios</h3>
+      <p style="margin-bottom:12px;">
+        Si tu centro genera los cuadrantes de guardia con un programa de horarios (SIF, Peñalara, etc.), puedes importar los archivos Excel directamente. Se sube <strong>un archivo por edificio</strong>.
+      </p>
+
+      <div class="manual-paso">
+        <strong>Paso 1 — Subir archivo y analizar:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Ve a <strong>Guardias &gt; Planificadas</strong> y pulsa <strong>"Importar Excel"</strong>.</li>
+          <li>Selecciona el <strong>edificio</strong> y el <strong>curso escolar</strong>.</li>
+          <li>Arrastra o selecciona el archivo <strong>.xls / .xlsx</strong> del programa de horarios.</li>
+          <li>El sistema analizará el archivo, detectará los nombres de los profesores y los emparejará con las cuentas del sistema.</li>
+        </ol>
+      </div>
+
+      <div class="manual-paso">
+        <strong>Paso 2 — Revisión de coincidencias:</strong> El asistente muestra una tabla con cada profesor del archivo y su estado:
+        <ul style="margin:8px 0 0 16px;font-size:13px;">
+          <li><span style="color:#16a34a;"><i class="bi bi-check-circle"></i></span> <strong>Coincidencia exacta:</strong> el nombre coincide con un usuario registrado. Las guardias se asignarán directamente.</li>
+          <li><span style="color:#f59e0b;"><i class="bi bi-exclamation-triangle"></i></span> <strong>Nombre dudoso:</strong> el sistema ha encontrado un candidato probable pero no está seguro al 100%. Revisa que la sugerencia sea correcta y confírmala, o selecciona manualmente el profesor correcto del desplegable.</li>
+          <li><span style="color:#6366f1;"><i class="bi bi-clock-history"></i></span> <strong>Sin cuenta todavía:</strong> el profesor aparece en el archivo pero no se ha registrado en la plataforma. Sus guardias se crean igualmente y se vincularán automáticamente cuando se registre con su cuenta de Google.</li>
+          <li><span style="color:#1152d4;"><i class="bi bi-person-plus"></i></span> <strong>Plaza pendiente (código SIF):</strong> el nombre del profesor en el archivo encaja con un código de plaza (ej: SIF1, SIF2). Estas guardias se asocian a la plaza, no a una persona concreta. Cuando se incorpore el profesor titular, se le asigna la plaza y hereda automáticamente las guardias.</li>
+        </ul>
+      </div>
+
+      <div class="manual-paso">
+        <strong>Paso 3 — Confirmar importación:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Revisa el resumen: guardias a crear, profesores vinculados, plazas pendientes y profesores sin cuenta.</li>
+          <li>Pulsa <strong>"Confirmar importación"</strong>.</li>
+          <li>El sistema crea las guardias y muestra un resumen final con las guardias creadas por día/tramo.</li>
+        </ol>
+      </div>
+
+      <div class="manual-paso">
+        <strong>Procedimiento — Asignar una plaza SIF cuando se incorpora un profesor:</strong>
+        <ol style="margin:8px 0 0 16px;font-size:13px;">
+          <li>Cuando un profesor nuevo inicia sesión y no tiene guardias, recibirás una notificación <strong>"Plaza sin asignar"</strong> (<i class="bi bi-bell"></i> en el menú lateral).</li>
+          <li>Pulsa la notificación: se abrirá la página de <strong>Profesores</strong> con el modal de asignación de plaza.</li>
+          <li>Selecciona la plaza SIF correspondiente (ej: SIF1) del desplegable.</li>
+          <li>Al confirmar, el profesor hereda automáticamente <strong>todas las guardias de esa plaza</strong> y recibe el rol PROFESOR si no lo tenía.</li>
+          <li>Alternativa: desde la sección <strong>"Plazas Pendientes"</strong> en la página de Profesores, puedes ver todas las plazas libres y asignadas, y desvincular una plaza si el profesor cambia.</li>
+        </ol>
+      </div>
+
+      <div class="manual-nota">
+        <i class="bi bi-info-circle me-1"></i> <strong>Repite la importación para cada edificio.</strong> Si el centro tiene ESO, Bachillerato y Ciclos, sube un archivo por edificio seleccionando cada vez el edificio correcto.
+      </div>
+      <div class="manual-nota advertencia">
+        <i class="bi bi-exclamation-triangle me-1"></i> <strong>Atención:</strong> Al importar se añaden guardias nuevas; no se eliminan las existentes. Si quieres reemplazar el cuadrante completo de un edificio, elimina primero las guardias anteriores desde la vista planificada.
+      </div>
+    </div>
+
+    <!-- 10. FAQ -->
     <div class="tarjeta manual-seccion" id="faq">
-      <h3><i class="bi bi-question-circle"></i>9. Preguntas frecuentes</h3>
+      <h3><i class="bi bi-question-circle"></i>10. Preguntas frecuentes</h3>
       <dl class="manual-faq">
         <dt><i class="bi bi-envelope-x me-2"></i>"Un profesor me dice que no le llegan las notificaciones de guardia"</dt>
         <dd>Las notificaciones se envían al correo de Google con el que inició sesión. Pidele que revise su carpeta de Spam. También puede consultar las notificaciones directamente en su Dashboard dentro de la plataforma. Si el problema persiste, verifica con el administrador que el correo en el perfil del usuario sea correcto.</dd>

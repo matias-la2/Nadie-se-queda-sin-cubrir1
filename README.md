@@ -17,6 +17,23 @@ Portal web para la gestión de guardias, incidencias, ausencias y reservas del p
 
 La base de datos se crea automáticamente en el primer arranque.
 
+### Migraciones
+
+Tras el primer arranque, aplica las migraciones pendientes:
+
+```bash
+# Migración 001: Importador de guardias (tablas plaza_pendiente, alias_profesor,
+# profesor_pendiente_login; columnas nuevas en guardia_creada; tipo PLAZA_SIN_ASIGNAR
+# en notificación; renombrado de tramos horarios)
+docker compose exec db mysql -u root -padmin portal_ies < database/migrations/001_importador_guardias.sql
+```
+
+### Variables de entorno opcionales
+
+| Variable | Descripción | Valor por defecto |
+|---|---|---|
+| `PLAZA_CODIGO_REGEX` | Expresión regular para detectar códigos de plaza en los archivos de horarios (ej: SIF1, SIF2) | `^SIF\d+$` |
+
 ## Arranque sin Docker (desarrollo)
 
 1. `npm install`
