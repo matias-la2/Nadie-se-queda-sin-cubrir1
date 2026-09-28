@@ -457,7 +457,7 @@ async function asignarPlaza(req, res, next) {
     );
 
     const [updateResult] = await conn.query(
-      'UPDATE guardia_creada SET id_usuario = ?, id_plaza_pendiente = NULL WHERE id_plaza_pendiente = ?',
+      'UPDATE guardia_creada SET id_usuario = ? WHERE id_plaza_pendiente = ?',
       [idUsuario, plaza.id]
     );
 
@@ -504,9 +504,8 @@ async function desvincularPlaza(req, res, next) {
     await conn.beginTransaction();
 
     const [updateResult] = await conn.query(
-      `UPDATE guardia_creada SET id_plaza_pendiente = ?, id_usuario = NULL
-       WHERE id_usuario = ? AND origen = 'EXCEL' AND curso_escolar = ?`,
-      [plaza.id, plaza.id_usuario, curso]
+      'UPDATE guardia_creada SET id_usuario = NULL WHERE id_plaza_pendiente = ?',
+      [plaza.id]
     );
 
     await conn.query(
@@ -603,12 +602,6 @@ async function asignarPendiente(req, res, next) {
       [idUsuario, mensaje, idUsuario]
     );
 
-    await conn.query(
-      `INSERT INTO log_acciones (accion, tabla_afectada, id_usuario, datos_extra)
-       VALUES ('VINCULAR_PENDIENTE_LOGIN', 'guardia_creada', ?, ?)`,
-      [idUsuario, JSON.stringify({ pendiente_nombre: pendiente.nombre_original, manual: true })]
-    );
-
     await conn.commit();
 
     return success(res, {
@@ -683,9 +676,8 @@ async function reasignarPlaza(req, res, next) {
 
     if (plaza.id_usuario) {
       await conn.query(
-        `UPDATE guardia_creada SET id_plaza_pendiente = ?, id_usuario = NULL
-         WHERE id_usuario = ? AND origen = 'EXCEL' AND curso_escolar = ?`,
-        [plaza.id, plaza.id_usuario, curso]
+        'UPDATE guardia_creada SET id_usuario = NULL WHERE id_plaza_pendiente = ?',
+        [plaza.id]
       );
       await conn.query(
         'UPDATE plaza_pendiente SET id_usuario = NULL, fecha_asignacion = NULL WHERE id = ?',
@@ -709,7 +701,7 @@ async function reasignarPlaza(req, res, next) {
     );
 
     const [updateResult] = await conn.query(
-      'UPDATE guardia_creada SET id_usuario = ?, id_plaza_pendiente = NULL WHERE id_plaza_pendiente = ?',
+      'UPDATE guardia_creada SET id_usuario = ? WHERE id_plaza_pendiente = ?',
       [idUsuario, plaza.id]
     );
 

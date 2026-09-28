@@ -122,10 +122,10 @@ describe('POST /api/v1/usuarios/:id/asignar-plaza', () => {
     assert.equal(plaza.id_usuario, 1, 'plaza debería estar asignada a usuario 1');
 
     const [[{ count }]] = await pool.query(
-      "SELECT COUNT(*) AS count FROM guardia_creada WHERE id_usuario = 1 AND id_plaza_pendiente IS NULL AND origen = 'EXCEL' AND curso_escolar = ?",
-      [cursoActual()]
+      "SELECT COUNT(*) AS count FROM guardia_creada WHERE id_usuario = 1 AND id_plaza_pendiente = ? AND origen = 'EXCEL' AND curso_escolar = ?",
+      [plazaId, cursoActual()]
     );
-    assert.equal(count, 3, 'Las 3 guardias deberían pertenecer al usuario');
+    assert.equal(count, 3, 'Las 3 guardias deberían pertenecer al usuario y conservar id_plaza_pendiente');
   });
 
   it('asignar de nuevo devuelve 409', async () => {

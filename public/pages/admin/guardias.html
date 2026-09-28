@@ -780,7 +780,11 @@
 
         for (var p = 0; p < grupo.profesores.length; p++) {
           var prof = grupo.profesores[p];
-          if (prof.plaza_codigo) {
+          if (prof.plaza_codigo && prof.nombre.trim()) {
+            html += '<span class="badge-estado badge-en-proceso" style="padding:5px 10px;font-size:13px;">' +
+                      '<i class="bi bi-person me-1"></i>' + escapeHtml(prof.nombre.trim()) + ' <span style="color:#94a3b8;">· plaza ' + escapeHtml(prof.plaza_codigo) + '</span>' +
+                      ' <button class="btn-accion peligro" style="margin-left:6px;padding:0 4px;font-size:11px;border:none;background:none;color:#dc2626;cursor:pointer;" onclick="eliminarPlanificada(' + prof.id + ')" title="Quitar del grupo"><i class="bi bi-x-lg"></i></button></span>';
+          } else if (prof.plaza_codigo) {
             html += '<span class="badge-estado badge-pendiente" style="padding:5px 10px;font-size:13px;">' +
                       '<i class="bi bi-building me-1"></i>' + escapeHtml(prof.plaza_codigo) + ' <span style="color:#94a3b8;">· plaza pendiente</span>' +
                       ' <button class="btn-accion peligro" style="margin-left:6px;padding:0 4px;font-size:11px;border:none;background:none;color:#dc2626;cursor:pointer;" onclick="eliminarPlanificada(' + prof.id + ')" title="Quitar del grupo"><i class="bi bi-x-lg"></i></button></span>';
@@ -1465,7 +1469,8 @@
         var clave = (g.tramo_horario || "") + "_" + (g.dia_semana || 0);
         if (!mapa[clave]) mapa[clave] = [];
         var nomTramo = ((g.profesor_nombre || "") + " " + (g.profesor_apellidos || "")).trim();
-        if (g.plaza_codigo) nomTramo = g.plaza_codigo + " (plaza)";
+        if (g.plaza_codigo && nomTramo) nomTramo = nomTramo + " · plaza " + g.plaza_codigo;
+        else if (g.plaza_codigo) nomTramo = g.plaza_codigo + " (plaza)";
         else if (g.pendiente_nombre) nomTramo = g.pendiente_nombre + " (sin login)";
         mapa[clave].push({
           nombre: nomTramo,

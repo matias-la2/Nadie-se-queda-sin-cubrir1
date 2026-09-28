@@ -235,22 +235,34 @@ CREATE TABLE IF NOT EXISTS guardia_creada (
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Trigger: exactamente uno de los tres titulares debe estar relleno
+-- Trigger: id_profesor_pendiente es exclusivo; id_usuario + id_plaza_pendiente pueden coexistir
 -- (CHECK no puede usarse en MySQL 8 sobre columnas con FK referencial)
 DELIMITER //
 CREATE TRIGGER trg_gc_titular_insert BEFORE INSERT ON guardia_creada
 FOR EACH ROW
 BEGIN
-  IF (NEW.id_usuario IS NOT NULL) + (NEW.id_plaza_pendiente IS NOT NULL) + (NEW.id_profesor_pendiente IS NOT NULL) <> 1 THEN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Exactamente uno de id_usuario, id_plaza_pendiente, id_profesor_pendiente debe estar relleno';
+  IF NEW.id_profesor_pendiente IS NOT NULL THEN
+    IF NEW.id_usuario IS NOT NULL OR NEW.id_plaza_pendiente IS NOT NULL THEN
+      SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'id_profesor_pendiente es exclusivo: no combinable con id_usuario ni id_plaza_pendiente';
+    END IF;
+  ELSEIF NEW.id_usuario IS NULL AND NEW.id_plaza_pendiente IS NULL THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Debe rellenarse id_usuario, id_plaza_pendiente o id_profesor_pendiente';
   END IF;
 END //
 
 CREATE TRIGGER trg_gc_titular_update BEFORE UPDATE ON guardia_creada
 FOR EACH ROW
 BEGIN
-  IF (NEW.id_usuario IS NOT NULL) + (NEW.id_plaza_pendiente IS NOT NULL) + (NEW.id_profesor_pendiente IS NOT NULL) <> 1 THEN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Exactamente uno de id_usuario, id_plaza_pendiente, id_profesor_pendiente debe estar relleno';
+  IF NEW.id_profesor_pendiente IS NOT NULL THEN
+    IF NEW.id_usuario IS NOT NULL OR NEW.id_plaza_pendiente IS NOT NULL THEN
+      SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'id_profesor_pendiente es exclusivo: no combinable con id_usuario ni id_plaza_pendiente';
+    END IF;
+  ELSEIF NEW.id_usuario IS NULL AND NEW.id_plaza_pendiente IS NULL THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Debe rellenarse id_usuario, id_plaza_pendiente o id_profesor_pendiente';
   END IF;
 END //
 DELIMITER ;

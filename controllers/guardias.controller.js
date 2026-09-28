@@ -1167,15 +1167,15 @@ async function confirmarExcel(req, res, next) {
     const [aliasRows] = await conn.query('SELECT nombre_normalizado, id_usuario FROM alias_profesor');
     const aliasMap = new Map(aliasRows.map(a => [a.nombre_normalizado, a.id_usuario]));
 
-    // Map plaza codigo → id
+    // Map plaza codigo → { id, id_usuario }
     const plazaCodigos = [...new Set(guardias.filter(g => g.esPlaza).map(g => g.nombreExcel))];
     const plazaIdMap = new Map();
     if (plazaCodigos.length > 0) {
       const [plazaRows] = await conn.query(
-        `SELECT id, codigo FROM plaza_pendiente WHERE curso = ? AND codigo IN (?)`,
+        `SELECT id, codigo, id_usuario FROM plaza_pendiente WHERE curso = ? AND codigo IN (?)`,
         [curso, plazaCodigos]
       );
-      for (const p of plazaRows) plazaIdMap.set(p.codigo, p.id);
+      for (const p of plazaRows) plazaIdMap.set(p.codigo, { id: p.id, id_usuario: p.id_usuario });
     }
 
     // Map pendiente nombre → id
@@ -1205,8 +1205,10 @@ async function confirmarExcel(req, res, next) {
       let idPendiente = null;
 
       if (g.esPlaza) {
-        idPlaza = plazaIdMap.get(g.nombreExcel) || null;
-        if (!idPlaza) continue;
+        const plazaInfo = plazaIdMap.get(g.nombreExcel);
+        if (!plazaInfo) continue;
+        idPlaza = plazaInfo.id;
+        if (plazaInfo.id_usuario) idUsuario = plazaInfo.id_usuario;
         contPlazas++;
       } else {
         // Check vinculados first
