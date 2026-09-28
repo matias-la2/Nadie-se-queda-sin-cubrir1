@@ -506,11 +506,12 @@
         var leyenda = document.getElementById("leyenda-edificios");
         for (var i = 0; i < _todosLosEdificios.length; i++) {
           var ed = _todosLosEdificios[i];
-          selModal.innerHTML += '<option value="' + ed.id_edificio + '">' + ed.nombre + '</option>';
-          selFiltro.innerHTML += '<option value="' + ed.nombre + '">' + ed.nombre + '</option>';
-          selHorario.innerHTML += '<option value="' + ed.id_edificio + '">' + ed.nombre + '</option>';
-          selCSV.innerHTML += '<option value="' + ed.id_edificio + '">' + ed.nombre + '</option>';
-          leyenda.innerHTML += '<span class="leyenda-item"><span class="leyenda-color ' + claseEdificioLeyenda(ed.nombre) + '"></span> ' + ed.nombre + '</span>';
+          var nombre = escapeHtml(ed.nombre);
+          selModal.innerHTML += '<option value="' + ed.id_edificio + '">' + nombre + '</option>';
+          selFiltro.innerHTML += '<option value="' + nombre + '">' + nombre + '</option>';
+          selHorario.innerHTML += '<option value="' + ed.id_edificio + '">' + nombre + '</option>';
+          selCSV.innerHTML += '<option value="' + ed.id_edificio + '">' + nombre + '</option>';
+          leyenda.innerHTML += '<span class="leyenda-item"><span class="leyenda-color ' + claseEdificioLeyenda(ed.nombre) + '"></span> ' + nombre + '</span>';
         }
         leyenda.innerHTML += '<span class="leyenda-item"><span class="leyenda-color leyenda-sin"></span> Sin edificio</span>';
       });
