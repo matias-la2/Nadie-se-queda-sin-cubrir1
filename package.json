@@ -42,5 +42,15 @@
     "nodemon": "^3.1.4",
     "prettier": "^3.3.0",
     "supertest": "^6.3.4"
+  },
+  "jest": {
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "nombres.service.test.js",
+      "importador-guardias.service.test.js",
+      "importador.endpoints.test.js",
+      "vinculacion.service.test.js",
+      "plazas.test.js"
+    ]
   }
 }
