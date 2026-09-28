@@ -26,7 +26,9 @@ exports.up = async function (conn, h) {
     `);
   }
 
-  const [ciclos] = await conn.query("SELECT id_edificio FROM edificio WHERE nombre = 'Ciclos'");
+  const [ciclos] = await conn.query(
+    "SELECT id_edificio FROM edificio WHERE UPPER(REPLACE(nombre, ' ', '')) LIKE '%CICLOS%'"
+  );
   if (ciclos.length === 0) {
     await conn.query("INSERT INTO edificio (nombre, piso) VALUES ('Ciclos', '3 plantas')");
   }

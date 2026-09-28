@@ -5,27 +5,34 @@
 Desde la consola del servicio MySQL en Easypanel (o una terminal con acceso al contenedor):
 
 ```bash
-# Crear el dump
-mysqldump -u root -p portal_ies --routines --triggers > /tmp/backup_$(date +%Y%m%d_%H%M%S).sql
-
-# Comprobar que el archivo no está vacío y contiene CREATE TABLE
-head -50 /tmp/backup_*.sql
-tail -5 /tmp/backup_*.sql
-wc -l /tmp/backup_*.sql
+# Crear el dump (--single-transaction evita bloqueos en tablas InnoDB)
+BACKUP=/tmp/backup_$(date +%Y%m%d_%H%M%S).sql
+mysqldump -u root -p portal_ies \
+  --single-transaction --routines --triggers > "$BACKUP"
 ```
 
-**Verificar que la copia es válida:**
+**Comprobar que la copia es válida:**
 
 ```bash
-# Restaurar en una BD temporal para comprobar
+# 1. Tamaño mayor que 0
+ls -lh "$BACKUP"
+
+# 2. Contiene CREATE TABLE
+grep -c 'CREATE TABLE' "$BACKUP"
+# Debe ser >= 20 (el numero de tablas de la BD)
+
+# 3. Restaurar en una BD temporal y comparar tablas
 mysql -u root -p -e "CREATE DATABASE portal_ies_backup_test"
-mysql -u root -p portal_ies_backup_test < /tmp/backup_*.sql
+mysql -u root -p portal_ies_backup_test < "$BACKUP"
 
-# Contar tablas (debe coincidir con producción)
-mysql -u root -p -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='portal_ies_backup_test'"
-mysql -u root -p -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='portal_ies'"
+mysql -u root -p -e "
+  SELECT 'produccion' AS origen, COUNT(*) AS tablas
+    FROM information_schema.TABLES WHERE TABLE_SCHEMA='portal_ies'
+  UNION ALL
+  SELECT 'backup', COUNT(*)
+    FROM information_schema.TABLES WHERE TABLE_SCHEMA='portal_ies_backup_test'"
 
-# Limpiar
+# Las dos filas deben tener el mismo numero de tablas
 mysql -u root -p -e "DROP DATABASE portal_ies_backup_test"
 ```
 
@@ -84,14 +91,20 @@ Desde Easypanel: redeploy del servicio de la app (o `docker compose up -d --buil
 Si algo va mal después de migrar, restaurar la copia de seguridad:
 
 ```bash
-# Parar la app para evitar escrituras durante la restauración
-# (en Easypanel: detener el servicio de la app)
+# 1. Parar la app para evitar escrituras durante la restauración
+#    (en Easypanel: detener el servicio de la app)
 
-# Restaurar
+# 2. Identificar el backup (usar el nombre exacto del archivo)
+ls -lt /tmp/backup_*.sql
+
+# 3. Restaurar (reemplaza todo el contenido de la BD)
 mysql -u root -p portal_ies < /tmp/backup_YYYYMMDD_HHMMSS.sql
 
-# Volver a arrancar la app con la versión anterior del código
-# (en Easypanel: redeploy con el commit anterior)
+# 4. Verificar que las tablas están correctas
+mysql -u root -p -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='portal_ies'"
+
+# 5. Volver a arrancar la app con la versión anterior del código
+#    (en Easypanel: redeploy con el commit anterior)
 ```
 
 **Importante:** la restauración reemplaza TODO el contenido de la BD, incluyendo la tabla `schema_migrations`. Si después quieres volver a migrar, ejecuta `npm run migrate:estado` primero para ver el estado.

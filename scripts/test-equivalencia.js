@@ -288,12 +288,74 @@ async function main() {
       console.log('   OK: Idempotencia confirmada');
     }
 
-    // 8. Limpiar
-    console.log('\n8. Eliminando BD temporales...');
+    // 8. Deteccion de Ciclos case-insensitive
+    console.log('\n8. Prueba: deteccion de Ciclos case-insensitive...');
+    var DB_C = 'portal_ies_migtest_c';
+    var connSetup = await mysql.createConnection({
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT, 10) || 3306,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      charset: 'utf8mb4'
+    });
+    await connSetup.query('DROP DATABASE IF EXISTS ??', [DB_C]);
+    await connSetup.query('CREATE DATABASE ?? CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci', [DB_C]);
+    await connSetup.end();
+
+    await cargarSchema(DB_C, DB_C, newSchema);
+
+    var connC = await mysql.createConnection({
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT, 10) || 3306,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: DB_C,
+      charset: 'utf8mb4'
+    });
+    // Renombrar Ciclos a "ciclos formativos" antes de migrar
+    await connC.query("UPDATE edificio SET nombre = 'ciclos formativos' WHERE UPPER(REPLACE(nombre,' ','')) LIKE '%CICLOS%'");
+    await connC.end();
+
+    var countC = await ejecutarMigraciones(DB_C);
+    // Verificar que no se inserto un Ciclos duplicado
+    var connCheck = await mysql.createConnection({
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT, 10) || 3306,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: DB_C,
+      charset: 'utf8mb4'
+    });
+    var [edCount] = await connCheck.query(
+      "SELECT COUNT(*) AS cnt FROM edificio WHERE UPPER(REPLACE(nombre,' ','')) LIKE '%CICLOS%'"
+    );
+    await connCheck.end();
+
+    var ciclosOk = edCount[0].cnt === 1;
+    if (ciclosOk) {
+      console.log('   OK: Solo 1 edificio Ciclos (deteccion case-insensitive funciona)');
+    } else {
+      console.log('   FALLO: ' + edCount[0].cnt + ' edificios con Ciclos (esperado: 1)');
+      ok = false;
+    }
+
+    // Limpiar BD C
+    var connDrop = await mysql.createConnection({
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT, 10) || 3306,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      charset: 'utf8mb4'
+    });
+    await connDrop.query('DROP DATABASE IF EXISTS ??', [DB_C]);
+    await connDrop.end();
+
+    // 9. Limpiar
+    console.log('\n9. Eliminando BD temporales...');
     await limpiar();
     console.log('   OK\n');
 
-    process.exit(ok && countA2 === 0 && countB2 === 0 ? 0 : 1);
+    process.exit(ok && countA2 === 0 && countB2 === 0 && ciclosOk ? 0 : 1);
   } catch (err) {
     console.error('\nError: ' + err.message);
     console.error(err.stack);

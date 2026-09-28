@@ -73,6 +73,7 @@ npm run test:vinculacion  # Solo vinculación en primer login
 npm run test:plazas       # Solo gestión de plazas pendientes
 npm run test:pendientes   # Solo pendientes de asignar (vincular/desvincular/reasignar)
 npm run test:curso        # Filtro por curso actual
+npm run test:migraciones  # Equivalencia de migraciones (necesita Docker MySQL y git)
 ```
 
 Los tests de Jest (health, auth, reservas, guardias, incidencias) van aparte:
