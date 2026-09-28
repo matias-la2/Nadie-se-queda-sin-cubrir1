@@ -51,6 +51,7 @@ async function actualizarEdificio(req, res, next) {
     const valores = [];
     if (req.body.nombre !== undefined) { campos.push('nombre = ?'); valores.push(req.body.nombre); }
     if (req.body.piso !== undefined) { campos.push('piso = ?'); valores.push(req.body.piso); }
+    if (req.body.id_edificio_guardias !== undefined) { campos.push('id_edificio_guardias = ?'); valores.push(req.body.id_edificio_guardias || null); }
     if (campos.length === 0) return error(res, 'No se enviaron campos para actualizar', 400);
 
     valores.push(req.params.id);

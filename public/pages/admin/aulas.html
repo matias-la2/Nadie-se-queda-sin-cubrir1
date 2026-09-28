@@ -151,6 +151,7 @@
                 <tr>
                   <th>Nombre</th>
                   <th>Piso / Plantas</th>
+                  <th>Sus guardias las cubre</th>
                 </tr>
               </thead>
               <tbody id="tabla-edificios"></tbody>
@@ -455,12 +456,20 @@
 
         var tbody = document.getElementById("tabla-edificios");
         if (_edificios.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="2" class="sin-resultados">No hay edificios</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="3" class="sin-resultados">No hay edificios</td></tr>';
         } else {
           var html = "";
           for (var i = 0; i < _edificios.length; i++) {
             var e = _edificios[i];
-            html += '<tr><td class="celda-sm">' + (e.nombre || "—") + '</td><td class="celda-sm">' + (e.piso || "—") + '</td></tr>';
+            var selectHtml = '<select class="select-filtro" onchange="cambiarEdificioGuardias(' + e.id_edificio + ', this.value)">';
+            selectHtml += '<option value="">El propio edificio</option>';
+            for (var j = 0; j < _edificios.length; j++) {
+              if (_edificios[j].id_edificio === e.id_edificio) continue;
+              var sel = (e.id_edificio_guardias === _edificios[j].id_edificio) ? ' selected' : '';
+              selectHtml += '<option value="' + _edificios[j].id_edificio + '"' + sel + '>' + escapeHtml(_edificios[j].nombre) + '</option>';
+            }
+            selectHtml += '</select>';
+            html += '<tr><td class="celda-sm">' + (e.nombre || "—") + '</td><td class="celda-sm">' + (e.piso || "—") + '</td><td class="celda-sm">' + selectHtml + '</td></tr>';
           }
           tbody.innerHTML = html;
         }
@@ -482,7 +491,27 @@
           selectModal.appendChild(opt2);
         }
       }).catch(function () {
-        document.getElementById("tabla-edificios").innerHTML = '<tr><td colspan="2" class="sin-resultados">Error al cargar</td></tr>';
+        document.getElementById("tabla-edificios").innerHTML = '<tr><td colspan="3" class="sin-resultados">Error al cargar</td></tr>';
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function cambiarEdificioGuardias(idEdificio, valor) {
+      var body = { id_edificio_guardias: valor ? parseInt(valor) : null };
+      apiFetch('/api/v1/espacios/edificios/' + idEdificio, {
+        method: 'PUT',
+        body: JSON.stringify(body)
+      }).then(function (data) {
+        if (!data || !data.ok) {
+          alert((data && data.mensaje) || 'Error al actualizar');
+          recargarTodo();
+        }
+      }).catch(function () {
+        alert('Error de conexion');
+        recargarTodo();
       });
     }
 

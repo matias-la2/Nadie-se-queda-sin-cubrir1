@@ -6,6 +6,7 @@ const { TRAMOS, ETIQUETAS_LECTIVAS } = require('../config/tramos');
 const { cursoActual, inicioCursoActual, rangoCurso } = require('../helpers/curso.helper');
 const { parsearArchivo } = require('../services/importador-guardias.service');
 const { normalizar, emparejar } = require('../services/nombres.service');
+const { edificioDeGuardias } = require('../helpers/edificio-guardias.helper');
 
 // ─── GUARDIAS CREADAS (planificadas) ───────────────────
 
@@ -298,11 +299,14 @@ async function crearAsignada(req, res, next) {
     );
 
     if (edificiosAusencia.length > 0 && tipo_asignacion !== 'MANUAL') {
-      const idsEdificioAusencia = edificiosAusencia.map(e => e.id_edificio);
+      var idsEdificioGuardias = [];
+      for (var k = 0; k < edificiosAusencia.length; k++) {
+        idsEdificioGuardias.push(await edificioDeGuardias(conn, edificiosAusencia[k].id_edificio));
+      }
       const [[{ coincide }]] = await conn.query(
         `SELECT COUNT(*) as coincide FROM profesor_edificio
          WHERE id_usuario = ? AND id_edificio IN (?)`,
-        [id_profesor_sustituto, idsEdificioAusencia]
+        [id_profesor_sustituto, idsEdificioGuardias]
       );
       if (coincide === 0) {
         return error(res, 'El profesor sustituto no pertenece al edificio de la ausencia', 400);
@@ -616,9 +620,11 @@ async function asignarAutomaticamente(conn, idAusencia, fecha, tramoHorario, idP
      WHERE ae.id_ausencia = ?`,
     [idAusencia]
   );
-  const idEdificio = espaciosAusencia.length > 0 ? espaciosAusencia[0].id_edificio : null;
+  const idEdificioReal = espaciosAusencia.length > 0 ? espaciosAusencia[0].id_edificio : null;
   const espacioNombre = espaciosAusencia.length > 0 ? espaciosAusencia[0].espacio_nombre : null;
   const edificioNombre = espaciosAusencia.length > 0 ? espaciosAusencia[0].edificio_nombre : null;
+
+  const idEdificio = await edificioDeGuardias(conn, idEdificioReal);
 
   let candidatos = await buscarCandidatos(conn, diaSemanaDB, fecha, tramoHorario, excluidos, idEdificio);
 

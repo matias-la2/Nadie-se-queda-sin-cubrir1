@@ -72,7 +72,10 @@ CREATE TABLE IF NOT EXISTS equipo_directivo (
 CREATE TABLE IF NOT EXISTS edificio (
     id_edificio     INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY,
     nombre          VARCHAR(50)     NOT NULL,
-    piso            VARCHAR(20)     NULL
+    piso            VARCHAR(20)     NULL,
+    id_edificio_guardias INT UNSIGNED NULL,
+    CONSTRAINT fk_edificio_guardias FOREIGN KEY (id_edificio_guardias) REFERENCES edificio(id_edificio)
+        ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ───────────────────────────────────────
