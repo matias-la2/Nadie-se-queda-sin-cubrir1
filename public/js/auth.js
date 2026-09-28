@@ -97,6 +97,11 @@ function apiFetch(url, opciones) {
   });
 }
 
+function escapeJs(str) {
+  var s = (str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 function formatearFecha(fechaISO) {
   if (!fechaISO) return "—";
   var str = String(fechaISO).substring(0, 10);

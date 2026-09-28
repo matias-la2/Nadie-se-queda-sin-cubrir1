@@ -333,7 +333,7 @@
           var u = filas[i];
           var nombreRaw = ((u.nombre || "") + " " + (u.apellidos || "")).trim();
           var nombreEsc = escapeHtml(nombreRaw);
-          var nombreJs = nombreRaw.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+          var nombreJs = escapeJs(nombreRaw);
           var avatarSrc = u.avatar_url || "https://ui-avatars.com/api/?name=" + encodeURIComponent(nombreRaw) + "&background=dbeafe&color=1152d4&bold=true";
 
           var roles = u.roles || [];

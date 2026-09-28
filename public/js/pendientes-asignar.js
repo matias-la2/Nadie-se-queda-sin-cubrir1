@@ -15,11 +15,6 @@
     return d.innerHTML;
   }
 
-  function escJs(str) {
-    var s = (str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-    return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
-
   window.initPendientesAsignar = function (containerId, opciones) {
     _containerId = containerId;
     _onRecargar = (opciones && opciones.onRecargar) || function () {};
@@ -167,8 +162,8 @@
         html += '<tr><td>' + esc(p.nombre_original) + '</td>' +
           '<td class="celda-sm">' + p.guardias + '</td>' +
           '<td><div class="d-flex gap-1">' +
-            '<button class="btn-accion" title="Asignar a un usuario" onclick="PA.abrirAsignarPendiente(' + p.id + ',\'' + escJs(p.nombre_original) + '\',' + p.guardias + ')"><i class="bi bi-person-plus"></i></button>' +
-            '<button class="btn-accion peligro" title="Eliminar" onclick="PA.abrirEliminar(' + p.id + ',\'' + escJs(p.nombre_original) + '\',' + p.guardias + ')"><i class="bi bi-trash"></i></button>' +
+            '<button class="btn-accion" title="Asignar a un usuario" onclick="PA.abrirAsignarPendiente(' + p.id + ',\'' + escapeJs(p.nombre_original) + '\',' + p.guardias + ')"><i class="bi bi-person-plus"></i></button>' +
+            '<button class="btn-accion peligro" title="Eliminar" onclick="PA.abrirEliminar(' + p.id + ',\'' + escapeJs(p.nombre_original) + '\',' + p.guardias + ')"><i class="bi bi-trash"></i></button>' +
           '</div></td></tr>';
       }
       html += '</tbody></table></div></div>';
@@ -192,11 +187,11 @@
           var nomPl = ((pl.usuario_nombre || '') + ' ' + (pl.usuario_apellidos || '')).trim();
           estadoHtml = '<span class="badge-estado badge-cubierta">Asignada a ' + esc(nomPl) + '</span>';
           accionHtml =
-            '<button class="btn-accion" title="Reasignar" onclick="PA.abrirReasignar(' + pl.id + ',\'' + escJs(pl.codigo) + '\',' + pl.guardias + ')"><i class="bi bi-arrow-repeat"></i></button>' +
-            '<button class="btn-accion peligro" title="Desvincular" onclick="PA.abrirDesvincular(\'' + escJs(pl.codigo) + '\',\'' + escJs(nomPl) + '\',' + pl.guardias + ')"><i class="bi bi-person-dash"></i></button>';
+            '<button class="btn-accion" title="Reasignar" onclick="PA.abrirReasignar(' + pl.id + ',\'' + escapeJs(pl.codigo) + '\',' + pl.guardias + ')"><i class="bi bi-arrow-repeat"></i></button>' +
+            '<button class="btn-accion peligro" title="Desvincular" onclick="PA.abrirDesvincular(\'' + escapeJs(pl.codigo) + '\',\'' + escapeJs(nomPl) + '\',' + pl.guardias + ')"><i class="bi bi-person-dash"></i></button>';
         } else {
           estadoHtml = '<span class="badge-estado badge-pendiente">Libre</span>';
-          accionHtml = '<button class="btn-accion" title="Asignar" onclick="PA.abrirReasignar(' + pl.id + ',\'' + escJs(pl.codigo) + '\',' + pl.guardias + ')"><i class="bi bi-person-plus"></i></button>';
+          accionHtml = '<button class="btn-accion" title="Asignar" onclick="PA.abrirReasignar(' + pl.id + ',\'' + escapeJs(pl.codigo) + '\',' + pl.guardias + ')"><i class="bi bi-person-plus"></i></button>';
         }
 
         html += '<tr>' +
@@ -258,7 +253,7 @@
         var u = usuarios[i];
         var nombre = ((u.nombre || '') + ' ' + (u.apellidos || '')).trim();
         html += '<div style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;" ' +
-          'onclick="PA.seleccionarUsuario(' + u.id_usuario + ',\'' + escJs(nombre) + '\')" ' +
+          'onclick="PA.seleccionarUsuario(' + u.id_usuario + ',\'' + escapeJs(nombre) + '\')" ' +
           'onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'transparent\'">' +
           '<i class="bi bi-person" style="color:#64748b;"></i>' +
           '<div><div style="font-weight:500;font-size:14px;">' + esc(nombre) + '</div>' +
