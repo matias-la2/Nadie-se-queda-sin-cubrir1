@@ -11,7 +11,7 @@ Portal web "Nadie se queda sin cubrir" del IES Río Arba (Tauste, Zaragoza). Ges
 - Frontend vanilla JS + Bootstrap 5.3 — sin framework
 - Autenticación Google OAuth 2.0 + JWT en cookies httpOnly
 - Validación con Zod
-- Tests: node:test (importador, nombres, vinculación, plazas) + Jest (auth, health, reservas, guardias, incidencias)
+- Tests: node:test (importador, nombres, vinculación, plazas, pendientes) + Jest (auth, health, reservas, guardias, incidencias)
 
 ## Comandos habituales
 
@@ -22,6 +22,7 @@ npm run test:nombres       # Solo normalización/emparejamiento
 npm run test:importador    # Solo parser XLS
 npm run test:endpoints     # Solo endpoints analizar/confirmar
 npm run test:vinculacion   # Solo vinculación primer login
+npm run test:pendientes    # Solo pendientes de asignar
 npm test                   # Tests Jest (no necesitan Docker)
 ```
 
@@ -59,9 +60,18 @@ Los archivos XLS en `docs/` y los nombres en tests/seed.sql están **anonimizado
 - Códigos de plaza: regex configurable via `PLAZA_CODIGO_REGEX` (default `^[A-Z]{2,4}\d{1,2}$`)
 - Las vistas de trabajo diario (dashboard, contadores, sin cubrir) filtran por curso actual con `rangoCurso()` / `curso=actual`; los listados históricos con filtros manuales no filtran por defecto
 
+### Pendientes de asignar (`pendientes-asignar.js`)
+
+Componente IIFE reutilizable (namespace `PA`) que muestra la sección "Plazas vacantes" con búsqueda de usuario, asignación, desvinculación y reasignación. Se integra en `usuarios.html` y `profesores.html` con `initPendientesAsignar(containerId, {onRecargar})`.
+
+### Escapado en onclick (`escapeJs` en `auth.js`)
+
+`escapeJs(str)` aplica doble escapado: primero JS (`\` y `'`) y luego HTML entities (`&`, `"`, `<`, `>`). Es necesario para valores que van en atributos `onclick="fn('...')"` dentro de innerHTML, donde el valor cruza dos contextos (HTML atributo → JS string).
+
 ## Cosas a tener en cuenta
 
 - El parser BIFF maneja tanto mini-streams (< 4096 bytes, como Bto.xls) como streams regulares (como ESO.xls) dentro del formato OLE2/CFB
 - La migración 001 usa triggers en vez de CHECK constraints porque MySQL 8.0 no permite CHECK en columnas con FK referencial
+- La migración 002 (triggers `trg_gc_titular_insert`/`trg_gc_titular_update`): `id_profesor_pendiente` es exclusivo con `id_usuario`, pero `id_usuario` e `id_plaza_pendiente` pueden coexistir. `id_plaza_pendiente` indica la procedencia de la plaza (qué plaza ocupa el usuario), no es un estado "pendiente"
 - Los tests de integración (`test:all`) necesitan `docker compose up -d db` corriendo
 - Los tests node:test y Jest son suites separadas con runners distintos

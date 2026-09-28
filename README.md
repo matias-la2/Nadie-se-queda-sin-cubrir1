@@ -71,6 +71,7 @@ npm run test:importador   # Solo parser XLS
 npm run test:endpoints    # Solo endpoints analizar/confirmar
 npm run test:vinculacion  # Solo vinculación en primer login
 npm run test:plazas       # Solo gestión de plazas pendientes
+npm run test:pendientes   # Solo pendientes de asignar (vincular/desvincular/reasignar)
 npm run test:curso        # Filtro por curso actual
 ```
 
