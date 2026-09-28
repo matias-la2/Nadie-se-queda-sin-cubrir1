@@ -9,6 +9,8 @@
     "lint": "eslint . --ext .js --ignore-pattern node_modules --ignore-pattern public/js/datos-prueba.js",
     "lint:fix": "eslint . --ext .js --fix --ignore-pattern node_modules",
     "format": "prettier --write \"**/*.{js,json,css,html}\"",
+    "migrate": "node scripts/migrate.js",
+    "migrate:estado": "node scripts/migrate-status.js",
     "test": "jest --detectOpenHandles --forceExit",
     "test:nombres": "node --test tests/nombres.service.test.js",
     "test:importador": "node --test tests/importador-guardias.service.test.js",

@@ -24,6 +24,8 @@ npm run test:endpoints     # Solo endpoints analizar/confirmar
 npm run test:vinculacion   # Solo vinculación primer login
 npm run test:pendientes    # Solo pendientes de asignar
 npm test                   # Tests Jest (no necesitan Docker)
+npm run migrate:estado     # Ver estado de migraciones (solo lectura)
+npm run migrate            # Aplicar migraciones pendientes
 ```
 
 ## Arquitectura
@@ -71,7 +73,8 @@ Componente IIFE reutilizable (namespace `PA`) que muestra la sección "Plazas va
 ## Cosas a tener en cuenta
 
 - El parser BIFF maneja tanto mini-streams (< 4096 bytes, como Bto.xls) como streams regulares (como ESO.xls) dentro del formato OLE2/CFB
-- La migración 001 usa triggers en vez de CHECK constraints porque MySQL 8.0 no permite CHECK en columnas con FK referencial
-- La migración 002 (triggers `trg_gc_titular_insert`/`trg_gc_titular_update`): `id_profesor_pendiente` es exclusivo con `id_usuario`, pero `id_usuario` e `id_plaza_pendiente` pueden coexistir. `id_plaza_pendiente` indica la procedencia de la plaza (qué plaza ocupa el usuario), no es un estado "pendiente"
+- Sistema de migraciones en `database/migrations/` (001-006 como módulos JS). Cada migración exporta `async up(conn, h)` donde `h` son helpers idempotentes. `npm run migrate` aplica las pendientes; en producción exige `--confirmo-backup`
+- La migración 005 usa triggers en vez de CHECK constraints porque MySQL 8.0 no permite CHECK en columnas con FK referencial
+- La migración 006 (triggers `trg_gc_titular_insert`/`trg_gc_titular_update`): `id_profesor_pendiente` es exclusivo con `id_usuario`, pero `id_usuario` e `id_plaza_pendiente` pueden coexistir. `id_plaza_pendiente` indica la procedencia de la plaza (qué plaza ocupa el usuario), no es un estado "pendiente"
 - Los tests de integración (`test:all`) necesitan `docker compose up -d db` corriendo
 - Los tests node:test y Jest son suites separadas con runners distintos

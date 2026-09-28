@@ -97,9 +97,24 @@ CREATE TABLE IF NOT EXISTS espacio (
     estado_disponibilidad ENUM('DISPONIBLE','NO_DISPONIBLE','MANTENIMIENTO')
         NOT NULL DEFAULT 'DISPONIBLE',
     capacidad       SMALLINT        NULL,
+    planta          VARCHAR(20)     NULL
+        COMMENT 'Planta del edificio: Baja, Primera, Segunda',
     id_edificio     INT UNSIGNED    NOT NULL,
     CONSTRAINT fk_espacio_edificio FOREIGN KEY (id_edificio) REFERENCES edificio(id_edificio)
         ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ───────────────────────────────────────
+-- 7b. ESPACIO_CURSO (nombre variable por curso escolar)
+-- ───────────────────────────────────────
+CREATE TABLE IF NOT EXISTS espacio_curso (
+    id_espacio      INT UNSIGNED    NOT NULL,
+    curso_escolar   VARCHAR(10)     NOT NULL,
+    nombre_curso    VARCHAR(100)    NOT NULL
+        COMMENT 'Nombre del aula para ese curso (ej: 1ºA, 3ºB)',
+    PRIMARY KEY (id_espacio, curso_escolar),
+    CONSTRAINT fk_ec_espacio FOREIGN KEY (id_espacio) REFERENCES espacio(id_espacio)
+        ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ───────────────────────────────────────
@@ -375,6 +390,7 @@ CREATE INDEX idx_inc_estado         ON incidencia(estado);
 CREATE INDEX idx_aus_profesor       ON ausencia(id_profesor);
 CREATE INDEX idx_aus_fecha          ON ausencia(fecha);
 CREATE INDEX idx_aus_estado         ON ausencia(estado);
+CREATE INDEX idx_ec_curso            ON espacio_curso(curso_escolar);
 CREATE INDEX idx_gc_usuario         ON guardia_creada(id_usuario);
 CREATE INDEX idx_gc_dia             ON guardia_creada(dia_semana, tramo_horario);
 CREATE INDEX idx_gc_edificio        ON guardia_creada(id_edificio);

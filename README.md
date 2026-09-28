@@ -22,11 +22,11 @@ La base de datos se crea automáticamente en el primer arranque.
 Tras el primer arranque, aplica las migraciones pendientes:
 
 ```bash
-# Migración 001: Importador de guardias (tablas plaza_pendiente, alias_profesor,
-# profesor_pendiente_login; columnas nuevas en guardia_creada; tipo PLAZA_SIN_ASIGNAR
-# en notificación; renombrado de tramos horarios)
-docker compose exec db mysql -u root -padmin portal_ies < database/migrations/001_importador_guardias.sql
+npm run migrate:estado    # Ver qué migraciones faltan (solo lectura)
+npm run migrate           # Aplicar migraciones pendientes
 ```
+
+En producción (`NODE_ENV=production`), `migrate` exige `--confirmo-backup`. Ver `docs/DESPLIEGUE.md` para el guion completo.
 
 ### Variables de entorno opcionales
 
@@ -123,11 +123,15 @@ npm test
 │   ├── nombres.service.js             # Normalización, Jaro-Winkler, emparejamiento
 │   ├── importador-guardias.service.js # Parser XLS/XLSX de archivos de horarios
 │   └── vinculacion.service.js         # Vinculación automática en primer login
+├── scripts/
+│   ├── migrate.js           # npm run migrate
+│   ├── migrate-status.js    # npm run migrate:estado
+│   └── migraciones-helpers.js
 ├── database/
-│   ├── schema.sql           # DDL completo (20 tablas)
+│   ├── schema.sql           # DDL completo (21 tablas)
 │   ├── seed.sql             # Datos de prueba
-│   └── migrations/
-│       └── 001_importador_guardias.sql
+│   ├── migrations/          # Migraciones JS (001-006)
+│   └── scripts/manual/      # Scripts de datos (no automáticos)
 ├── tests/
 │   ├── nombres.service.test.js             # Normalización y emparejamiento
 │   ├── importador-guardias.service.test.js # Parser XLS con archivos reales
@@ -136,6 +140,7 @@ npm test
 │   ├── plazas.test.js                      # Gestión de plazas pendientes
 │   ├── health.test.js, auth.test.js, ...   # Tests Jest originales
 ├── docs/
+│   ├── DESPLIEGUE.md                  # Guion de despliegue en producción
 │   ├── spec-importador-guardias.md    # Especificación del importador
 │   ├── Guardias ESO.xls              # Archivo de muestra ESO (anonimizado)
 │   ├── Guardias Bto.xls              # Archivo de muestra Bachillerato (anonimizado)
