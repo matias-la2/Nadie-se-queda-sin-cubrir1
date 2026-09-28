@@ -57,6 +57,7 @@ Los archivos XLS en `docs/` y los nombres en tests/seed.sql están **anonimizado
 - Tramos definidos en `config/tramos.js`, no hardcodeados
 - Curso escolar con formato YYYY-YYYY, calculado por `curso.helper.js`
 - Códigos de plaza: regex configurable via `PLAZA_CODIGO_REGEX` (default `^[A-Z]{2,4}\d{1,2}$`)
+- Las vistas de trabajo diario (dashboard, contadores, sin cubrir) filtran por curso actual con `rangoCurso()` / `curso=actual`; los listados históricos con filtros manuales no filtran por defecto
 
 ## Cosas a tener en cuenta
 
