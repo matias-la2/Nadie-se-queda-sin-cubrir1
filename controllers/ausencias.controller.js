@@ -2,12 +2,24 @@ const pool = require('../config/db');
 const { success, error } = require('../helpers/response.helper');
 const { paginar, respuestaPaginada } = require('../helpers/pagination.helper');
 const { asignarAutomaticamente } = require('./guardias.controller');
+const { rangoCurso } = require('../helpers/curso.helper');
 
 async function listar(req, res, next) {
   try {
     const { page, limit, offset } = paginar(req.query);
     const where = [];
     const params = [];
+
+    if (req.query.curso) {
+      const rango = rangoCurso(req.query.curso);
+      if (!rango) {
+        return error(res, 'Formato de curso no válido. Use "actual" o "YYYY-YYYY" (ej: 2025-2026)', 400);
+      }
+      where.push('a.fecha >= ?');
+      params.push(rango.desde);
+      where.push('a.fecha <= ?');
+      params.push(rango.hasta);
+    }
 
     if (req.query.estado) {
       where.push('a.estado = ?');

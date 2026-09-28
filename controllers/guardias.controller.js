@@ -3,7 +3,7 @@ const { success, error } = require('../helpers/response.helper');
 const { paginar, respuestaPaginada } = require('../helpers/pagination.helper');
 const { enviarEmail, plantillaNotificacion } = require('../services/email.service');
 const { TRAMOS, ETIQUETAS_LECTIVAS } = require('../config/tramos');
-const { cursoActual, inicioCursoActual } = require('../helpers/curso.helper');
+const { cursoActual, inicioCursoActual, rangoCurso } = require('../helpers/curso.helper');
 const { parsearArchivo } = require('../services/importador-guardias.service');
 const { normalizar, emparejar } = require('../services/nombres.service');
 
@@ -24,8 +24,16 @@ async function listarCreadas(req, res, next) {
       params.push(req.query.dia_semana);
     }
     if (req.query.curso_escolar) {
-      where.push('gc.curso_escolar = ?');
-      params.push(req.query.curso_escolar);
+      if (req.query.curso_escolar === 'actual') {
+        where.push('gc.curso_escolar = ?');
+        params.push(cursoActual());
+      } else {
+        if (!rangoCurso(req.query.curso_escolar)) {
+          return error(res, 'Formato de curso_escolar no válido. Use "actual" o "YYYY-YYYY" (ej: 2025-2026)', 400);
+        }
+        where.push('gc.curso_escolar = ?');
+        params.push(req.query.curso_escolar);
+      }
     }
 
     const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
@@ -55,6 +63,17 @@ async function listarCreadas(req, res, next) {
     );
 
     return success(res, respuestaPaginada(rows, total, { page, limit }));
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function listarCursosCreadas(req, res, next) {
+  try {
+    const [rows] = await pool.query(
+      'SELECT DISTINCT curso_escolar FROM guardia_creada ORDER BY curso_escolar DESC'
+    );
+    return success(res, rows.map(r => r.curso_escolar));
   } catch (err) {
     next(err);
   }
@@ -869,6 +888,7 @@ async function guardiasHoy(req, res, next) {
        AND ga.estado IN ('PENDIENTE', 'ACEPTADA')`
     );
 
+    const rangoCursoActual = rangoCurso('actual');
     let sinCubrirOtrosDiasSql = `
       SELECT a.*, u.nombre AS profesor_nombre, u.apellidos AS profesor_apellidos,
              p.departamento
@@ -876,8 +896,9 @@ async function guardiasHoy(req, res, next) {
       JOIN usuario u ON a.id_profesor = u.id_usuario
       JOIN profesor p ON a.id_profesor = p.id_usuario
       WHERE a.fecha != CURDATE()
-      AND a.estado = 'SIN_CUBRIR'`;
-    const sinCubrirParams = [];
+      AND a.estado = 'SIN_CUBRIR'
+      AND a.fecha >= ? AND a.fecha <= ?`;
+    const sinCubrirParams = [rangoCursoActual.desde, rangoCursoActual.hasta];
 
     if (filtroEdificio) {
       sinCubrirOtrosDiasSql += ` AND EXISTS (
@@ -1319,7 +1340,7 @@ function listarTramos(_req, res) {
 }
 
 module.exports = {
-  listarCreadas, obtenerCreada, crearCreada, crearGrupo, actualizarCreada, eliminarCreada,
+  listarCreadas, listarCursosCreadas, obtenerCreada, crearCreada, crearGrupo, actualizarCreada, eliminarCreada,
   listarAsignadas, crearAsignada, eliminarAsignada, responderGuardia,
   guardiasHoy, asignarAutomaticamente, guardarHorario, importarCSV,
   analizarExcel, confirmarExcel,

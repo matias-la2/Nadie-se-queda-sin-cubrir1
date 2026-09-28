@@ -200,7 +200,7 @@
       }).catch(function () { document.getElementById("num-reservas").textContent = "0"; });
 
       // Tarjeta ausencias
-      apiFetch('/api/v1/ausencias?limit=1').then(function (data) {
+      apiFetch('/api/v1/ausencias?curso=actual&limit=1').then(function (data) {
         document.getElementById("num-ausencias").textContent =
           (data && data.datos && data.datos.paginacion) ? data.datos.paginacion.total : 0;
       }).catch(function () { document.getElementById("num-ausencias").textContent = "0"; });

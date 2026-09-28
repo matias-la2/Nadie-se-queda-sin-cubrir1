@@ -456,6 +456,7 @@
 
       crearSidebar("guardias", "../../");
       cargarDatosIniciales();
+      poblarFiltroCurso();
       recargar();
 
       document.getElementById("form-guardia").addEventListener("submit", guardarGrupo);
@@ -465,7 +466,11 @@
       document.getElementById("horario-profesor").addEventListener("change", cargarHorarioExistente);
       document.getElementById("horario-curso").addEventListener("change", cargarHorarioExistente);
       document.getElementById("csv-archivo").addEventListener("change", parsearCSV);
-      document.getElementById("filtro-curso-tramo").addEventListener("change", renderVistaTramos);
+      document.getElementById("filtro-curso-tramo").addEventListener("change", function () {
+        var curso = this.value || 'actual';
+        cargarPlanificadas(curso);
+        renderVistaTramos();
+      });
       document.getElementById("filtro-edificio-tramo").addEventListener("change", renderVistaTramos);
       document.getElementById("tab-tramos").addEventListener("shown.bs.tab", renderVistaTramos);
 
@@ -484,7 +489,8 @@
 
     function recargar() {
       cargarGuardiasHoy();
-      cargarPlanificadas();
+      var cursoSel = document.getElementById("filtro-curso-tramo").value || 'actual';
+      cargarPlanificadas(cursoSel);
     }
 
     var _todosLosEdificios = [];
@@ -697,8 +703,9 @@
     // GUARDIAS PLANIFICADAS
     // ============================================================
 
-    function cargarPlanificadas() {
-      apiFetch('/api/v1/guardias/creadas?limit=200').then(function (data) {
+    function cargarPlanificadas(curso) {
+      var cursoParam = curso || 'actual';
+      apiFetch('/api/v1/guardias/creadas?curso_escolar=' + encodeURIComponent(cursoParam) + '&limit=200').then(function (data) {
         var filas = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
         var pag = (data && data.datos && data.datos.paginacion) ? data.datos.paginacion : { total: 0 };
 
@@ -708,26 +715,25 @@
         document.getElementById("contador-planificadas").textContent = "Mostrando " + filas.length + " de " + pag.total + " guardias";
 
         renderGrupos(filas);
-        poblarFiltroCurso(filas);
       }).catch(function () {
         document.getElementById("contenedor-grupos").innerHTML = '<div class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No hay guardias planificadas</div>';
         document.getElementById("contador-planificadas").textContent = "Mostrando 0 guardias";
       });
     }
 
-    function poblarFiltroCurso(filas) {
-      var cursos = {};
-      for (var i = 0; i < filas.length; i++) {
-        if (filas[i].curso_escolar) cursos[filas[i].curso_escolar] = true;
-      }
-      var sel = document.getElementById("filtro-curso-tramo");
-      var valorActual = sel.value;
-      sel.innerHTML = '<option value="">Todos los cursos</option>';
-      var keys = Object.keys(cursos).sort();
-      for (var j = 0; j < keys.length; j++) {
-        sel.innerHTML += '<option value="' + keys[j] + '">' + keys[j] + '</option>';
-      }
-      if (valorActual) sel.value = valorActual;
+    function poblarFiltroCurso() {
+      apiFetch('/api/v1/guardias/creadas/cursos').then(function (data) {
+        var cursos = (data && data.datos) ? data.datos : [];
+        var sel = document.getElementById("filtro-curso-tramo");
+        var valorActual = sel.value;
+        sel.innerHTML = '';
+        for (var j = 0; j < cursos.length; j++) {
+          sel.innerHTML += '<option value="' + cursos[j] + '">' + cursos[j] + '</option>';
+        }
+        if (valorActual && sel.querySelector('option[value="' + valorActual + '"]')) {
+          sel.value = valorActual;
+        }
+      }).catch(function () {});
     }
 
     function renderGrupos(filas) {
@@ -1439,13 +1445,9 @@
     }
 
     function renderVistaTramos() {
-      var filtCurso = document.getElementById("filtro-curso-tramo").value;
       var filtEdificio = document.getElementById("filtro-edificio-tramo").value;
       var filas = _todasLasGuardias;
 
-      if (filtCurso) {
-        filas = filas.filter(function (g) { return g.curso_escolar === filtCurso; });
-      }
       if (filtEdificio) {
         filas = filas.filter(function (g) { return (g.edificio_nombre || "") === filtEdificio; });
       }

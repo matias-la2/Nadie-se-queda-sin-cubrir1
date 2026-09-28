@@ -139,19 +139,19 @@
     });
 
     function actualizarResumen() {
-      apiFetch('/api/v1/ausencias?estado=PENDIENTE&limit=1').then(function (d) {
+      apiFetch('/api/v1/ausencias?estado=PENDIENTE&curso=actual&limit=1').then(function (d) {
         document.getElementById("num-pendientes").textContent = (d && d.datos && d.datos.paginacion) ? d.datos.paginacion.total : 0;
       }).catch(function () { document.getElementById("num-pendientes").textContent = "0"; });
 
-      apiFetch('/api/v1/ausencias?estado=CUBIERTA&limit=1').then(function (d) {
+      apiFetch('/api/v1/ausencias?estado=CUBIERTA&curso=actual&limit=1').then(function (d) {
         document.getElementById("num-cubiertas").textContent = (d && d.datos && d.datos.paginacion) ? d.datos.paginacion.total : 0;
       }).catch(function () { document.getElementById("num-cubiertas").textContent = "0"; });
 
-      apiFetch('/api/v1/ausencias?estado=SIN_CUBRIR&limit=1').then(function (d) {
+      apiFetch('/api/v1/ausencias?estado=SIN_CUBRIR&curso=actual&limit=1').then(function (d) {
         document.getElementById("num-sin-cubrir").textContent = (d && d.datos && d.datos.paginacion) ? d.datos.paginacion.total : 0;
       }).catch(function () { document.getElementById("num-sin-cubrir").textContent = "0"; });
 
-      apiFetch('/api/v1/ausencias?limit=1').then(function (d) {
+      apiFetch('/api/v1/ausencias?curso=actual&limit=1').then(function (d) {
         document.getElementById("num-total").textContent = (d && d.datos && d.datos.paginacion) ? d.datos.paginacion.total : 0;
       }).catch(function () { document.getElementById("num-total").textContent = "0"; });
     }

@@ -175,7 +175,7 @@
       });
 
       // Tarjeta ausencias pendientes
-      apiFetch('/api/v1/ausencias?estado=PENDIENTE&limit=1').then(function (data) {
+      apiFetch('/api/v1/ausencias?estado=PENDIENTE&curso=actual&limit=1').then(function (data) {
         var total = (data && data.datos && data.datos.paginacion) ? data.datos.paginacion.total : 0;
         document.getElementById("num-ausencias").textContent = total;
       }).catch(function () {
@@ -203,7 +203,7 @@
       }
 
       // Guardias sin cubrir
-      apiFetch('/api/v1/ausencias?estado=SIN_CUBRIR&limit=10').then(function (data) {
+      apiFetch('/api/v1/ausencias?estado=SIN_CUBRIR&curso=actual&limit=10').then(function (data) {
         var filas = (data && data.datos && data.datos.registros) ? data.datos.registros : [];
         if (filas.length === 0) return;
 

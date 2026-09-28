@@ -33,6 +33,10 @@ router.get('/hoy', controller.guardiasHoy);
 
 // ─── Guardias creadas (planificadas) ───────────────────
 router.get('/creadas', controller.listarCreadas);
+router.get('/creadas/cursos',
+  requiereRol('EQUIPO_DIRECTIVO', 'ADMINISTRADOR'),
+  controller.listarCursosCreadas
+);
 router.get('/creadas/:id', controller.obtenerCreada);
 router.post('/creadas',
   requiereRol('EQUIPO_DIRECTIVO', 'ADMINISTRADOR'),

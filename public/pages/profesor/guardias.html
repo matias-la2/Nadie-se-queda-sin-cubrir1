@@ -109,7 +109,7 @@
     });
 
     function cargarCalendario(usuario) {
-      apiFetch('/api/v1/guardias/creadas?id_usuario=' + usuario.id).then(function (data) {
+      apiFetch('/api/v1/guardias/creadas?id_usuario=' + usuario.id + '&curso_escolar=actual').then(function (data) {
         var tbody = document.getElementById("calendario-body");
         var filas = [];
 
@@ -179,7 +179,7 @@
     function cargarPlanificadas(usuario) {
       var diasSemana = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
-      apiFetch('/api/v1/guardias/creadas?id_usuario=' + usuario.id).then(function (data) {
+      apiFetch('/api/v1/guardias/creadas?id_usuario=' + usuario.id + '&curso_escolar=actual').then(function (data) {
         var tbody = document.getElementById("tabla-planificadas");
         var filas = [];
 
