@@ -73,7 +73,11 @@ async function listarCursosCreadas(req, res, next) {
     const [rows] = await pool.query(
       'SELECT DISTINCT curso_escolar FROM guardia_creada ORDER BY curso_escolar DESC'
     );
-    return success(res, rows.map(r => r.curso_escolar));
+    const actual = cursoActual();
+    const cursos = rows.map(r => r.curso_escolar);
+    if (!cursos.includes(actual)) cursos.unshift(actual);
+    cursos.sort().reverse();
+    return success(res, { cursos, actual });
   } catch (err) {
     next(err);
   }

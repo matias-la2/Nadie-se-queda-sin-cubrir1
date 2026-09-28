@@ -469,7 +469,6 @@
       document.getElementById("filtro-curso-tramo").addEventListener("change", function () {
         var curso = this.value || 'actual';
         cargarPlanificadas(curso);
-        renderVistaTramos();
       });
       document.getElementById("filtro-edificio-tramo").addEventListener("change", renderVistaTramos);
       document.getElementById("tab-tramos").addEventListener("shown.bs.tab", renderVistaTramos);
@@ -715,23 +714,31 @@
         document.getElementById("contador-planificadas").textContent = "Mostrando " + filas.length + " de " + pag.total + " guardias";
 
         renderGrupos(filas);
+        renderVistaTramos();
       }).catch(function () {
+        _todasLasGuardias = [];
         document.getElementById("contenedor-grupos").innerHTML = '<div class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No hay guardias planificadas</div>';
         document.getElementById("contador-planificadas").textContent = "Mostrando 0 guardias";
+        renderVistaTramos();
       });
     }
 
     function poblarFiltroCurso() {
       apiFetch('/api/v1/guardias/creadas/cursos').then(function (data) {
-        var cursos = (data && data.datos) ? data.datos : [];
+        var info = (data && data.datos) ? data.datos : {};
+        var cursos = info.cursos || [];
+        var actual = info.actual || '';
         var sel = document.getElementById("filtro-curso-tramo");
-        var valorActual = sel.value;
+        var valorPrevio = sel.value;
         sel.innerHTML = '';
         for (var j = 0; j < cursos.length; j++) {
-          sel.innerHTML += '<option value="' + cursos[j] + '">' + cursos[j] + '</option>';
+          var texto = cursos[j] === actual ? cursos[j] + ' (actual)' : cursos[j];
+          sel.innerHTML += '<option value="' + cursos[j] + '">' + texto + '</option>';
         }
-        if (valorActual && sel.querySelector('option[value="' + valorActual + '"]')) {
-          sel.value = valorActual;
+        if (valorPrevio && sel.querySelector('option[value="' + valorPrevio + '"]')) {
+          sel.value = valorPrevio;
+        } else if (actual) {
+          sel.value = actual;
         }
       }).catch(function () {});
     }

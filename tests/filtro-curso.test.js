@@ -199,14 +199,23 @@ describe('GET /api/v1/guardias/creadas — validación curso_escolar', () => {
 // ─── Tests de /creadas/cursos ──────────────────────────
 
 describe('GET /api/v1/guardias/creadas/cursos', () => {
-  it('devuelve los cursos existentes', async () => {
+  it('devuelve los cursos existentes con el actual incluido', async () => {
     const res = await request(app)
       .get('/api/v1/guardias/creadas/cursos')
       .set('Cookie', `token=${adminToken}`)
       .expect(200);
 
-    assert.ok(Array.isArray(res.body.datos), 'datos debe ser un array');
-    assert.ok(res.body.datos.length > 0, 'debe haber al menos un curso');
-    assert.ok(res.body.datos.includes('2025-2026'), 'debe incluir el curso del seed');
+    const datos = res.body.datos;
+    assert.ok(Array.isArray(datos.cursos), 'datos.cursos debe ser un array');
+    assert.ok(datos.cursos.length > 0, 'debe haber al menos un curso');
+    assert.ok(datos.cursos.includes('2025-2026'), 'debe incluir el curso del seed');
+    assert.strictEqual(datos.actual, cursoActual(), 'actual debe ser el curso en curso');
+    assert.ok(datos.cursos.includes(cursoActual()), 'cursos debe incluir el actual aunque no tenga guardias');
+    const sorted = [...datos.cursos].sort().reverse();
+    assert.deepStrictEqual(datos.cursos, sorted, 'cursos debe estar ordenado de más reciente a más antiguo');
   });
+});
+
+after(async () => {
+  await pool.end();
 });
