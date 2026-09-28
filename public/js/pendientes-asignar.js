@@ -16,7 +16,8 @@
   }
 
   function escJs(str) {
-    return (str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    var s = (str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   window.initPendientesAsignar = function (containerId, opciones) {
@@ -176,7 +177,7 @@
     if (_plazas.length > 0) {
       html += '<div>' +
         '<div class="d-flex justify-content-between align-items-center mb-2">' +
-          '<h3 style="font-size:15px;font-weight:600;margin:0;"><i class="bi bi-building me-1" style="color:#1152d4;"></i> Plazas pendientes</h3>' +
+          '<h3 style="font-size:15px;font-weight:600;margin:0;"><i class="bi bi-building me-1" style="color:#1152d4;"></i> Plazas vacantes</h3>' +
           '<span class="badge-estado badge-en-proceso" style="font-size:12px;">' + _plazas.length + '</span>' +
         '</div>' +
         '<div class="tabla-responsive"><table class="tabla-datos"><thead><tr>' +

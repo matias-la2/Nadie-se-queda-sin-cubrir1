@@ -786,7 +786,7 @@
                       ' <button class="btn-accion peligro" style="margin-left:6px;padding:0 4px;font-size:11px;border:none;background:none;color:#dc2626;cursor:pointer;" onclick="eliminarPlanificada(' + prof.id + ')" title="Quitar del grupo"><i class="bi bi-x-lg"></i></button></span>';
           } else if (prof.plaza_codigo) {
             html += '<span class="badge-estado badge-pendiente" style="padding:5px 10px;font-size:13px;">' +
-                      '<i class="bi bi-building me-1"></i>' + escapeHtml(prof.plaza_codigo) + ' <span style="color:#94a3b8;">· plaza pendiente</span>' +
+                      '<i class="bi bi-building me-1"></i>' + escapeHtml(prof.plaza_codigo) + ' <span style="color:#94a3b8;">· plaza vacante</span>' +
                       ' <button class="btn-accion peligro" style="margin-left:6px;padding:0 4px;font-size:11px;border:none;background:none;color:#dc2626;cursor:pointer;" onclick="eliminarPlanificada(' + prof.id + ')" title="Quitar del grupo"><i class="bi bi-x-lg"></i></button></span>';
           } else if (prof.pendiente_nombre) {
             html += '<span class="badge-estado badge-cerrada" style="padding:5px 10px;font-size:13px;">' +
@@ -1301,7 +1301,7 @@
         for (var pl = 0; pl < d.plazas.length; pl++) {
           plHtml += '<span class="badge-estado badge-en-proceso" style="padding:5px 10px;font-size:13px;">' + escapeHtml(d.plazas[pl]) + '</span>';
         }
-        plHtml += '</div><div style="font-size:12px;color:#64748b;margin-top:8px;">Se crearan como plazas pendientes; asigna la persona cuando se incorpore desde Usuarios.</div></div>';
+        plHtml += '</div><div style="font-size:12px;color:#64748b;margin-top:8px;">Se crearan como plazas vacantes; asigna la persona cuando se incorpore desde Usuarios.</div></div>';
         plDiv.innerHTML = plHtml;
       } else {
         plDiv.innerHTML = '';
@@ -1428,7 +1428,7 @@
           '<div style="display:inline-block;text-align:left;background:#f8fafc;border-radius:10px;padding:16px 24px;font-size:14px;">' +
           '<div style="margin-bottom:6px;"><i class="bi bi-calendar-check me-2" style="color:#16a34a;"></i><strong>' + res.guardiasCreadas + '</strong> guardias creadas</div>' +
           '<div style="margin-bottom:6px;"><i class="bi bi-person-check me-2" style="color:#1152d4;"></i><strong>' + res.resueltos + '</strong> profesores resueltos</div>' +
-          '<div style="margin-bottom:6px;"><i class="bi bi-building me-2" style="color:#f59e0b;"></i><strong>' + res.plazas + '</strong> plazas pendientes</div>' +
+          '<div style="margin-bottom:6px;"><i class="bi bi-building me-2" style="color:#f59e0b;"></i><strong>' + res.plazas + '</strong> plazas vacantes</div>' +
           '<div style="margin-bottom:6px;"><i class="bi bi-person-x me-2" style="color:#64748b;"></i><strong>' + res.pendientesLogin + '</strong> pendientes de login</div>' +
           '<div><i class="bi bi-x-circle me-2" style="color:#94a3b8;"></i><strong>' + res.ignorados + '</strong> ignorados</div>' +
           '</div></div>';
@@ -1470,7 +1470,7 @@
         if (!mapa[clave]) mapa[clave] = [];
         var nomTramo = ((g.profesor_nombre || "") + " " + (g.profesor_apellidos || "")).trim();
         if (g.plaza_codigo && nomTramo) nomTramo = nomTramo + " · plaza " + g.plaza_codigo;
-        else if (g.plaza_codigo) nomTramo = g.plaza_codigo + " (plaza)";
+        else if (g.plaza_codigo) nomTramo = g.plaza_codigo + " (plaza vacante)";
         else if (g.pendiente_nombre) nomTramo = g.pendiente_nombre + " (sin login)";
         mapa[clave].push({
           nombre: nomTramo,

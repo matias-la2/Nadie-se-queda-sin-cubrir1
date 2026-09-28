@@ -517,7 +517,6 @@
 
           cargarPlazas().then(function () {
             cargarUsuarios();
-            renderPlazasPendientes();
           });
         } else {
           errorDiv.textContent = (data && data.mensaje) || "Error al asignar plaza";
