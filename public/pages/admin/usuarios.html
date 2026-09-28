@@ -119,29 +119,8 @@
 
     </div>
 
-    <!-- Plazas pendientes -->
-    <div class="tarjeta mt-4" id="seccion-plazas">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="tarjeta-titulo mb-0">
-          <i class="bi bi-person-plus me-2" style="color:#1152d4;"></i>Plazas Pendientes
-        </h2>
-        <span class="badge-estado badge-pendiente" id="badge-plazas-count">0 plazas</span>
-      </div>
-
-      <div class="tabla-responsive">
-        <table class="tabla-datos">
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Guardias</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-plazas-body"></tbody>
-        </table>
-      </div>
-    </div>
+    <!-- Pendientes de asignar (componente reutilizable) -->
+    <div class="tarjeta mt-4" id="seccion-pendientes" style="display:none;"></div>
 
   </main>
 
@@ -266,40 +245,10 @@
   </div>
 
 
-  <!-- Modal confirmar desvincular -->
-  <div class="modal fade" id="modal-confirmar-desvincular" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-      <div class="modal-content modal-contenido">
-
-        <div class="modal-header modal-cabecera">
-          <h5 class="modal-title modal-titulo">
-            <i class="bi bi-person-dash me-2" style="color:#ef4444;"></i>
-            Desvincular Plaza
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        </div>
-
-        <div class="modal-body modal-cuerpo">
-          <div id="modal-desvincular-error" class="modal-error"></div>
-          <p id="modal-desvincular-texto"></p>
-          <input type="hidden" id="modal-desvincular-codigo">
-        </div>
-
-        <div class="modal-footer modal-pie">
-          <button type="button" class="btn-secundario" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn-primario" style="background:#ef4444;border-color:#ef4444;" onclick="confirmarDesvincular()">
-            <i class="bi bi-person-dash"></i> Desvincular
-          </button>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../../js/auth.js"></script>
   <script src="../../js/sidebar.js"></script>
+  <script src="../../js/pendientes-asignar.js"></script>
 
   <script>
     var _plazasData = [];
@@ -318,8 +267,12 @@
 
       cargarPlazas().then(function () {
         cargarUsuarios();
-        renderPlazasPendientes();
-        handleVincularParam();
+      });
+
+      initPendientesAsignar('seccion-pendientes', {
+        onRecargar: function () {
+          cargarPlazas().then(function () { cargarUsuarios(); });
+        }
       });
 
       document.getElementById("filtro-rol").addEventListener("change", function () { cargarUsuarios(); });
@@ -442,46 +395,6 @@
           '<tr><td colspan="6" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No se encontraron usuarios</td></tr>';
         document.getElementById("contador-texto").textContent = "Mostrando 0 usuarios";
       });
-    }
-
-    function renderPlazasPendientes() {
-      var tbody = document.getElementById("tabla-plazas-body");
-      var countEl = document.getElementById("badge-plazas-count");
-
-      if (_plazasData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="sin-resultados"><i class="bi bi-inbox sin-resultados-icono"></i>No hay plazas pendientes para este curso</td></tr>';
-        countEl.textContent = "0 plazas";
-        return;
-      }
-
-      countEl.textContent = _plazasData.length + (_plazasData.length === 1 ? " plaza" : " plazas");
-
-      var html = "";
-      for (var i = 0; i < _plazasData.length; i++) {
-        var p = _plazasData[i];
-        var estadoHtml, accionHtml;
-
-        if (p.id_usuario) {
-          var nombreRaw = ((p.usuario_nombre || '') + ' ' + (p.usuario_apellidos || '')).trim();
-          var nombreEsc = escapeHtml(nombreRaw);
-          var nombreJs = nombreRaw.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-          var fecha = formatearFecha(p.fecha_asignacion);
-          estadoHtml = '<span class="badge-estado badge-cubierta">Asignada a ' + nombreEsc + '</span>' +
-                       '<div style="font-size:11px;color:#64748b;margin-top:2px;">Desde ' + fecha + '</div>';
-          accionHtml = '<button class="btn-accion peligro" title="Desvincular" onclick="abrirModalDesvincular(\'' + escapeHtml(p.codigo).replace(/'/g, "\\'") + '\', \'' + nombreJs + '\')"><i class="bi bi-person-dash"></i></button>';
-        } else {
-          estadoHtml = '<span class="badge-estado badge-pendiente">Libre</span>';
-          accionHtml = '<span style="color:#94a3b8;">—</span>';
-        }
-
-        html += '<tr>' +
-                  '<td><span class="badge-estado badge-en-proceso" style="font-weight:600;">' + escapeHtml(p.codigo) + '</span></td>' +
-                  '<td class="celda-sm">' + p.guardias + '</td>' +
-                  '<td>' + estadoHtml + '</td>' +
-                  '<td>' + accionHtml + '</td>' +
-                '</tr>';
-      }
-      tbody.innerHTML = html;
     }
 
     // ─── Modal roles ──────────────────────────────────────
@@ -649,61 +562,6 @@
       });
     }
 
-    // ─── Modal desvincular ────────────────────────────────
-
-    function abrirModalDesvincular(codigo, nombre) {
-      document.getElementById("modal-desvincular-codigo").value = codigo;
-      var p = document.getElementById("modal-desvincular-texto");
-      p.textContent = "";
-      p.appendChild(document.createTextNode("¿Desvincular la plaza "));
-      var strong1 = document.createElement("strong");
-      strong1.textContent = codigo;
-      p.appendChild(strong1);
-      p.appendChild(document.createTextNode(" de " + nombre + "? Las guardias volverán a la plaza pendiente."));
-      document.getElementById("modal-desvincular-error").style.display = "none";
-
-      bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-confirmar-desvincular")).show();
-    }
-
-    function confirmarDesvincular() {
-      var codigo = document.getElementById("modal-desvincular-codigo").value;
-      var errorDiv = document.getElementById("modal-desvincular-error");
-      errorDiv.style.display = "none";
-
-      apiFetch('/api/v1/usuarios/plazas/' + encodeURIComponent(codigo) + '/desvincular', {
-        method: 'DELETE'
-      }).then(function (data) {
-        if (data && data.ok) {
-          bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-confirmar-desvincular")).hide();
-          cargarPlazas().then(function () {
-            cargarUsuarios();
-            renderPlazasPendientes();
-          });
-        } else {
-          errorDiv.textContent = (data && data.mensaje) || "Error al desvincular";
-          errorDiv.style.display = "block";
-        }
-      }).catch(function () {
-        errorDiv.textContent = "Error de conexión";
-        errorDiv.style.display = "block";
-      });
-    }
-
-    // ─── ?vincular param ──────────────────────────────────
-
-    function handleVincularParam() {
-      var params = new URLSearchParams(window.location.search);
-      var vincularId = params.get('vincular');
-      if (!vincularId) return;
-
-      apiFetch('/api/v1/usuarios/' + vincularId).then(function (data) {
-        if (data && data.ok && data.datos) {
-          var u = data.datos;
-          var nombre = ((u.nombre || '') + ' ' + (u.apellidos || '')).trim();
-          abrirModalAsignarPlaza(u.id_usuario, nombre);
-        }
-      });
-    }
   </script>
 
 </body>

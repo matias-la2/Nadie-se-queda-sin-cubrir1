@@ -111,6 +111,9 @@
 
     </div>
 
+    <!-- Pendientes de asignar (componente reutilizable) -->
+    <div class="tarjeta mt-4" id="seccion-pendientes" style="display:none;"></div>
+
   </main>
 
 
@@ -184,6 +187,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../../js/auth.js"></script>
   <script src="../../js/sidebar.js"></script>
+  <script src="../../js/pendientes-asignar.js"></script>
 
   <script>
     var _plazasData = [];
@@ -202,7 +206,12 @@
 
       cargarPlazas().then(function () {
         cargarProfesores();
-        handleVincularParam();
+      });
+
+      initPendientesAsignar('seccion-pendientes', {
+        onRecargar: function () {
+          cargarPlazas().then(function () { cargarProfesores(); });
+        }
       });
 
       document.getElementById("filtro-estado").addEventListener("change", function () { cargarProfesores(); });
@@ -422,21 +431,6 @@
       });
     }
 
-    // ─── ?vincular param ──────────────────────────────────
-
-    function handleVincularParam() {
-      var params = new URLSearchParams(window.location.search);
-      var vincularId = params.get('vincular');
-      if (!vincularId) return;
-
-      apiFetch('/api/v1/usuarios/' + vincularId).then(function (data) {
-        if (data && data.ok && data.datos) {
-          var u = data.datos;
-          var nombre = ((u.nombre || '') + ' ' + (u.apellidos || '')).trim();
-          abrirModalAsignarPlaza(u.id_usuario, nombre);
-        }
-      });
-    }
   </script>
 
 </body>
