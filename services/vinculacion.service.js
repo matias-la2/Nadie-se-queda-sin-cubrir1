@@ -92,7 +92,7 @@ async function vincularNuevoUsuario(conn, usuario) {
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     try {
-      const enlace = `/pages/admin/usuarios.html?vincular=${usuario.id}`;
+      const enlace = `/pages/admin/usuarios.html#pendientes&usuario=${usuario.id}`;
       const html = plantillaNotificacion({
         titulo: 'Nuevo profesor sin guardias',
         cuerpo: mensaje,

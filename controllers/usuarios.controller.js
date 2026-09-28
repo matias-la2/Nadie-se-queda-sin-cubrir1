@@ -26,6 +26,13 @@ async function listar(req, res, next) {
       )`);
       params.push(req.query.rol);
     }
+    if (req.query.sin_guardias === 'true') {
+      where.push(`NOT EXISTS (
+        SELECT 1 FROM guardia_creada gc
+        WHERE gc.id_usuario = u.id_usuario AND gc.curso_escolar = ?
+      )`);
+      params.push(cursoActual());
+    }
 
     const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
 
@@ -460,6 +467,12 @@ async function asignarPlaza(req, res, next) {
       [idUsuario]
     );
 
+    await conn.query(
+      `INSERT INTO notificacion (id_usuario, tipo, mensaje, referencia_id, referencia_tipo)
+       VALUES (?, 'GUARDIA_REASIGNADA', ?, ?, 'plaza_pendiente')`,
+      [idUsuario, `Se te ha asignado la plaza ${codigo} con ${updateResult.affectedRows} guardias`, plaza.id]
+    );
+
     await conn.commit();
 
     return success(res, {
@@ -506,6 +519,218 @@ async function desvincularPlaza(req, res, next) {
     return success(res, {
       codigo,
       guardiasRevertidas: updateResult.affectedRows,
+    });
+  } catch (err) {
+    await conn.rollback();
+    next(err);
+  } finally {
+    conn.release();
+  }
+}
+
+// ─── PENDIENTES LOGIN ─────────────────────────────────
+
+async function listarPendientesLogin(req, res, next) {
+  try {
+    const [rows] = await pool.query(
+      `SELECT ppl.id, ppl.nombre_normalizado, ppl.nombre_original, ppl.creado_en,
+              COUNT(gc.id_guardia_creada) AS guardias
+       FROM profesor_pendiente_login ppl
+       LEFT JOIN guardia_creada gc ON gc.id_profesor_pendiente = ppl.id
+       GROUP BY ppl.id
+       ORDER BY ppl.nombre_original`
+    );
+    return success(res, rows);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function asignarPendiente(req, res, next) {
+  const conn = await pool.getConnection();
+  try {
+    const idUsuario = parseInt(req.params.id);
+    const { id_pendiente } = req.body;
+
+    const [[usuario]] = await conn.query(
+      'SELECT id_usuario, nombre, apellidos, activo FROM usuario WHERE id_usuario = ?',
+      [idUsuario]
+    );
+    if (!usuario) { conn.release(); return error(res, 'Usuario no encontrado', 404); }
+    if (!usuario.activo) { conn.release(); return error(res, 'El usuario no está activo', 400); }
+
+    const [[pendiente]] = await conn.query(
+      'SELECT * FROM profesor_pendiente_login WHERE id = ?',
+      [id_pendiente]
+    );
+    if (!pendiente) { conn.release(); return error(res, 'Nombre pendiente no encontrado', 404); }
+
+    await conn.beginTransaction();
+
+    const [updateResult] = await conn.query(
+      'UPDATE guardia_creada SET id_usuario = ?, id_profesor_pendiente = NULL WHERE id_profesor_pendiente = ?',
+      [idUsuario, id_pendiente]
+    );
+
+    await conn.query(
+      `INSERT INTO alias_profesor (nombre_normalizado, id_usuario)
+       VALUES (?, ?) ON DUPLICATE KEY UPDATE id_usuario = VALUES(id_usuario)`,
+      [pendiente.nombre_normalizado, idUsuario]
+    );
+
+    await conn.query('DELETE FROM profesor_pendiente_login WHERE id = ?', [id_pendiente]);
+
+    const [[rolProf]] = await conn.query("SELECT id_rol FROM rol WHERE nombre_rol = 'PROFESOR'");
+    const [[existeRol]] = await conn.query(
+      'SELECT 1 AS e FROM usuario_rol WHERE id_usuario = ? AND id_rol = ?',
+      [idUsuario, rolProf.id_rol]
+    );
+    if (!existeRol) {
+      await conn.query('INSERT INTO usuario_rol (id_usuario, id_rol) VALUES (?, ?)', [idUsuario, rolProf.id_rol]);
+    }
+    await conn.query('INSERT IGNORE INTO profesor (id_usuario) VALUES (?)', [idUsuario]);
+
+    await conn.query(
+      `UPDATE notificacion SET leida = 1
+       WHERE tipo = 'PLAZA_SIN_ASIGNAR' AND referencia_id = ? AND leida = 0`,
+      [idUsuario]
+    );
+
+    const mensaje = `Se te han asignado ${updateResult.affectedRows} guardias del nombre "${pendiente.nombre_original}"`;
+    await conn.query(
+      `INSERT INTO notificacion (id_usuario, tipo, mensaje, referencia_id, referencia_tipo)
+       VALUES (?, 'GUARDIA_REASIGNADA', ?, ?, 'usuario')`,
+      [idUsuario, mensaje, idUsuario]
+    );
+
+    await conn.query(
+      `INSERT INTO log_acciones (accion, tabla_afectada, id_usuario, datos_extra)
+       VALUES ('VINCULAR_PENDIENTE_LOGIN', 'guardia_creada', ?, ?)`,
+      [idUsuario, JSON.stringify({ pendiente_nombre: pendiente.nombre_original, manual: true })]
+    );
+
+    await conn.commit();
+
+    return success(res, {
+      id_pendiente,
+      id_usuario: idUsuario,
+      guardiasTransferidas: updateResult.affectedRows,
+    });
+  } catch (err) {
+    await conn.rollback();
+    next(err);
+  } finally {
+    conn.release();
+  }
+}
+
+async function eliminarPendiente(req, res, next) {
+  const conn = await pool.getConnection();
+  try {
+    const idPendiente = parseInt(req.params.id);
+
+    const [[pendiente]] = await conn.query(
+      'SELECT id, nombre_original FROM profesor_pendiente_login WHERE id = ?',
+      [idPendiente]
+    );
+    if (!pendiente) { conn.release(); return error(res, 'Nombre pendiente no encontrado', 404); }
+
+    await conn.beginTransaction();
+
+    const [delResult] = await conn.query(
+      'DELETE FROM guardia_creada WHERE id_profesor_pendiente = ?',
+      [idPendiente]
+    );
+
+    await conn.query('DELETE FROM profesor_pendiente_login WHERE id = ?', [idPendiente]);
+
+    await conn.commit();
+
+    return success(res, {
+      id_pendiente: idPendiente,
+      nombre: pendiente.nombre_original,
+      guardiasEliminadas: delResult.affectedRows,
+    });
+  } catch (err) {
+    await conn.rollback();
+    next(err);
+  } finally {
+    conn.release();
+  }
+}
+
+async function reasignarPlaza(req, res, next) {
+  const conn = await pool.getConnection();
+  try {
+    const idUsuario = parseInt(req.params.id);
+    const { id_plaza } = req.body;
+    const curso = cursoActual();
+
+    const [[usuario]] = await conn.query(
+      'SELECT id_usuario, nombre, apellidos, activo FROM usuario WHERE id_usuario = ?',
+      [idUsuario]
+    );
+    if (!usuario) { conn.release(); return error(res, 'Usuario no encontrado', 404); }
+    if (!usuario.activo) { conn.release(); return error(res, 'El usuario no está activo', 400); }
+
+    const [[plaza]] = await conn.query(
+      'SELECT id, codigo, id_usuario FROM plaza_pendiente WHERE id = ? AND curso = ?',
+      [id_plaza, curso]
+    );
+    if (!plaza) { conn.release(); return error(res, 'Plaza no encontrada para el curso actual', 404); }
+
+    await conn.beginTransaction();
+
+    if (plaza.id_usuario) {
+      await conn.query(
+        `UPDATE guardia_creada SET id_plaza_pendiente = ?, id_usuario = NULL
+         WHERE id_usuario = ? AND origen = 'EXCEL' AND curso_escolar = ?`,
+        [plaza.id, plaza.id_usuario, curso]
+      );
+      await conn.query(
+        'UPDATE plaza_pendiente SET id_usuario = NULL, fecha_asignacion = NULL WHERE id = ?',
+        [plaza.id]
+      );
+    }
+
+    const [[rolProf]] = await conn.query("SELECT id_rol FROM rol WHERE nombre_rol = 'PROFESOR'");
+    const [[existeRol]] = await conn.query(
+      'SELECT 1 AS e FROM usuario_rol WHERE id_usuario = ? AND id_rol = ?',
+      [idUsuario, rolProf.id_rol]
+    );
+    if (!existeRol) {
+      await conn.query('INSERT INTO usuario_rol (id_usuario, id_rol) VALUES (?, ?)', [idUsuario, rolProf.id_rol]);
+    }
+    await conn.query('INSERT IGNORE INTO profesor (id_usuario) VALUES (?)', [idUsuario]);
+
+    await conn.query(
+      'UPDATE plaza_pendiente SET id_usuario = ?, fecha_asignacion = NOW() WHERE id = ?',
+      [idUsuario, plaza.id]
+    );
+
+    const [updateResult] = await conn.query(
+      'UPDATE guardia_creada SET id_usuario = ?, id_plaza_pendiente = NULL WHERE id_plaza_pendiente = ?',
+      [idUsuario, plaza.id]
+    );
+
+    await conn.query(
+      `UPDATE notificacion SET leida = 1
+       WHERE tipo = 'PLAZA_SIN_ASIGNAR' AND referencia_id = ? AND leida = 0`,
+      [idUsuario]
+    );
+
+    await conn.query(
+      `INSERT INTO notificacion (id_usuario, tipo, mensaje, referencia_id, referencia_tipo)
+       VALUES (?, 'GUARDIA_REASIGNADA', ?, ?, 'plaza_pendiente')`,
+      [idUsuario, `Se te ha asignado la plaza ${plaza.codigo} con ${updateResult.affectedRows} guardias`, plaza.id]
+    );
+
+    await conn.commit();
+
+    return success(res, {
+      codigo: plaza.codigo,
+      id_usuario: idUsuario,
+      guardiasTransferidas: updateResult.affectedRows,
     });
   } catch (err) {
     await conn.rollback();
@@ -568,5 +793,6 @@ module.exports = {
   listarProfesores, crearProfesor, actualizarProfesor, eliminarProfesor,
   listarDirectivos, crearDirectivo, actualizarDirectivo, eliminarDirectivo,
   listarPlazasPendientes, asignarPlaza, desvincularPlaza,
+  listarPendientesLogin, asignarPendiente, eliminarPendiente, reasignarPlaza,
   listarLogs
 };

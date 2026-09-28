@@ -313,8 +313,7 @@ function obtenerEnlaceNotificacion(notif, rutaBase, roles) {
   switch (notif.tipo) {
     case 'PLAZA_SIN_ASIGNAR':
       if (!notif.referencia_id) return '#';
-      if (esAdmin) return rutaBase + 'pages/admin/usuarios.html?vincular=' + notif.referencia_id;
-      if (esDirectivo) return rutaBase + 'pages/admin/profesores.html?vincular=' + notif.referencia_id;
+      if (esAdmin || esDirectivo) return rutaBase + 'pages/admin/usuarios.html#pendientes&usuario=' + notif.referencia_id;
       return '#';
     case 'GUARDIA_PENDIENTE':
     case 'GUARDIA_REASIGNADA':

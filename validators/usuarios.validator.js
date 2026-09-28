@@ -35,6 +35,14 @@ const asignarPlazaSchema = z.object({
   codigo: z.string().min(1, 'El código de plaza es obligatorio').transform(s => s.toUpperCase()),
 });
 
+const asignarPendienteSchema = z.object({
+  id_pendiente: z.number().int().positive('El pendiente es obligatorio'),
+});
+
+const reasignarPlazaSchema = z.object({
+  id_plaza: z.number().int().positive('La plaza es obligatoria'),
+});
+
 function validar(schema) {
   return (req, res, next) => {
     const resultado = schema.safeParse(req.body);
@@ -52,6 +60,6 @@ module.exports = {
   actualizarUsuarioSchema, cambiarRolesSchema,
   crearProfesorSchema, actualizarProfesorSchema,
   crearDirectivoSchema, actualizarDirectivoSchema,
-  asignarPlazaSchema,
+  asignarPlazaSchema, asignarPendienteSchema, reasignarPlazaSchema,
   validar
 };

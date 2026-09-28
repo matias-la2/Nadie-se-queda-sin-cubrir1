@@ -16,8 +16,9 @@
     "test:vinculacion": "node --test tests/vinculacion.service.test.js",
     "test:plazas": "node --test tests/plazas.test.js",
     "test:curso": "node --test tests/filtro-curso.test.js",
+    "test:pendientes": "node --test tests/pendientes.test.js",
     "test:bloque": "node --test tests/nombres.service.test.js tests/importador-guardias.service.test.js",
-    "test:all": "node --test --test-concurrency=1 tests/nombres.service.test.js tests/importador-guardias.service.test.js tests/importador.endpoints.test.js tests/vinculacion.service.test.js tests/plazas.test.js tests/filtro-curso.test.js"
+    "test:all": "node --test --test-concurrency=1 tests/nombres.service.test.js tests/importador-guardias.service.test.js tests/importador.endpoints.test.js tests/vinculacion.service.test.js tests/plazas.test.js tests/filtro-curso.test.js tests/pendientes.test.js"
   },
   "dependencies": {
     "cookie-parser": "^1.4.6",
@@ -52,7 +53,8 @@
       "importador.endpoints.test.js",
       "vinculacion.service.test.js",
       "plazas.test.js",
-      "filtro-curso.test.js"
+      "filtro-curso.test.js",
+      "pendientes.test.js"
     ]
   }
 }
