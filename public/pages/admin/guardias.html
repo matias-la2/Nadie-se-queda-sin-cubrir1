@@ -170,12 +170,8 @@
               <tbody id="tbody-vista-tramos"></tbody>
             </table>
           </div>
-          <div class="leyenda-edificios">
+          <div class="leyenda-edificios" id="leyenda-edificios">
             <span class="leyenda-titulo">Edificio:</span>
-            <span class="leyenda-item"><span class="leyenda-color leyenda-eso"></span> ESO</span>
-            <span class="leyenda-item"><span class="leyenda-color leyenda-bach"></span> Bachillerato</span>
-            <span class="leyenda-item"><span class="leyenda-color leyenda-ciclos"></span> Ciclos</span>
-            <span class="leyenda-item"><span class="leyenda-color leyenda-sin"></span> Sin edificio</span>
           </div>
         </div>
       </div>
@@ -507,13 +503,16 @@
         var selFiltro = document.getElementById("filtro-edificio-tramo");
         var selHorario = document.getElementById("horario-edificio");
         var selCSV = document.getElementById("csv-edificio");
+        var leyenda = document.getElementById("leyenda-edificios");
         for (var i = 0; i < _todosLosEdificios.length; i++) {
           var ed = _todosLosEdificios[i];
           selModal.innerHTML += '<option value="' + ed.id_edificio + '">' + ed.nombre + '</option>';
           selFiltro.innerHTML += '<option value="' + ed.nombre + '">' + ed.nombre + '</option>';
           selHorario.innerHTML += '<option value="' + ed.id_edificio + '">' + ed.nombre + '</option>';
           selCSV.innerHTML += '<option value="' + ed.id_edificio + '">' + ed.nombre + '</option>';
+          leyenda.innerHTML += '<span class="leyenda-item"><span class="leyenda-color ' + claseEdificioLeyenda(ed.nombre) + '"></span> ' + ed.nombre + '</span>';
         }
+        leyenda.innerHTML += '<span class="leyenda-item"><span class="leyenda-color leyenda-sin"></span> Sin edificio</span>';
       });
 
       document.getElementById("modal-nueva-guardia").addEventListener("hidden.bs.modal", function () {
@@ -1446,13 +1445,22 @@
     // VISTA POR TRAMO
     // ============================================================
 
+    var _EDIFICIO_CLASES = {
+      eso:          { badge: "badge-prof-eso",    leyenda: "leyenda-eso" },
+      bachillerato: { badge: "badge-prof-bach",   leyenda: "leyenda-bach" },
+      ciclos:       { badge: "badge-prof-ciclos", leyenda: "leyenda-ciclos" }
+    };
+
     function claseEdificio(nombre) {
       if (!nombre) return "badge-prof-sin";
-      var n = nombre.toLowerCase();
-      if (n === "eso") return "badge-prof-eso";
-      if (n === "bachillerato") return "badge-prof-bach";
-      if (n === "ciclos") return "badge-prof-ciclos";
-      return "badge-prof-sin";
+      var e = _EDIFICIO_CLASES[nombre.toLowerCase()];
+      return e ? e.badge : "badge-prof-sin";
+    }
+
+    function claseEdificioLeyenda(nombre) {
+      if (!nombre) return "leyenda-sin";
+      var e = _EDIFICIO_CLASES[nombre.toLowerCase()];
+      return e ? e.leyenda : "leyenda-sin";
     }
 
     function renderVistaTramos() {
@@ -1500,7 +1508,7 @@
             }
             if (profs.length > limite) {
               var cellId = "expand-" + t + "-" + d;
-              html += '<span class="badge-prof-mas" onclick="expandirCelda(\'' + cellId + '\', this)">+' + (profs.length - limite) + ' mas</span>';
+              html += '<span class="badge-prof-mas" data-extra="' + (profs.length - limite) + '" onclick="expandirCelda(\'' + cellId + '\', this)">+' + (profs.length - limite) + ' más</span>';
               html += '<span id="' + cellId + '" class="celda-expandida" style="display:none;">';
               for (var p2 = limite; p2 < profs.length; p2++) {
                 html += '<span class="badge-prof-tramo ' + claseEdificio(profs[p2].edificio) + '">' + profs[p2].nombre + '</span>';
@@ -1519,7 +1527,10 @@
       var el = document.getElementById(id);
       if (el.style.display === "none") {
         el.style.display = "inline";
-        boton.style.display = "none";
+        boton.textContent = "Mostrar menos";
+      } else {
+        el.style.display = "none";
+        boton.textContent = "+" + boton.getAttribute("data-extra") + " más";
       }
     }
   </script>
