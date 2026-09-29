@@ -51,7 +51,34 @@ async function actualizarEdificio(req, res, next) {
     const valores = [];
     if (req.body.nombre !== undefined) { campos.push('nombre = ?'); valores.push(req.body.nombre); }
     if (req.body.piso !== undefined) { campos.push('piso = ?'); valores.push(req.body.piso); }
-    if (req.body.id_edificio_guardias !== undefined) { campos.push('id_edificio_guardias = ?'); valores.push(req.body.id_edificio_guardias || null); }
+    if (req.body.id_edificio_guardias !== undefined) {
+      const idGuardias = req.body.id_edificio_guardias || null;
+      const idEdificio = parseInt(req.params.id);
+      if (idGuardias !== null) {
+        if (idGuardias === idEdificio) {
+          return error(res, 'Un edificio no puede cubrirse a sí mismo', 400);
+        }
+        const [[destino]] = await pool.query(
+          'SELECT id_edificio, id_edificio_guardias FROM edificio WHERE id_edificio = ?',
+          [idGuardias]
+        );
+        if (!destino) {
+          return error(res, 'El edificio destino no existe', 400);
+        }
+        if (destino.id_edificio_guardias) {
+          return error(res, 'El edificio destino ya delega en otro edificio; no se permiten cadenas', 400);
+        }
+        const [[{ deleganEnEste }]] = await pool.query(
+          'SELECT COUNT(*) AS deleganEnEste FROM edificio WHERE id_edificio_guardias = ?',
+          [idEdificio]
+        );
+        if (deleganEnEste > 0) {
+          return error(res, 'Otros edificios ya delegan en este; no puede delegar a su vez', 400);
+        }
+      }
+      campos.push('id_edificio_guardias = ?');
+      valores.push(idGuardias);
+    }
     if (campos.length === 0) return error(res, 'No se enviaron campos para actualizar', 400);
 
     valores.push(req.params.id);

@@ -5,7 +5,9 @@ const crearEdificioSchema = z.object({
   piso: z.string().max(20).nullish()
 });
 
-const actualizarEdificioSchema = crearEdificioSchema.partial();
+const actualizarEdificioSchema = crearEdificioSchema.partial().extend({
+  id_edificio_guardias: z.number().int().positive('Debe ser un entero positivo').nullish()
+});
 
 const crearEspacioSchema = z.object({
   id_espacio: z.number().int().positive().nullish(),

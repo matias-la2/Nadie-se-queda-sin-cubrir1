@@ -1356,5 +1356,6 @@ module.exports = {
   listarAsignadas, crearAsignada, eliminarAsignada, responderGuardia,
   guardiasHoy, asignarAutomaticamente, guardarHorario, importarCSV,
   analizarExcel, confirmarExcel,
-  listarTramos
+  listarTramos,
+  buscarCandidatos
 };

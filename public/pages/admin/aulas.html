@@ -469,7 +469,7 @@
               selectHtml += '<option value="' + _edificios[j].id_edificio + '"' + sel + '>' + escapeHtml(_edificios[j].nombre) + '</option>';
             }
             selectHtml += '</select>';
-            html += '<tr><td class="celda-sm">' + (e.nombre || "—") + '</td><td class="celda-sm">' + (e.piso || "—") + '</td><td class="celda-sm">' + selectHtml + '</td></tr>';
+            html += '<tr><td class="celda-sm">' + escapeHtml(e.nombre || "—") + '</td><td class="celda-sm">' + escapeHtml(e.piso || "—") + '</td><td class="celda-sm">' + selectHtml + '</td></tr>';
           }
           tbody.innerHTML = html;
         }

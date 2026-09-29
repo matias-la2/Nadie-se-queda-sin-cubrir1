@@ -11,7 +11,7 @@ Portal web "Nadie se queda sin cubrir" del IES Río Arba (Tauste, Zaragoza). Ges
 - Frontend vanilla JS + Bootstrap 5.3 — sin framework
 - Autenticación Google OAuth 2.0 + JWT en cookies httpOnly
 - Validación con Zod
-- Tests: node:test (importador, nombres, vinculación, plazas, pendientes) + Jest (auth, health, reservas, guardias, incidencias)
+- Tests: node:test (importador, nombres, vinculación, plazas, pendientes, edificio-guardias) + Jest (auth, health, reservas, guardias, incidencias)
 
 ## Comandos habituales
 
@@ -23,6 +23,8 @@ npm run test:importador    # Solo parser XLS
 npm run test:endpoints     # Solo endpoints analizar/confirmar
 npm run test:vinculacion   # Solo vinculación primer login
 npm run test:pendientes    # Solo pendientes de asignar
+npm run test:migraciones   # Solo idempotencia de migraciones
+npm run test:edificio-guardias # Solo edificio de guardias (helper + buscarCandidatos + PUT)
 npm test                   # Tests Jest (no necesitan Docker)
 npm run migrate:estado     # Ver estado de migraciones (solo lectura)
 npm run migrate            # Aplicar migraciones pendientes
@@ -47,6 +49,10 @@ El parser BIFF (`importador-guardias.service.js`) lee registros LABEL (0x0204) d
 ### Vinculación (`vinculacion.service.js`)
 
 En primer login con Google, busca coincidencia en `profesor_pendiente_login` y transfiere guardias importadas del Excel al nuevo usuario.
+
+### Edificio de guardias (`edificio-guardias.helper.js`)
+
+`edificioDeGuardias(conn, idEdificio)` resuelve qué edificio cubre las guardias de otro. La tabla `edificio` tiene `id_edificio_guardias` (FK auto-referencial): si está configurado, las guardias de ese edificio las cubren profesores del edificio destino. Regla de negocio: un solo nivel de delegación, sin cadenas (A→B→C) ni ciclos (A→B, B→A). La validación se aplica en `PUT /api/v1/espacios/edificios/:id`.
 
 ## Datos de prueba
 
@@ -73,7 +79,7 @@ Componente IIFE reutilizable (namespace `PA`) que muestra la sección "Plazas va
 ## Cosas a tener en cuenta
 
 - El parser BIFF maneja tanto mini-streams (< 4096 bytes, como Bto.xls) como streams regulares (como ESO.xls) dentro del formato OLE2/CFB
-- Sistema de migraciones en `database/migrations/` (001-006 como módulos JS). Cada migración exporta `async up(conn, h)` donde `h` son helpers idempotentes. `npm run migrate` aplica las pendientes; en producción exige `--confirmo-backup`
+- Sistema de migraciones en `database/migrations/` (001-007 como módulos JS). Cada migración exporta `async up(conn, h)` donde `h` son helpers idempotentes. `npm run migrate` aplica las pendientes; en producción exige `--confirmo-backup`. Migración 007: columna `id_edificio_guardias` en edificio (FK auto-referencial, ON DELETE SET NULL)
 - La migración 005 usa triggers en vez de CHECK constraints porque MySQL 8.0 no permite CHECK en columnas con FK referencial
 - La migración 006 (triggers `trg_gc_titular_insert`/`trg_gc_titular_update`): `id_profesor_pendiente` es exclusivo con `id_usuario`, pero `id_usuario` e `id_plaza_pendiente` pueden coexistir. `id_plaza_pendiente` indica la procedencia de la plaza (qué plaza ocupa el usuario), no es un estado "pendiente"
 - Los tests de integración (`test:all`) necesitan `docker compose up -d db` corriendo
