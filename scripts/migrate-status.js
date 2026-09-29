@@ -21,6 +21,10 @@ var DETECCIONES = {
   '006': async function (h) {
     var cuerpo = await h.cuerpoTrigger('trg_gc_titular_insert');
     return cuerpo !== null && cuerpo.indexOf('exclusivo') !== -1;
+  },
+  '007': async function (h) {
+    return await h.columnaExiste('edificio', 'id_edificio_guardias') &&
+           await h.fkExiste('edificio', 'fk_edificio_guardias');
   }
 };
 
