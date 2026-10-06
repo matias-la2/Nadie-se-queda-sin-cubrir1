@@ -232,6 +232,10 @@ function inicializarNotificaciones(rutaBase, roles) {
     panel.hidden = true;
   });
 
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') panel.hidden = true;
+  });
+
   var btnLeer = document.getElementById('notif-leer-todas');
   if (btnLeer) {
     btnLeer.addEventListener('click', function (e) {

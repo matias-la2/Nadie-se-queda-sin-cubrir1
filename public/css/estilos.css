@@ -764,10 +764,18 @@ body {
 }
 
 .notif-panel {
+  position: fixed;
+  top: 65px;
+  left: 0;
+  width: 320px;
+  max-width: calc(100vw - 16px);
   background: #fff;
-  border-bottom: 1px solid #e2e8f0;
-  max-height: 340px;
+  border: 1px solid #e2e8f0;
+  border-radius: 0 0 8px 8px;
+  max-height: 400px;
   overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
 }
 
 .notif-panel-cabecera {
