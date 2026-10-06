@@ -1,7 +1,7 @@
 'use strict';
 const pool = require('../config/db');
 const { success } = require('../helpers/response.helper');
-const { cursoActual, cursoSiguiente } = require('../helpers/curso.helper');
+const { cursoActual, cursoSiguiente, generarRangoCursos } = require('../helpers/curso.helper');
 
 async function listarCursos(req, res, next) {
   try {
@@ -10,13 +10,20 @@ async function listarCursos(req, res, next) {
          SELECT curso_escolar FROM guardia_creada
          UNION
          SELECT curso_escolar FROM espacio_curso
-       ) t ORDER BY curso_escolar DESC`
+       ) t`
     );
+    const conDatos = new Set(rows.map(r => r.curso_escolar));
+    const rango = generarRangoCursos();
+    const todos = new Set(rango);
+    for (const c of conDatos) {
+      todos.add(c);
+    }
+    const cursos = Array.from(todos)
+      .sort()
+      .reverse()
+      .map(c => ({ curso: c, tieneDatos: conDatos.has(c) }));
     const actual = cursoActual();
     const siguiente = cursoSiguiente();
-    const cursos = rows.map(r => r.curso_escolar);
-    if (!cursos.includes(actual)) cursos.push(actual);
-    cursos.sort().reverse();
     return success(res, { cursos, actual, siguiente });
   } catch (err) {
     next(err);

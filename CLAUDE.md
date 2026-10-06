@@ -85,3 +85,5 @@ Componente IIFE reutilizable (namespace `PA`) que muestra la sección "Plazas va
 - La tabla `profesor_edificio` (migración 001) está **obsoleta y vacía**. El edificio de cada profesor se deriva automáticamente de `guardia_creada.id_edificio` del curso actual a través del helper `helpers/profesor-edificios.helper.js` (`edificiosDeProfesor`, `sqlExisteEnEdificio`, `SQL_EDIFICIOS_JOIN`). La delegación (`edificioDeGuardias`) se aplica solo al edificio de la ausencia, nunca al del profesor
 - Los tests de integración (`test:all`) necesitan `docker compose up -d db` corriendo
 - Los tests node:test y Jest son suites separadas con runners distintos
+- **No ejecutar suites que usen la BD en paralelo** — comparten la misma BD de desarrollo y los datos de prueba colisionan
+- El MySQL de Docker funciona en UTC y Node.js en hora local (Europe/Madrid, UTC+1/+2). Las consultas con `CURDATE()`/`WEEKDAY(CURDATE())` se desfasan entre las 00:00 y las 02:00 hora local. Los tests que necesitan la fecha de hoy la obtienen de MySQL (`DATE_FORMAT(CURDATE(), '%Y-%m-%d')` y `WEEKDAY(CURDATE()) + 1`) para evitar el desfase. Pendiente unificar la zona horaria en producción

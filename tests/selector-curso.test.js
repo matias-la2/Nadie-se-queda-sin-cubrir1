@@ -11,7 +11,7 @@ process.env.DB_HOST = 'localhost';
 const request = require('supertest');
 const app = require('../server');
 const pool = require('../config/db');
-const { cursoActual, cursoSiguiente } = require('../helpers/curso.helper');
+const { cursoActual, cursoSiguiente, CURSOS_ANTERIORES, CURSOS_SIGUIENTES } = require('../helpers/curso.helper');
 
 var JWT_SECRET = process.env.JWT_SECRET;
 
@@ -28,6 +28,7 @@ var profToken = jwt.sign(
 );
 
 var createdEspacioCurso = [];
+var cursoFueraRango = '2010-2011';
 
 before(async function () {
   var conn = await pool.getConnection();
@@ -35,10 +36,10 @@ before(async function () {
     var [espacios] = await conn.query('SELECT id_espacio FROM espacio LIMIT 1');
     if (espacios.length > 0) {
       await conn.query(
-        "INSERT IGNORE INTO espacio_curso (id_espacio, curso_escolar, nombre_curso) VALUES (?, '2023-2024', 'TestAntiguo')",
-        [espacios[0].id_espacio]
+        "INSERT IGNORE INTO espacio_curso (id_espacio, curso_escolar, nombre_curso) VALUES (?, ?, 'TestAntiguo')",
+        [espacios[0].id_espacio, cursoFueraRango]
       );
-      createdEspacioCurso.push({ id_espacio: espacios[0].id_espacio, curso: '2023-2024' });
+      createdEspacioCurso.push({ id_espacio: espacios[0].id_espacio, curso: cursoFueraRango });
     }
   } finally {
     conn.release();
@@ -71,22 +72,46 @@ describe('GET /api/v1/cursos', function () {
     assert.equal(res.body.datos.siguiente, cursoSiguiente());
   });
 
-  it('cursos incluye el actual aunque no haya datos', async function () {
+  it('el rango tiene al menos CURSOS_ANTERIORES + 1 + CURSOS_SIGUIENTES elementos', async function () {
     var res = await request(app)
       .get('/api/v1/cursos')
       .set('Authorization', 'Bearer ' + adminToken)
       .expect(200);
     var cursos = res.body.datos.cursos;
-    assert.ok(cursos.indexOf(cursoActual()) !== -1, 'Debe incluir el curso actual');
+    var rangoBase = CURSOS_ANTERIORES + 1 + CURSOS_SIGUIENTES;
+    assert.ok(cursos.length >= rangoBase, 'Debe tener al menos ' + rangoBase + ' cursos, tiene ' + cursos.length);
   });
 
-  it('cursos incluye datos de espacio_curso', async function () {
+  it('incluye el actual con tieneDatos boolean', async function () {
     var res = await request(app)
       .get('/api/v1/cursos')
       .set('Authorization', 'Bearer ' + adminToken)
       .expect(200);
     var cursos = res.body.datos.cursos;
-    assert.ok(cursos.indexOf('2023-2024') !== -1, 'Debe incluir 2023-2024 de espacio_curso');
+    var actual = cursos.find(function (c) { return c.curso === cursoActual(); });
+    assert.ok(actual, 'Debe incluir el curso actual');
+    assert.equal(typeof actual.tieneDatos, 'boolean');
+  });
+
+  it('incluye curso con datos fuera del rango (2010-2011)', async function () {
+    var res = await request(app)
+      .get('/api/v1/cursos')
+      .set('Authorization', 'Bearer ' + adminToken)
+      .expect(200);
+    var cursos = res.body.datos.cursos;
+    var fuera = cursos.find(function (c) { return c.curso === cursoFueraRango; });
+    assert.ok(fuera, 'Debe incluir ' + cursoFueraRango + ' porque tiene datos en espacio_curso');
+    assert.equal(fuera.tieneDatos, true);
+  });
+
+  it('tieneDatos es false para cursos del rango sin datos', async function () {
+    var res = await request(app)
+      .get('/api/v1/cursos')
+      .set('Authorization', 'Bearer ' + adminToken)
+      .expect(200);
+    var cursos = res.body.datos.cursos;
+    var sinDatos = cursos.filter(function (c) { return !c.tieneDatos; });
+    assert.ok(sinDatos.length > 0, 'Debe haber al menos un curso sin datos en el rango');
   });
 
   it('cursos está ordenado de más reciente a más antiguo', async function () {
@@ -96,7 +121,7 @@ describe('GET /api/v1/cursos', function () {
       .expect(200);
     var cursos = res.body.datos.cursos;
     for (var i = 1; i < cursos.length; i++) {
-      assert.ok(cursos[i - 1] >= cursos[i], 'Debe estar ordenado descendente: ' + cursos[i - 1] + ' >= ' + cursos[i]);
+      assert.ok(cursos[i - 1].curso >= cursos[i].curso, 'Debe estar ordenado descendente: ' + cursos[i - 1].curso + ' >= ' + cursos[i].curso);
     }
   });
 

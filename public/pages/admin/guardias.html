@@ -726,10 +726,10 @@
     }
 
     function poblarFiltroCurso() {
-      SelectorCurso.poblarSelectorCurso(document.getElementById("filtro-curso-tramo"));
-      SelectorCurso.poblarSelectorCurso(document.getElementById("modal-curso"), { incluirSiguiente: true });
-      SelectorCurso.poblarSelectorCurso(document.getElementById("horario-curso"), { incluirSiguiente: true });
-      SelectorCurso.poblarSelectorCurso(document.getElementById("csv-curso"), { incluirSiguiente: true });
+      SelectorCurso.poblarSelectorCurso(document.getElementById("filtro-curso-tramo"), { esFiltro: true });
+      SelectorCurso.poblarSelectorCurso(document.getElementById("modal-curso"));
+      SelectorCurso.poblarSelectorCurso(document.getElementById("horario-curso"));
+      SelectorCurso.poblarSelectorCurso(document.getElementById("csv-curso"));
     }
 
     function renderGrupos(filas) {

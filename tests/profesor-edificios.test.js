@@ -32,17 +32,8 @@ var createdGuardiaCreada = [];
 var createdAusencias = [];
 var createdAsignadas = [];
 
-function hoyStr() {
-  var d = new Date();
-  return d.getFullYear() + '-' +
-    String(d.getMonth() + 1).padStart(2, '0') + '-' +
-    String(d.getDate()).padStart(2, '0');
-}
-
-function diaSemanaHoy() {
-  var d = new Date().getDay();
-  return d === 0 ? 7 : d;
-}
+var mysqlHoy;
+var mysqlDiaSemana;
 
 async function crearUsuarioProfesor(conn, nombre, apellidos, correo, googleId, depto) {
   var [rolProf] = await conn.query("SELECT id_rol FROM rol WHERE nombre_rol = 'PROFESOR'");
@@ -61,7 +52,7 @@ async function crearGuardia(conn, idUsuario, idEdificio, cursoEsc, tramo) {
   tramo = tramo || '1a hora (08:30-09:20)';
   var [res] = await conn.query(
     'INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_edificio) VALUES (?, ?, ?, ?, ?)',
-    [diaSemanaHoy(), tramo, cursoEsc, idUsuario, idEdificio]
+    [mysqlDiaSemana, tramo, cursoEsc, idUsuario, idEdificio]
   );
   createdGuardiaCreada.push(res.insertId);
   return res.insertId;
@@ -70,6 +61,10 @@ async function crearGuardia(conn, idUsuario, idEdificio, cursoEsc, tramo) {
 before(async () => {
   var conn = await pool.getConnection();
   try {
+    var [fechaRow] = await conn.query('SELECT DATE_FORMAT(CURDATE(), \'%Y-%m-%d\') AS hoy, WEEKDAY(CURDATE()) + 1 AS dia');
+    mysqlHoy = fechaRow[0].hoy;
+    mysqlDiaSemana = fechaRow[0].dia;
+
     var [eso] = await conn.query(
       "SELECT id_edificio FROM edificio WHERE UPPER(REPLACE(nombre, ' ', '')) LIKE '%ESO%' AND UPPER(REPLACE(nombre, ' ', '')) NOT LIKE '%CICLOS%'"
     );
@@ -246,7 +241,7 @@ describe('POST /api/v1/guardias/asignadas — validación edificio sin profesor_
     try {
       var [res] = await conn.query(
         "INSERT INTO ausencia (tramo_horario, fecha, id_profesor, id_usuario_creador, estado) VALUES ('1a hora (08:30-09:20)', ?, ?, 4, 'SIN_CUBRIR')",
-        [hoyStr(), idAusente]
+        [mysqlHoy, idAusente]
       );
       idAusencia = res.insertId;
       createdAusencias.push(idAusencia);
@@ -264,7 +259,7 @@ describe('POST /api/v1/guardias/asignadas — validación edificio sin profesor_
       .post('/api/v1/guardias/asignadas')
       .set('Authorization', 'Bearer ' + adminToken)
       .send({
-        fecha: hoyStr(),
+        fecha: mysqlHoy,
         tramo_horario: '1a hora (08:30-09:20)',
         tipo_asignacion: 'AUTOMATICA',
         id_ausencia: idAusencia,
@@ -280,7 +275,7 @@ describe('POST /api/v1/guardias/asignadas — validación edificio sin profesor_
       .post('/api/v1/guardias/asignadas')
       .set('Authorization', 'Bearer ' + adminToken)
       .send({
-        fecha: hoyStr(),
+        fecha: mysqlHoy,
         tramo_horario: '2a hora (09:25-10:15)',
         tipo_asignacion: 'AUTOMATICA',
         id_ausencia: idAusencia,

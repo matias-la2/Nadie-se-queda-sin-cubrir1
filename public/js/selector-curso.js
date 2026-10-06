@@ -13,19 +13,22 @@ var SelectorCurso = (function () {
 
   function poblarSelectorCurso(selectEl, opciones) {
     opciones = opciones || {};
-    var incluirSiguiente = !!opciones.incluirSiguiente;
+    var esFiltro = !!opciones.esFiltro;
     var onChange = opciones.onChange || null;
     return cargar().then(function (info) {
-      var cursos = info.cursos.slice();
-      if (incluirSiguiente && info.siguiente && cursos.indexOf(info.siguiente) === -1) {
-        cursos.unshift(info.siguiente);
-      }
       var valorPrevio = selectEl.value;
       selectEl.innerHTML = '';
-      for (var i = 0; i < cursos.length; i++) {
+      for (var i = 0; i < info.cursos.length; i++) {
+        var item = info.cursos[i];
         var opt = document.createElement('option');
-        opt.value = cursos[i];
-        opt.textContent = cursos[i] === info.actual ? cursos[i] + ' (actual)' : cursos[i];
+        opt.value = item.curso;
+        var texto = item.curso;
+        if (item.curso === info.actual) {
+          texto += ' (actual)';
+        } else if (esFiltro && !item.tieneDatos) {
+          texto += ' (sin datos)';
+        }
+        opt.textContent = texto;
         selectEl.appendChild(opt);
       }
       if (valorPrevio && selectEl.querySelector('option[value="' + valorPrevio + '"]')) {

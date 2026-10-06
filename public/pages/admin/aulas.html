@@ -425,7 +425,7 @@
       if (!usuario) return;
 
       crearSidebar("aulas", "../../");
-      SelectorCurso.poblarSelectorCurso(document.getElementById("filtro-curso"), { incluirSiguiente: true }).then(function () {
+      SelectorCurso.poblarSelectorCurso(document.getElementById("filtro-curso"), { esFiltro: true }).then(function () {
         recargarTodo();
       });
 

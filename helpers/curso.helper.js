@@ -1,3 +1,6 @@
+const CURSOS_ANTERIORES = 5;
+const CURSOS_SIGUIENTES = 4;
+
 function cursoActual() {
   const ahora = new Date();
   const anioInicio = ahora.getMonth() >= 8 ? ahora.getFullYear() : ahora.getFullYear() - 1;
@@ -26,4 +29,14 @@ function rangoCurso(curso) {
   return { desde: `${inicio}-09-01`, hasta: `${fin}-08-31` };
 }
 
-module.exports = { cursoActual, cursoSiguiente, inicioCursoActual, rangoCurso };
+function generarRangoCursos() {
+  const actual = cursoActual();
+  const anioActual = parseInt(actual.split('-')[0], 10);
+  const cursos = [];
+  for (let a = anioActual - CURSOS_ANTERIORES; a <= anioActual + CURSOS_SIGUIENTES; a++) {
+    cursos.push(`${a}-${a + 1}`);
+  }
+  return cursos;
+}
+
+module.exports = { cursoActual, cursoSiguiente, inicioCursoActual, rangoCurso, generarRangoCursos, CURSOS_ANTERIORES, CURSOS_SIGUIENTES };
