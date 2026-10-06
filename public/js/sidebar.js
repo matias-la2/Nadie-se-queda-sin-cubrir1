@@ -265,7 +265,7 @@ function cargarContadorNotificaciones() {
         badge.hidden = true;
       }
     }
-  }).catch(function () {});
+  }).catch(function (err) { console.error('Error al cargar contador de notificaciones:', err); });
 }
 
 function cargarListaNotificaciones(rutaBase, roles) {
@@ -306,7 +306,7 @@ function cargarListaNotificaciones(rutaBase, roles) {
         apiFetch('/api/v1/notificaciones/' + nid + '/leer', { method: 'PATCH' });
       });
     }
-  }).catch(function () {});
+  }).catch(function (err) { console.error('Error al cargar notificaciones:', err); });
 }
 
 function obtenerEnlaceNotificacion(notif, rutaBase, roles) {
