@@ -1,4 +1,6 @@
 const pool = require('../config/db');
+const { edificiosDeProfesor, sqlExisteEnEdificio } = require('../helpers/profesor-edificios.helper');
+const { cursoActual } = require('../helpers/curso.helper');
 
 const Profesor = {
   async findAll({ departamento, busqueda, id_edificio, limit, offset } = {}) {
@@ -10,8 +12,8 @@ const Profesor = {
       params.push(`%${busqueda}%`, `%${busqueda}%`);
     }
     if (id_edificio) {
-      where.push('EXISTS (SELECT 1 FROM profesor_edificio pe WHERE pe.id_usuario = p.id_usuario AND pe.id_edificio = ?)');
-      params.push(id_edificio);
+      where.push(sqlExisteEnEdificio('p.id_usuario'));
+      params.push(id_edificio, cursoActual());
     }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
     const [[{ total }]] = await pool.query(
@@ -50,29 +52,7 @@ const Profesor = {
   },
 
   async getEdificios(id) {
-    const [rows] = await pool.query(
-      `SELECT e.id_edificio, e.nombre FROM profesor_edificio pe
-       JOIN edificio e ON pe.id_edificio = e.id_edificio WHERE pe.id_usuario = ?`, [id]
-    );
-    return rows;
-  },
-
-  async setEdificios(id, edificios) {
-    const conn = await pool.getConnection();
-    try {
-      await conn.beginTransaction();
-      await conn.query('DELETE FROM profesor_edificio WHERE id_usuario = ?', [id]);
-      if (edificios && edificios.length) {
-        await conn.query('INSERT INTO profesor_edificio (id_usuario, id_edificio) VALUES ?',
-          [edificios.map(idEd => [id, idEd])]);
-      }
-      await conn.commit();
-    } catch (err) {
-      await conn.rollback();
-      throw err;
-    } finally {
-      conn.release();
-    }
+    return edificiosDeProfesor(pool, id);
   }
 };
 

@@ -2,6 +2,7 @@ const pool = require('../config/db');
 const { success, error } = require('../helpers/response.helper');
 const { paginar, respuestaPaginada } = require('../helpers/pagination.helper');
 const { cursoActual } = require('../helpers/curso.helper');
+const { edificiosDeProfesor, sqlExisteEnEdificio } = require('../helpers/profesor-edificios.helper');
 
 // ─── USUARIOS ──────────────────────────────────────────
 
@@ -89,14 +90,7 @@ async function obtenerPorId(req, res, next) {
     );
     if (prof.length > 0) {
       user.profesor = prof[0];
-      const [edificios] = await pool.query(
-        `SELECT e.id_edificio, e.nombre
-         FROM profesor_edificio pe
-         JOIN edificio e ON pe.id_edificio = e.id_edificio
-         WHERE pe.id_usuario = ?`,
-        [req.params.id]
-      );
-      user.profesor.edificios = edificios;
+      user.profesor.edificios = await edificiosDeProfesor(pool, req.params.id);
     }
 
     const [dir] = await pool.query(
@@ -199,11 +193,8 @@ async function listarProfesores(req, res, next) {
       params.push(`%${req.query.busqueda}%`, `%${req.query.busqueda}%`);
     }
     if (req.query.id_edificio) {
-      where.push(`EXISTS (
-        SELECT 1 FROM profesor_edificio pe
-        WHERE pe.id_usuario = p.id_usuario AND pe.id_edificio = ?
-      )`);
-      params.push(req.query.id_edificio);
+      where.push(sqlExisteEnEdificio('p.id_usuario'));
+      params.push(req.query.id_edificio, cursoActual());
     }
 
     const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
@@ -224,14 +215,7 @@ async function listarProfesores(req, res, next) {
     );
 
     for (const prof of rows) {
-      const [edificios] = await pool.query(
-        `SELECT e.id_edificio, e.nombre
-         FROM profesor_edificio pe
-         JOIN edificio e ON pe.id_edificio = e.id_edificio
-         WHERE pe.id_usuario = ?`,
-        [prof.id_usuario]
-      );
-      prof.edificios = edificios;
+      prof.edificios = await edificiosDeProfesor(pool, prof.id_usuario);
     }
 
     return success(res, respuestaPaginada(rows, total, { page, limit }));
@@ -244,20 +228,12 @@ async function crearProfesor(req, res, next) {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
-    const { id_usuario, departamento, edificios } = req.body;
+    const { id_usuario, departamento } = req.body;
 
     await conn.query(
       'INSERT INTO profesor (id_usuario, departamento) VALUES (?, ?)',
       [id_usuario, departamento || null]
     );
-
-    if (edificios && edificios.length > 0) {
-      const valores = edificios.map(idEd => [id_usuario, idEd]);
-      await conn.query(
-        'INSERT INTO profesor_edificio (id_usuario, id_edificio) VALUES ?',
-        [valores]
-      );
-    }
 
     await conn.commit();
     res.registroId = id_usuario;
@@ -266,9 +242,6 @@ async function crearProfesor(req, res, next) {
     await conn.rollback();
     if (err.code === 'ER_DUP_ENTRY') {
       return error(res, 'El usuario ya es profesor', 409);
-    }
-    if (err.code === 'ER_NO_REFERENCED_ROW_2') {
-      return error(res, 'El usuario o edificio no existe', 400);
     }
     next(err);
   } finally {
@@ -280,7 +253,7 @@ async function actualizarProfesor(req, res, next) {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
-    const { departamento, edificios } = req.body;
+    const { departamento } = req.body;
 
     if (departamento !== undefined) {
       const [result] = await conn.query(
@@ -290,20 +263,6 @@ async function actualizarProfesor(req, res, next) {
       if (result.affectedRows === 0) {
         await conn.rollback();
         return error(res, 'Profesor no encontrado', 404);
-      }
-    }
-
-    if (edificios !== undefined) {
-      await conn.query(
-        'DELETE FROM profesor_edificio WHERE id_usuario = ?',
-        [req.params.id]
-      );
-      if (edificios.length > 0) {
-        const valores = edificios.map(idEd => [parseInt(req.params.id), idEd]);
-        await conn.query(
-          'INSERT INTO profesor_edificio (id_usuario, id_edificio) VALUES ?',
-          [valores]
-        );
       }
     }
 

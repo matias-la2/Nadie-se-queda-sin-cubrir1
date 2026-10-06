@@ -13,13 +13,11 @@ const cambiarRolesSchema = z.object({
 
 const crearProfesorSchema = z.object({
   id_usuario: z.number().int().positive('El usuario es obligatorio'),
-  departamento: z.string().max(100).nullish(),
-  edificios: z.array(z.number().int().positive()).optional()
+  departamento: z.string().max(100).nullish()
 });
 
 const actualizarProfesorSchema = z.object({
-  departamento: z.string().max(100).nullish(),
-  edificios: z.array(z.number().int().positive()).optional()
+  departamento: z.string().max(100).nullish()
 });
 
 const crearDirectivoSchema = z.object({

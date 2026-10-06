@@ -22,7 +22,8 @@
     "test:bloque": "node --test tests/nombres.service.test.js tests/importador-guardias.service.test.js",
     "test:all": "node --test --test-concurrency=1 tests/nombres.service.test.js tests/importador-guardias.service.test.js tests/importador.endpoints.test.js tests/vinculacion.service.test.js tests/plazas.test.js tests/filtro-curso.test.js tests/pendientes.test.js",
     "test:migraciones": "node scripts/test-equivalencia.js",
-    "test:edificio-guardias": "node --test tests/edificio-guardias.test.js"
+    "test:edificio-guardias": "node --test tests/edificio-guardias.test.js",
+    "test:profesor-edificios": "node --test tests/profesor-edificios.test.js"
   },
   "dependencies": {
     "cookie-parser": "^1.4.6",
@@ -59,7 +60,8 @@
       "plazas.test.js",
       "filtro-curso.test.js",
       "pendientes.test.js",
-      "edificio-guardias.test.js"
+      "edificio-guardias.test.js",
+      "profesor-edificios.test.js"
     ]
   }
 }

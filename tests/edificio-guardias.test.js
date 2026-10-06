@@ -95,7 +95,6 @@ before(async () => {
     createdUserIds.push(idProfesorBach);
     await conn.query('INSERT INTO usuario_rol (id_usuario, id_rol) VALUES (?, ?)', [idProfesorBach, rolProf[0].id_rol]);
     await conn.query('INSERT INTO profesor (id_usuario, departamento) VALUES (?, ?)', [idProfesorBach, 'Informática']);
-    await conn.query('INSERT INTO profesor_edificio (id_usuario, id_edificio) VALUES (?, ?)', [idProfesorBach, idBach]);
 
     var [resGc] = await conn.query(
       "INSERT INTO guardia_creada (dia_semana, tramo_horario, curso_escolar, id_usuario, id_edificio) VALUES (1, '1a hora (08:30-09:20)', ?, ?, ?)",
@@ -111,7 +110,6 @@ before(async () => {
     createdUserIds.push(idAusenteCiclos);
     await conn.query('INSERT INTO usuario_rol (id_usuario, id_rol) VALUES (?, ?)', [idAusenteCiclos, rolProf[0].id_rol]);
     await conn.query('INSERT INTO profesor (id_usuario, departamento) VALUES (?, ?)', [idAusenteCiclos, 'Mecánica']);
-    await conn.query('INSERT INTO profesor_edificio (id_usuario, id_edificio) VALUES (?, ?)', [idAusenteCiclos, idEdificioCiclos]);
 
     var [resA] = await conn.query("INSERT INTO edificio (nombre, piso) VALUES ('TestEdA', '1')");
     idTestEdA = resA.insertId;

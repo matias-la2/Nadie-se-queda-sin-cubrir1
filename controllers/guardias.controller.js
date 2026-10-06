@@ -7,6 +7,7 @@ const { cursoActual, inicioCursoActual, rangoCurso } = require('../helpers/curso
 const { parsearArchivo } = require('../services/importador-guardias.service');
 const { normalizar, emparejar } = require('../services/nombres.service');
 const { edificioDeGuardias } = require('../helpers/edificio-guardias.helper');
+const { sqlExisteEnEdificio, SQL_EDIFICIOS_JOIN } = require('../helpers/profesor-edificios.helper');
 
 // ─── GUARDIAS CREADAS (planificadas) ───────────────────
 
@@ -304,9 +305,10 @@ async function crearAsignada(req, res, next) {
         idsEdificioGuardias.push(await edificioDeGuardias(conn, edificiosAusencia[k].id_edificio));
       }
       const [[{ coincide }]] = await conn.query(
-        `SELECT COUNT(*) as coincide FROM profesor_edificio
-         WHERE id_usuario = ? AND id_edificio IN (?)`,
-        [id_profesor_sustituto, idsEdificioGuardias]
+        `SELECT COUNT(*) as coincide FROM guardia_creada gc_pe
+         WHERE gc_pe.id_usuario = ? AND gc_pe.id_edificio IN (?)
+           AND gc_pe.id_edificio IS NOT NULL AND gc_pe.curso_escolar = ?`,
+        [id_profesor_sustituto, idsEdificioGuardias, cursoActual()]
       );
       if (coincide === 0) {
         return error(res, 'El profesor sustituto no pertenece al edificio de la ausencia', 400);
@@ -807,6 +809,7 @@ async function guardiasHoy(req, res, next) {
     }
 
     // WEEKDAY: 0=Lun...4=Vie → +1 para nuestro 1=Lun...5=Vie
+    const curso = cursoActual();
     let disponibleSql = `
       SELECT gc.*, u.nombre AS profesor_nombre, u.apellidos AS profesor_apellidos,
              es.nombre AS espacio_nombre,
@@ -815,7 +818,7 @@ async function guardiasHoy(req, res, next) {
       FROM guardia_creada gc
       JOIN usuario u ON gc.id_usuario = u.id_usuario
       LEFT JOIN espacio es ON gc.id_espacio = es.id_espacio
-      LEFT JOIN profesor_edificio pe ON gc.id_usuario = pe.id_usuario
+      LEFT JOIN ${SQL_EDIFICIOS_JOIN} pe ON gc.id_usuario = pe.id_usuario
       LEFT JOIN edificio e ON pe.id_edificio = e.id_edificio
       WHERE gc.id_usuario IS NOT NULL
       AND (gc.dia_semana = WEEKDAY(CURDATE()) + 1 OR gc.fecha = CURDATE())
@@ -826,14 +829,11 @@ async function guardiasHoy(req, res, next) {
         AND ga.tramo_horario = gc.tramo_horario
         AND ga.estado IN ('PENDIENTE', 'ACEPTADA')
       )`;
-    const disponibleParams = [];
+    const disponibleParams = [curso];
 
     if (filtroEdificio) {
-      disponibleSql += ` AND EXISTS (
-        SELECT 1 FROM profesor_edificio pe2
-        WHERE pe2.id_usuario = gc.id_usuario AND pe2.id_edificio = ?
-      )`;
-      disponibleParams.push(filtroEdificio);
+      disponibleSql += ` AND ${sqlExisteEnEdificio('gc.id_usuario')}`;
+      disponibleParams.push(filtroEdificio, curso);
     }
 
     disponibleSql += ` GROUP BY gc.id_guardia_creada, gc.id_usuario, gc.dia_semana, gc.tramo_horario,
