@@ -186,7 +186,7 @@
             <p class="panel-ayuda">Asigna el grupo que ocupa este espacio en cada curso escolar.</p>
             <div class="mb-2">
               <label style="font-size:12px;color:#64748b;">Curso escolar</label>
-              <input type="text" class="select-filtro" id="input-curso-escolar" value="" style="width:100%;">
+              <select class="select-filtro" id="input-curso-escolar" style="width:100%;"></select>
             </div>
             <div class="mb-2">
               <label style="font-size:12px;color:#64748b;">Nombre del grupo</label>
@@ -214,6 +214,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../../js/auth.js"></script>
+  <script src="../../js/selector-curso.js"></script>
   <script src="../../js/sidebar.js"></script>
 
   <script>
@@ -231,16 +232,6 @@
       return "Mantenimiento";
     }
 
-    function calcularCursoActual() {
-      var ahora = new Date();
-      var anio = ahora.getFullYear();
-      if (ahora.getMonth() >= 8) {
-        return anio + "-" + (anio + 1);
-      } else {
-        return (anio - 1) + "-" + anio;
-      }
-    }
-
     function mostrarFeedback(contenedorId, mensaje, esError) {
       var div = document.getElementById(contenedorId);
       var bg = esError ? '#fef2f2' : '#f0fdf4';
@@ -251,8 +242,6 @@
       if (!esError) setTimeout(function() { div.innerHTML = ''; }, 3000);
     }
 
-    var _cursoEscolar = calcularCursoActual();
-
     verificarSesion().then(function (usuario) {
       if (!usuario) return;
       crearSidebar("aulas", "../../");
@@ -262,14 +251,7 @@
         return;
       }
 
-      document.getElementById("input-curso-escolar").value = _cursoEscolar;
-
-      var cursoInput = document.getElementById("input-curso-escolar");
-      var cursoTimer = null;
-      cursoInput.addEventListener("input", function () {
-        clearTimeout(cursoTimer);
-        cursoTimer = setTimeout(cargarNombreCurso, 500);
-      });
+      SelectorCurso.poblarSelectorCurso(document.getElementById("input-curso-escolar"), { incluirSiguiente: true, onChange: cargarNombreCurso });
 
       cargarEspacio();
       cargarBloqueos();

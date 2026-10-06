@@ -232,7 +232,7 @@
     }
 
     function cargarEspacios() {
-      apiFetch('/api/v1/espacios?limit=200&curso_escolar=2025-2026').then(function (data) {
+      apiFetch('/api/v1/espacios?limit=200&curso_escolar=actual').then(function (data) {
         var espacios = [];
         if (data && data.datos) {
           espacios = Array.isArray(data.datos) ? data.datos : (data.datos.registros || []);

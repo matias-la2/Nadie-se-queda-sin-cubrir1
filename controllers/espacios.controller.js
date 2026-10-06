@@ -2,6 +2,7 @@ const pool = require('../config/db');
 const { success, error } = require('../helpers/response.helper');
 const { paginar, respuestaPaginada } = require('../helpers/pagination.helper');
 const { ETIQUETAS } = require('../config/tramos');
+const { cursoActual } = require('../helpers/curso.helper');
 
 // ─── EDIFICIOS ─────────────────────────────────────────
 
@@ -116,7 +117,7 @@ async function listarEspacios(req, res, next) {
     const { page, limit, offset } = paginar(req.query);
     const where = [];
     const params = [];
-    const curso_escolar = req.query.curso_escolar || null;
+    const curso_escolar = req.query.curso_escolar === 'actual' ? cursoActual() : (req.query.curso_escolar || null);
 
     if (req.query.id_edificio) {
       where.push('e.id_edificio = ?');
@@ -167,7 +168,7 @@ async function listarEspacios(req, res, next) {
 
 async function obtenerEspacio(req, res, next) {
   try {
-    const curso_escolar = req.query.curso_escolar || null;
+    const curso_escolar = req.query.curso_escolar === 'actual' ? cursoActual() : (req.query.curso_escolar || null);
     const joinCurso = curso_escolar
       ? 'LEFT JOIN espacio_curso ec ON e.id_espacio = ec.id_espacio AND ec.curso_escolar = ?'
       : '';

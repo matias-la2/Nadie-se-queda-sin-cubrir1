@@ -47,6 +47,7 @@ app.use('/api/v1/guardias',     require('./routes/guardias.routes'));
 app.use('/api/v1/reservas',     require('./routes/reservas.routes'));
 app.use('/api/v1/usuarios',     require('./routes/usuarios.routes'));
 app.use('/api/v1/clases',       require('./routes/clases.routes'));
+app.use('/api/v1/cursos',       require('./routes/cursos.routes'));
 
 // ─── Health check ─────────────────────────────────────────
 app.get('/api/v1/health', async (req, res) => {

@@ -30,7 +30,9 @@ const crearBloqueoSchema = z.object({
 });
 
 const nombreCursoSchema = z.object({
-  curso_escolar: z.string().min(1, 'El curso escolar es obligatorio').max(10),
+  curso_escolar: z.string()
+    .regex(/^\d{4}-\d{4}$/, 'Formato de curso escolar: YYYY-YYYY (ej: 2026-2027)')
+    .refine(s => { const p = s.split('-'); return parseInt(p[1]) === parseInt(p[0]) + 1; }, 'El segundo año debe ser el siguiente al primero'),
   nombre_curso: z.string().min(1, 'El nombre de curso es obligatorio').max(100)
 });
 

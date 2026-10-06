@@ -11,7 +11,7 @@ Portal web "Nadie se queda sin cubrir" del IES Río Arba (Tauste, Zaragoza). Ges
 - Frontend vanilla JS + Bootstrap 5.3 — sin framework
 - Autenticación Google OAuth 2.0 + JWT en cookies httpOnly
 - Validación con Zod
-- Tests: node:test (importador, nombres, vinculación, plazas, pendientes, edificio-guardias) + Jest (auth, health, reservas, guardias, incidencias)
+- Tests: node:test (importador, nombres, vinculación, plazas, pendientes, edificio-guardias, profesor-edificios, selector-curso) + Jest (auth, health, reservas, guardias, incidencias)
 
 ## Comandos habituales
 

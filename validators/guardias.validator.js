@@ -6,7 +6,8 @@ const tramoHorarioSchema = z.enum(ETIQUETAS, {
 });
 
 const cursoEscolarSchema = z.string()
-  .regex(/^\d{4}-\d{4}$/, 'Formato de curso escolar: YYYY-YYYY (ej: 2026-2027)');
+  .regex(/^\d{4}-\d{4}$/, 'Formato de curso escolar: YYYY-YYYY (ej: 2026-2027)')
+  .refine(s => { const p = s.split('-'); return parseInt(p[1]) === parseInt(p[0]) + 1; }, 'El segundo año debe ser el siguiente al primero');
 
 const crearGuardiaCreadaSchema = z.object({
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato: YYYY-MM-DD').nullish(),
